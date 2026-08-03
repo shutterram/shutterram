@@ -254,6 +254,7 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof quoteSchema>>({
     resolver: zodResolver(quoteSchema),
@@ -263,6 +264,10 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
       budget: "",
     },
   });
+
+  const typeVal = watch("eventType");
+  const hoursVal = watch("hours");
+  const budgetVal = watch("budget");
 
   return (
     <section id="quote" className="mt-12 scroll-mt-40 border border-hairline bg-surface/30 p-8 md:p-12">
@@ -275,17 +280,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
       <form
         className="mt-8 grid gap-6 sm:grid-cols-2"
         onSubmit={handleSubmit(async (values) => {
-          const res = await submitForm(`Booking enquiry — ${values.eventType} — ${values.name}`, {
+          const pick = (v: string, custom?: string) => (v === CUSTOM ? (custom ?? "") : v);
+          const eventType = pick(values.eventType, values["eventTypeCustom"]);
+          const res = await submitForm(`Booking enquiry — ${eventType} — ${values.name}`, {
             name: values.name,
             email: values.email,
             phone: values.phone,
-            eventType: values.eventType,
+            eventType,
             eventDate: values["eventDate"] ?? "",
-            hours: values.hours,
-            budget: values.budget,
+            hours: pick(values.hours, values["hoursCustom"]),
+            budget: pick(values.budget, values["budgetCustom"]),
             location: values.location,
             details: values.details,
           });
+
           if (res.ok) {
             toast.success(
               res.mode === "endpoint"
