@@ -58,7 +58,7 @@ function Home() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+  const [mobileCount, setMobileCount] = useState(4);
   const railRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -68,7 +68,9 @@ function Home() {
     [featured, filter],
   );
 
-  const shown = isMobile && !showAll ? visible.slice(0, 4) : visible;
+  const shown = isMobile ? visible.slice(0, mobileCount) : visible;
+  const allShown = mobileCount >= visible.length;
+
 
   const stepServices = (dir: number) => {
     const el = servicesRef.current;
