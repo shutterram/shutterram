@@ -43,25 +43,17 @@ export function SiteHeader() {
         )}
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
-          <div className="flex w-full items-center justify-between md:justify-center">
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center md:flex md:justify-center">
+            <span className="md:hidden" aria-hidden="true" />
             <Link to="/" className="group flex flex-col items-center" onClick={() => setOpen(false)}>
               <img
                 src={logo.url}
-                alt=""
-                aria-hidden="true"
+                alt="Shutter Ram"
                 className={cn(
                   "w-auto shrink-0 invert transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  scrolled ? "h-10" : "h-14 md:h-[4.5rem]",
+                  scrolled ? "h-12" : "h-16 md:h-24",
                 )}
               />
-              <span
-                className={cn(
-                  "font-display mt-1 leading-none font-medium tracking-[0.14em] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  scrolled ? "text-base" : "text-xl md:text-[1.75rem]",
-                )}
-              >
-                SHUTTER RAM
-              </span>
               <span
                 className={cn(
                   "eyebrow hidden overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:block",
@@ -77,11 +69,12 @@ export function SiteHeader() {
               aria-label="Open menu"
               aria-expanded={open}
               onClick={() => setOpen(true)}
-              className="text-foreground md:hidden"
+              className="justify-self-end text-foreground md:hidden"
             >
               <Menu className="size-6" strokeWidth={1.4} />
             </button>
           </div>
+
 
           <nav className="hidden items-center gap-9 md:flex">
             {nav.map((item) => (
