@@ -61,7 +61,7 @@ function Label({ children, htmlFor }: { children: string; htmlFor: string }) {
   );
 }
 
-function ErrorText({ msg }: { msg?: string }) {
+function ErrorText({ msg }: { msg?: string | undefined }) {
   return msg ? <p className="mt-2 text-xs text-destructive">{msg}</p> : null;
 }
 
@@ -189,7 +189,7 @@ function QuoteForm({ initialService }: { initialService?: string }) {
   } = useForm<z.infer<typeof quoteSchema>>({
     resolver: zodResolver(quoteSchema),
     defaultValues: {
-      service: services.some((s) => s.slug === initialService) ? initialService : "",
+      service: services.some((s) => s.slug === initialService) ? (initialService ?? "") : "",
       budget: "",
     },
   });
@@ -205,9 +205,9 @@ function QuoteForm({ initialService }: { initialService?: string }) {
       <form
         className="mt-8 grid gap-6 sm:grid-cols-2"
         onSubmit={handleSubmit(async (values) => {
-          const res = await submitForm(`Quote request — ${values.service} — ${values.name}`, {
+          const res = await submitForm(`Quote request — ${values["service"]} — ${values["name"]}`, {
             ...values,
-            date: values.date ?? "",
+            date: values["date"] ?? "",
           });
           if (res.ok) {
             toast.success(

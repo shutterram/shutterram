@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as GalleryIndexRouteImport } from './routes/gallery.index'
 import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServicesRoute = ServicesRouteImport.update({
@@ -44,6 +50,7 @@ const GalleryCategoryRoute = GalleryCategoryRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery/': typeof GalleryIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery': typeof GalleryIndexRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery/': typeof GalleryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/services' | '/gallery/$category' | '/gallery/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/contact'
+    | '/services'
+    | '/gallery/$category'
+    | '/gallery/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/services' | '/gallery/$category' | '/gallery'
+  to:
+    | '/'
+    | '/about'
+    | '/contact'
+    | '/services'
+    | '/gallery/$category'
+    | '/gallery'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/contact'
     | '/services'
     | '/gallery/$category'
     | '/gallery/'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ContactRoute: typeof ContactRoute
   ServicesRoute: typeof ServicesRoute
   GalleryCategoryRoute: typeof GalleryCategoryRoute
   GalleryIndexRoute: typeof GalleryIndexRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/services': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ContactRoute: ContactRoute,
   ServicesRoute: ServicesRoute,
   GalleryCategoryRoute: GalleryCategoryRoute,
   GalleryIndexRoute: GalleryIndexRoute,
