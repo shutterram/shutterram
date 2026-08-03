@@ -67,7 +67,7 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-12 lg:col-span-3">
             <p className="eyebrow">Get in touch</p>
             <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
               <li className="flex items-start justify-center gap-3 md:justify-start">
