@@ -90,7 +90,7 @@ function About() {
               Work with me
             </Link>
           </div>
-        </div>
+        </Reveal>
       </div>
     </div>
   );
