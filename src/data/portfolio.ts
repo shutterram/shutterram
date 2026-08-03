@@ -1,401 +1,197 @@
 // ---------------------------------------------------------------------------
-// Shutter Ram — all site content lives here.
-// Swap any `u("...")` id for your own image URL to replace a photo.
+// Shutter Ram — live site content.
+//
+// Values below start as the built-in defaults (see ./portfolio.defaults.ts) and
+// are replaced at runtime with whatever is stored in the database, so the admin
+// panel can edit every piece of copy and every image on the site.
 // ---------------------------------------------------------------------------
 
-const u = (id: string, w = 1600) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+import type { SiteContentPayload, Row } from "@/lib/site-content.functions";
+import {
+  defaultSite,
+  defaultCategories,
+  defaultPhotos,
+  defaultFeaturedIds,
+  defaultEditSamples,
+  defaultServices,
+  defaultStats,
+  defaultExperience,
+  defaultTestimonials,
+  defaultProcessSteps,
+  defaultAboutShort,
+  defaultAboutLong,
+  defaultBudgetRanges,
+  defaultHourOptions,
+} from "./portfolio.defaults";
 
-/** Same photo, rendered "straight out of camera": flat, cool, low contrast. */
-export const unedited = (url: string) =>
-  `${url}&sat=-55&con=-22&bri=-8&gam=-12`;
+export { unedited } from "./portfolio.defaults";
+export type {
+  SiteInfo,
+  CategorySlug,
+  Category,
+  Photo,
+  EditSample,
+  Service,
+  Stat,
+  ExperienceItem,
+  Testimonial,
+  ProcessStep,
+} from "./portfolio.defaults";
 
-export const site = {
-  name: "Shutter Ram",
-  tagline: "Clicking today — for a memory that lives forever",
-  email: "hello@shutterram.com",
-  phone: "+1 (555) 014-2280",
-  location: "Based in New York — available across New Jersey, New York and further",
-  /**
-   * Third-party form endpoint (Formspree, Basin, Getform, FormSubmit…).
-   * Paste your endpoint URL here and submissions get emailed to you.
-   * While it is empty, forms fall back to opening a pre-filled email draft.
-   */
-  formEndpoint: "",
-  socials: [
-    { name: "Instagram", href: "https://instagram.com/", icon: "instagram" },
-    { name: "Flickr", href: "https://flickr.com/", icon: "flickr" },
-    { name: "Facebook", href: "https://facebook.com/", icon: "facebook" },
-    { name: "Twitter", href: "https://x.com/", icon: "twitter" },
-  ],
-} as const;
+import type {
+  SiteInfo,
+  Category,
+  Photo,
+  EditSample,
+  Service,
+  Stat,
+  ExperienceItem,
+  Testimonial,
+  ProcessStep,
+  CategorySlug,
+} from "./portfolio.defaults";
 
-export type CategorySlug =
-  | "wedding"
-  | "corporate"
-  | "portrait"
-  | "headshots"
-  | "events"
-  | "product";
+// Live bindings — reassigned by applyContent().
+export let site: SiteInfo = defaultSite;
+export let categories: Category[] = defaultCategories;
+export let photos: Photo[] = defaultPhotos;
+export let featuredIds: string[] = [...defaultFeaturedIds];
+export let editSamples: EditSample[] = defaultEditSamples;
+export let services: Service[] = defaultServices;
+export let stats: Stat[] = defaultStats;
+export let experience: ExperienceItem[] = defaultExperience;
+export let testimonials: Testimonial[] = defaultTestimonials;
+export let processSteps: ProcessStep[] = defaultProcessSteps;
+export let aboutShort: string = defaultAboutShort;
+export let aboutLong: string[] = [...defaultAboutLong];
+export let budgetRanges: string[] = [...defaultBudgetRanges];
+export let hourOptions: string[] = [...defaultHourOptions];
 
-export interface Category {
-  slug: CategorySlug;
-  title: string;
-  label: string;
-  tagline: string;
-  hero: string;
+const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
+const num = (v: unknown, fallback = 0) => (typeof v === "number" ? v : fallback);
+const list = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+
+/** Replace the live content with rows loaded from the database. */
+export function applyContent(payload: SiteContentPayload | null | undefined) {
+  if (!payload) return;
+
+  const s = payload.settings;
+  if (s) {
+    site = {
+      name: str(s["name"], defaultSite.name),
+      tagline: str(s["tagline"], defaultSite.tagline),
+      email: str(s["email"], defaultSite.email),
+      phone: str(s["phone"], defaultSite.phone),
+      location: str(s["location"], defaultSite.location),
+      formEndpoint: str(s["form_endpoint"]),
+      socials: payload.socials.length
+        ? payload.socials.map((r: Row) => ({
+            name: str(r["name"]),
+            href: str(r["href"]),
+            icon: str(r["icon"], "flickr"),
+          }))
+        : defaultSite.socials,
+    };
+    aboutShort = str(s["about_short"], defaultAboutShort);
+    const long = list(s["about_long"]);
+    if (long.length) aboutLong = long;
+    const budgets = list(s["budget_ranges"]);
+    if (budgets.length) budgetRanges = budgets;
+    const hours = list(s["hour_options"]);
+    if (hours.length) hourOptions = hours;
+  } else if (payload.socials.length) {
+    site = {
+      ...site,
+      socials: payload.socials.map((r: Row) => ({
+        name: str(r["name"]),
+        href: str(r["href"]),
+        icon: str(r["icon"], "flickr"),
+      })),
+    };
+  }
+
+  if (payload.categories.length) {
+    categories = payload.categories.map((r: Row) => ({
+      slug: str(r["slug"]),
+      title: str(r["title"]),
+      label: str(r["label"]),
+      tagline: str(r["tagline"]),
+      hero: str(r["hero"]),
+    }));
+  }
+
+  if (payload.photos.length) {
+    photos = payload.photos.map((r: Row) => ({
+      id: str(r["photo_key"]),
+      category: str(r["category_slug"]) as CategorySlug,
+      caption: str(r["caption"]),
+      src: str(r["src"]),
+    }));
+    featuredIds = payload.photos
+      .filter((r: Row) => r["featured"] === true)
+      .sort((a: Row, b: Row) => num(a["featured_order"]) - num(b["featured_order"]))
+      .map((r: Row) => str(r["photo_key"]));
+  }
+
+  if (payload.edit_samples.length) {
+    editSamples = payload.edit_samples.map((r: Row, i) => ({
+      id: str(r["id"], `ed${i}`),
+      title: str(r["title"]),
+      note: str(r["note"]),
+      src: str(r["src"]),
+    }));
+  }
+
+  if (payload.services.length) {
+    services = payload.services.map((r: Row) => ({
+      slug: str(r["slug"]),
+      title: str(r["title"]),
+      subtitle: str(r["subtitle"]),
+      description: str(r["description"]),
+      image: str(r["image"]),
+      category: str(r["category_slug"]) as CategorySlug,
+      includes: list(r["includes"]),
+      from: str(r["price_from"]),
+    }));
+  }
+
+  if (payload.stats.length) {
+    stats = payload.stats.map((r: Row) => ({
+      value: str(r["value"]),
+      label: str(r["label"]),
+    }));
+  }
+
+  if (payload.experience.length) {
+    experience = payload.experience.map((r: Row) => ({
+      period: str(r["period"]),
+      role: str(r["role"]),
+      place: str(r["place"]),
+      detail: str(r["detail"]),
+    }));
+  }
+
+  if (payload.testimonials.length) {
+    testimonials = payload.testimonials.map((r: Row, i) => ({
+      id: str(r["id"], `t${i}`),
+      quote: str(r["quote"]),
+      name: str(r["name"]),
+      role: str(r["role"]),
+      rating: num(r["rating"], 5),
+    }));
+  }
+
+  if (payload.process_steps.length) {
+    processSteps = payload.process_steps.map((r: Row) => ({
+      step: str(r["step"]),
+      title: str(r["title"]),
+      detail: str(r["detail"]),
+    }));
+  }
 }
-
-export const categories: Category[] = [
-  {
-    slug: "wedding",
-    title: "Wedding Photography",
-    label: "Wedding",
-    tagline: "The vows, the tears, the first dance — kept exactly as they felt.",
-    hero: u("1519741497674-611481863552", 2000),
-  },
-  {
-    slug: "corporate",
-    title: "Corporate Photography",
-    label: "Corporate",
-    tagline: "Brand imagery with the composure of a boardroom and the eye of an artist.",
-    hero: u("1497366811353-6870744d04b2", 2000),
-  },
-  {
-    slug: "portrait",
-    title: "Portrait Photography",
-    label: "Portrait",
-    tagline: "Quiet light, honest expression — a portrait that still looks like you.",
-    hero: u("1544005313-94ddf0286df2", 2000),
-  },
-  {
-    slug: "headshots",
-    title: "Headshots Photography",
-    label: "Headshots",
-    tagline: "One frame that opens doors. Clean, confident, unmistakably yours.",
-    hero: u("1560250097-0b93528c311a", 2000),
-  },
-  {
-    slug: "events",
-    title: "Event Photography",
-    label: "Events",
-    tagline: "From the first handshake to the last song, nothing slips past the lens.",
-    hero: u("1492684223066-81342ee5ff30", 2000),
-  },
-  {
-    slug: "product",
-    title: "Product Photography",
-    label: "Product",
-    tagline: "Considered light on considered objects. Detail worth lingering over.",
-    hero: u("1523275335684-37898b6baf30", 2000),
-  },
-];
-
-export interface Photo {
-  id: string;
-  src: string;
-  category: CategorySlug;
-  caption: string;
-}
-
-export const photos: Photo[] = [
-  { id: "w1", category: "wedding", caption: "First look — Hudson Valley", src: u("1519741497674-611481863552") },
-  { id: "w2", category: "wedding", caption: "The vows", src: u("1465495976277-4387d4b0b4c6") },
-  { id: "w3", category: "wedding", caption: "Golden hour portraits", src: u("1511285560929-80b456fea0bc") },
-  { id: "w4", category: "wedding", caption: "Reception, last dance", src: u("1522673607200-164d1b6ce486") },
-  { id: "w5", category: "wedding", caption: "Details in lace", src: u("1583939003579-730e3918a45a") },
-  { id: "w6", category: "wedding", caption: "Confetti exit", src: u("1519225421980-715cb0215aed") },
-
-  { id: "c1", category: "corporate", caption: "Quarterly summit keynote", src: u("1497366811353-6870744d04b2") },
-  { id: "c2", category: "corporate", caption: "Studio floor, mid-build", src: u("1497366216548-37526070297c") },
-  { id: "c3", category: "corporate", caption: "Leadership sit-down", src: u("1521737711867-e3b97375f902") },
-  { id: "c4", category: "corporate", caption: "Open plan, late shift", src: u("1524758631624-e2822e304c36") },
-  { id: "c5", category: "corporate", caption: "Panel discussion", src: u("1531058020387-3be344556be6") },
-
-  { id: "p1", category: "portrait", caption: "Window light study", src: u("1494790108377-be9c29b29330") },
-  { id: "p2", category: "portrait", caption: "Winter series, no. 3", src: u("1506794778202-cad84cf45f1d") },
-  { id: "p3", category: "portrait", caption: "Editorial, monochrome", src: u("1438761681033-6461ffad8d80") },
-  { id: "p4", category: "portrait", caption: "On the rooftop", src: u("1552058544-f2b08422138a") },
-  { id: "p5", category: "portrait", caption: "Available light", src: u("1517841905240-472988babdf9") },
-  { id: "p6", category: "portrait", caption: "Studio no. 12", src: u("1573496359142-b8d87734a5a2") },
-
-  { id: "h1", category: "headshots", caption: "Corporate headshot — grey seamless", src: u("1560250097-0b93528c311a") },
-  { id: "h2", category: "headshots", caption: "Actor headshot", src: u("1519085360753-af0119f7cbe7") },
-  { id: "h3", category: "headshots", caption: "Founder portrait", src: u("1507003211169-0a1dd7228f2d") },
-  { id: "h4", category: "headshots", caption: "Team session", src: u("1500048993953-d23a436266cf") },
-  { id: "h5", category: "headshots", caption: "Natural light headshot", src: u("1524504388940-b1c1722653e1") },
-
-  { id: "e1", category: "events", caption: "Gala, main hall", src: u("1492684223066-81342ee5ff30") },
-  { id: "e2", category: "events", caption: "Crowd at midnight", src: u("1493809842364-78817add7ffb") },
-  { id: "e3", category: "events", caption: "Awards night", src: u("1511632765486-a01980e01a18") },
-  { id: "e4", category: "events", caption: "Backstage", src: u("1454165804606-c3d57bc86b40") },
-  { id: "e5", category: "events", caption: "Street festival", src: u("1517457373958-b7bdd4587205") },
-
-  { id: "d1", category: "product", caption: "Chronograph, low key", src: u("1523275335684-37898b6baf30") },
-  { id: "d2", category: "product", caption: "Ceramics on linen", src: u("1600880292203-757bb62b4baf") },
-  { id: "d3", category: "product", caption: "Glassware study", src: u("1542744173-8e7e53415bb0") },
-  { id: "d4", category: "product", caption: "Leather goods", src: u("1543269865-cbf427effbad") },
-  { id: "d5", category: "product", caption: "Fragrance, hard light", src: u("1556761175-b413da4baf72") },
-];
-
-/** Curated subset shown in the home page Featured Work carousel. */
-export const featuredIds = [
-  "w1", "p1", "c1", "h1", "e1", "d1", "w3", "p3", "c3", "h2", "e3", "d3", "w5", "p6", "e5",
-];
-
-export interface EditSample {
-  id: string;
-  title: string;
-  note: string;
-  src: string;
-}
-
-export const editSamples: EditSample[] = [
-  { id: "ed1", title: "Golden Hour Wedding", note: "Warmth recovered, skin tones balanced, sky graded back in.", src: u("1519741497674-611481863552", 1800) },
-  { id: "ed2", title: "Studio Portrait", note: "Dodge and burn, blemish work, subtle contrast curve.", src: u("1494790108377-be9c29b29330", 1800) },
-  { id: "ed3", title: "Corporate Feature", note: "Colour cast removed, background cleaned, sharpening pass.", src: u("1521737711867-e3b97375f902", 1800) },
-  { id: "ed4", title: "Evening Event", note: "Noise reduction, mixed lighting neutralised, highlight rescue.", src: u("1511632765486-a01980e01a18", 1800) },
-  { id: "ed5", title: "Product Still Life", note: "Reflections tamed, dust removed, deep blacks restored.", src: u("1600880292203-757bb62b4baf", 1800) },
-];
-
-export interface Service {
-  slug: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  image: string;
-  category: CategorySlug;
-  includes: string[];
-  from: string;
-}
-
-export const services: Service[] = [
-  {
-    slug: "wedding",
-    title: "Wedding Photography",
-    subtitle: "Full-day documentary coverage",
-    description:
-      "From the morning stillness to the final song, I shoot weddings the way they actually unfold — unhurried, unposed, and generous with the small moments most people miss.",
-    image: u("1465495976277-4387d4b0b4c6"),
-    category: "wedding",
-    includes: ["Up to 12 hours coverage", "Second shooter", "400+ edited images", "Online gallery + print rights"],
-    from: "from $2,400",
-  },
-  {
-    slug: "corporate",
-    title: "Corporate & Brand",
-    subtitle: "Imagery your marketing team can live on",
-    description:
-      "Conferences, office culture, leadership portraits and campaign work — a consistent visual language across every asset your brand publishes.",
-    image: u("1497366216548-37526070297c"),
-    category: "corporate",
-    includes: ["Half or full day", "On-site direction", "Brand-matched grading", "Commercial licence"],
-    from: "from $850 / half day",
-  },
-  {
-    slug: "portrait",
-    title: "Portrait Sessions",
-    subtitle: "Personal, editorial, family",
-    description:
-      "A relaxed 90-minute session, on location or in studio. We talk, we walk, we shoot — and you end up with portraits that look like a good day rather than a photoshoot.",
-    image: u("1506794778202-cad84cf45f1d"),
-    category: "portrait",
-    includes: ["90-minute session", "Two locations", "35 edited images", "Wardrobe guidance"],
-    from: "from $420",
-  },
-  {
-    slug: "headshots",
-    title: "Professional Headshots",
-    subtitle: "Individual and team",
-    description:
-      "Fast, comfortable and repeatable. Ideal for teams that need everyone looking like they belong to the same company without looking like a passport queue.",
-    image: u("1519085360753-af0119f7cbe7"),
-    category: "headshots",
-    includes: ["15 min per person", "Studio or on-site setup", "2 retouched selects each", "Same-week delivery"],
-    from: "from $180 / person",
-  },
-  {
-    slug: "events",
-    title: "Event Coverage",
-    subtitle: "Galas, launches, conferences",
-    description:
-      "Discreet coverage that keeps pace with the room. Rapid same-night selects available for press and social while the event is still worth talking about.",
-    image: u("1454165804606-c3d57bc86b40"),
-    category: "events",
-    includes: ["4–8 hours coverage", "Same-night preview set", "Speaker + candid coverage", "Full edited gallery in 5 days"],
-    from: "from $700",
-  },
-  {
-    slug: "product",
-    title: "Product & Still Life",
-    subtitle: "E-commerce and campaign",
-    description:
-      "Controlled studio light, clean cut-outs, and hero shots built for the page they will live on. Consistency across a hundred SKUs, or one image worth the whole campaign.",
-    image: u("1543269865-cbf427effbad"),
-    category: "product",
-    includes: ["Studio day rate", "Styling + prop sourcing", "Retouched hero images", "Web-ready exports"],
-    from: "from $650 / day",
-  },
-];
-
-export const budgetRanges = [
-  "Under $500",
-  "$500 – $1,000",
-  "$1,000 – $2,500",
-  "$2,500 – $5,000",
-  "$5,000+",
-  "Not sure yet",
-];
-
-export const aboutShort =
-  "I'm Ram — a photographer of about fifteen years, most of them spent chasing light in places I had no business being awake for. I work quietly at weddings, patiently in studios, and quickly at events, and I care far more about how a photograph feels in ten years than how it performs in ten minutes. Shutter Ram is a one-person studio, which means the person you meet is the person behind the camera and the person editing every frame you receive.";
-
-export const aboutLong = [
-  "I picked up my first camera at nineteen, mostly to have something to do with my hands. Fifteen years later it is still the same instinct: a way of paying closer attention than everyday life usually allows.",
-  "My work sits somewhere between documentary and editorial. I would rather wait for a real expression than manufacture a good one, but I am not precious about it — if a family needs directing, I direct. If a founder needs three minutes to stop performing, we take five.",
-  "Technically, I shoot with a light kit and a preference for available light. Everything is edited by me, frame by frame, in a consistent tonal language: deep blacks, restrained colour, nothing that will look dated in a decade.",
-  "Outside of client work I photograph empty streets before sunrise, print far too much of it, and drink coffee that has usually gone cold.",
-];
 
 export const photoById = (id: string) => photos.find((p) => p.id === id);
-export const photosByCategory = (slug: CategorySlug) => photos.filter((p) => p.category === slug);
+export const photosByCategory = (slug: CategorySlug) =>
+  photos.filter((p) => p.category === slug);
 export const categoryBySlug = (slug: string) => categories.find((c) => c.slug === slug);
-
-// ---------------------------------------------------------------------------
-// Stats / experience / testimonials
-// ---------------------------------------------------------------------------
-
-export interface Stat {
-  value: string;
-  label: string;
-}
-
-export const stats: Stat[] = [
-  { value: "15", label: "Years shooting" },
-  { value: "10,000+", label: "Hours shot" },
-  { value: "60+", label: "Clients" },
-  { value: "1,200+", label: "Projects delivered" },
-];
-
-export interface ExperienceItem {
-  period: string;
-  role: string;
-  place: string;
-  detail: string;
-}
-
-export const experience: ExperienceItem[] = [
-  {
-    period: "2021 — Present",
-    role: "Lead Photographer",
-    place: "Shutter Ram Studio",
-    detail:
-      "Running a one-person studio end to end: shooting, grading and delivering weddings, brand campaigns and editorial portraits for clients across three continents.",
-  },
-  {
-    period: "2018 — 2021",
-    role: "Senior Brand Photographer",
-    place: "Northline Creative",
-    detail:
-      "Built and maintained the visual language for a roster of hospitality and fashion brands — campaign shoots, product libraries and founder portraiture.",
-  },
-  {
-    period: "2015 — 2018",
-    role: "Wedding & Event Photographer",
-    place: "Freelance",
-    detail:
-      "Two hundred-plus weddings across coastlines, cathedrals and back gardens. Learned to read a room faster than a light meter.",
-  },
-  {
-    period: "2011 — 2015",
-    role: "Assistant & Second Shooter",
-    place: "Various studios",
-    detail:
-      "Carried bags, set lights, and quietly learned the craft from photographers far better than I was.",
-  },
-];
-
-export interface Testimonial {
-  id: string;
-  quote: string;
-  name: string;
-  role: string;
-  rating: number;
-}
-
-export const testimonials: Testimonial[] = [
-  {
-    id: "t1",
-    quote:
-      "Ram spent the whole day almost invisible, and then handed us photographs that made our parents cry. Not one of them feels posed.",
-    name: "Ava & Daniel",
-    role: "Wedding — Hudson Valley",
-    rating: 5,
-  },
-  {
-    id: "t2",
-    quote:
-      "Our entire brand library came from one two-day shoot. Twelve months later we are still publishing from that set.",
-    name: "Marcus Rowe",
-    role: "Head of Brand, Northline",
-    rating: 5,
-  },
-  {
-    id: "t3",
-    quote:
-      "I hate having my photo taken. Ram somehow made it a conversation, and I now use that headshot everywhere.",
-    name: "Priya Anand",
-    role: "Founder, Corva Labs",
-    rating: 5,
-  },
-  {
-    id: "t4",
-    quote:
-      "Same-night previews were up on our socials before the gala had ended. Professional from the first email to the final gallery.",
-    name: "Helena Voss",
-    role: "Events Director, Meridian Foundation",
-    rating: 5,
-  },
-];
-
-export const hourOptions = [
-  "Up to 2 hours",
-  "Half day (4 hours)",
-  "Full day (8 hours)",
-  "Full day+ (10–12 hours)",
-  "Multi-day",
-  "Not sure yet",
-];
-
-// ---------------------------------------------------------------------------
-// The experience of working together (client journey)
-// ---------------------------------------------------------------------------
-
-export interface ProcessStep {
-  step: string;
-  title: string;
-  detail: string;
-}
-
-export const processSteps: ProcessStep[] = [
-  {
-    step: "01",
-    title: "Connect",
-    detail: "Tell me the date, the place and what matters most. We talk it through — no scripts, no sales call.",
-  },
-  {
-    step: "02",
-    title: "Plan",
-    detail: "We shape coverage, locations and a timeline that leaves room for the moments worth waiting for.",
-  },
-  {
-    step: "03",
-    title: "Shoot",
-    detail: "You stay present. I stay out of the way, working quietly while the day happens on its own terms.",
-  },
-  {
-    step: "04",
-    title: "Keep",
-    detail: "Every frame hand-graded and delivered in a private gallery, ready to print, share and revisit for decades.",
-  },
-];
