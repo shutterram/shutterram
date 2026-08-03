@@ -5,7 +5,7 @@ import type { Service } from "@/data/portfolio";
 export function ServiceCard({ service }: { service: Service }) {
   return (
     <article className="group flex flex-col border border-hairline bg-surface/30">
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
         <img
           src={service.image}
           alt={service.title}
