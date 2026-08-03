@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Photo } from "@/data/portfolio";
 
@@ -16,6 +16,8 @@ export function Lightbox({
 }) {
   const open = index !== null;
   const [mounted, setMounted] = useState(false);
+  const touchRef = useRef<number | null>(null);
+
 
   useEffect(() => setMounted(true), []);
 
@@ -70,12 +72,25 @@ export function Lightbox({
         </button>
       </div>
 
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4">
+      <div
+        className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4"
+        onTouchStart={(e) => {
+          touchRef.current = e.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(e) => {
+          const start = touchRef.current;
+          const end = e.changedTouches[0]?.clientX ?? null;
+          touchRef.current = null;
+          if (start === null || end === null) return;
+          const dx = end - start;
+          if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+        }}
+      >
         <button
           type="button"
           aria-label="Previous image"
           onClick={() => step(-1)}
-          className="absolute left-2 z-10 flex items-center justify-center text-foreground/60 transition-all duration-500 hover:-translate-x-1 hover:text-foreground md:left-8"
+          className="absolute left-2 z-10 hidden items-center justify-center text-foreground/60 transition-all duration-500 hover:-translate-x-1 hover:text-foreground md:left-8 md:flex"
         >
           <ChevronLeft className="size-9" strokeWidth={1} />
         </button>
@@ -85,22 +100,44 @@ export function Lightbox({
           src={photo.src}
           alt={photo.caption}
           className="max-h-full max-w-full object-contain fade-up"
+          draggable={false}
         />
 
         <button
           type="button"
           aria-label="Next image"
           onClick={() => step(1)}
-          className="absolute right-2 z-10 flex items-center justify-center text-foreground/60 transition-all duration-500 hover:translate-x-1 hover:text-foreground md:right-8"
+          className="absolute right-2 z-10 hidden items-center justify-center text-foreground/60 transition-all duration-500 hover:translate-x-1 hover:text-foreground md:right-8 md:flex"
         >
           <ChevronRight className="size-9" strokeWidth={1} />
         </button>
       </div>
 
-      <div className="shrink-0 px-6 pb-8 text-center">
+      <div className="flex shrink-0 items-center justify-center gap-10 pb-2 md:hidden">
+        <button
+          type="button"
+          aria-label="Previous image"
+          onClick={() => step(-1)}
+          className="flex items-center justify-center text-foreground/70 transition-transform duration-500 active:-translate-x-1"
+        >
+          <ChevronLeft className="size-8" strokeWidth={1} />
+        </button>
+        <span className="eyebrow">Swipe</span>
+        <button
+          type="button"
+          aria-label="Next image"
+          onClick={() => step(1)}
+          className="flex items-center justify-center text-foreground/70 transition-transform duration-500 active:translate-x-1"
+        >
+          <ChevronRight className="size-8" strokeWidth={1} />
+        </button>
+      </div>
+
+      <div className="shrink-0 px-6 pb-8 pt-4 text-center">
         <p className="font-display text-xl">{photo.caption}</p>
         <p className="eyebrow mt-1">{photo.category}</p>
       </div>
+
     </div>,
     document.body,
   );
