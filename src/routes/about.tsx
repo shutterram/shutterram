@@ -1,10 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { aboutLong, aboutShort, site } from "@/data/portfolio";
+import { aboutLong, aboutShort, site, stats } from "@/data/portfolio";
 import { SocialLinks } from "@/components/site/SocialLinks";
-
-const portrait =
-  "https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1200&q=80";
-
+import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
 
 export const Route = createFileRoute("/about")({
@@ -18,8 +15,6 @@ export const Route = createFileRoute("/about")({
       },
       { property: "og:title", content: "About Ram — Photographer | Shutter Ram" },
       { property: "og:description", content: aboutShort.slice(0, 155) },
-      { property: "og:image", content: portrait },
-      { name: "twitter:image", content: portrait },
     ],
   }),
   component: About,
@@ -27,39 +22,31 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-28 pt-40">
-      <p className="eyebrow">About Me</p>
-      <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
-        I'd rather wait for the real moment.
-      </h1>
+    <>
+      <div className="mx-auto max-w-5xl px-6 pb-24 pt-40">
+        <p className="eyebrow">About Me</p>
+        <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
+          I'd rather wait for the real moment.
+        </h1>
 
-      <div className="mt-16 grid gap-14 md:grid-cols-[1fr_1.2fr]">
-        <Reveal>
-          <img
-            src={portrait}
-            alt="Ram, photographer"
-            className="aspect-[4/5] w-full object-cover"
-          />
-          <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-hairline pt-8">
-            {[
-              ["15", "Years shooting"],
-              ["400+", "Weddings covered"],
-              ["60+", "Brand clients"],
-              ["1", "Person editing"],
-            ].map(([n, l]) => (
-              <div key={l}>
-                <dt className="font-display text-3xl leading-none">{n}</dt>
-                <dd className="eyebrow mt-2">{l}</dd>
+        <Reveal className="mt-14 space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
+          {aboutLong.map((p) => (
+            <p key={p.slice(0, 24)}>{p}</p>
+          ))}
+        </Reveal>
+
+        <Reveal delay={100}>
+          <dl className="mt-16 grid grid-cols-2 gap-y-10 border-y border-hairline py-12 md:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <dt className="font-display text-[clamp(2rem,4vw,3rem)] leading-none">{s.value}</dt>
+                <dd className="eyebrow mt-3">{s.label}</dd>
               </div>
             ))}
           </dl>
         </Reveal>
 
-        <Reveal delay={120} className="space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
-          {aboutLong.map((p) => (
-            <p key={p.slice(0, 24)}>{p}</p>
-          ))}
-
+        <Reveal delay={120} className="mt-14 space-y-10 text-sm leading-loose text-muted-foreground md:text-base">
           <div className="border-t border-hairline pt-8">
             <p className="eyebrow">Kit, briefly</p>
             <p className="mt-3">
@@ -82,16 +69,18 @@ function About() {
             <SocialLinks className="mt-6" />
           </div>
 
-          <div className="pt-4">
+          <div>
             <Link
               to="/contact"
-              className="inline-flex items-center border border-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-foreground transition-colors hover:bg-foreground hover:text-background"
+              className="glow-hover inline-flex items-center border border-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-foreground transition-colors hover:bg-foreground hover:text-background"
             >
               Work with me
             </Link>
           </div>
         </Reveal>
       </div>
-    </div>
+
+      <ExperienceSection />
+    </>
   );
 }
