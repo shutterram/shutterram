@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 
 /**
- * "The Experience" — the client's journey of working with the studio,
- * laid out as four hairline-separated columns.
+ * "The Experience" — the client's journey, drawn as a curving timeline with a
+ * milestone per step (horizontal on desktop, vertical on mobile).
  */
 export function ExperienceSection({ className }: { className?: string }) {
   return (
@@ -18,22 +18,96 @@ export function ExperienceSection({ className }: { className?: string }) {
           </h2>
         </Reveal>
 
-        <ol className="mt-16 grid gap-px border-t border-hairline bg-hairline md:grid-cols-4">
-          {processSteps.map((s, i) => (
-            <Reveal key={s.step} delay={i * 100} as="li">
-              <div className="group glow-hover h-full bg-background px-0 py-10 transition-colors duration-700 hover:bg-surface/50 md:px-8">
-                <p className="font-display text-2xl text-muted-foreground transition-colors duration-500 group-hover:text-foreground">
-                  {s.step}
-                </p>
-                <h3 className="mt-6 font-display text-xl md:text-2xl">{s.title}</h3>
-                <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-                  {s.detail}
-                </p>
-              </div>
-            </Reveal>
-          ))}
-        </ol>
+        {/* ------------------------------------------------ desktop: horizontal */}
+        <div className="relative mt-24 hidden md:block">
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            className="absolute inset-x-0 top-1/2 h-32 w-full -translate-y-1/2 text-foreground/25"
+          >
+            <path
+              d="M0 60 C 150 0, 300 120, 450 60 S 750 0, 900 60 S 1100 110, 1200 60"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeDasharray="3 6"
+            />
+          </svg>
+
+          <ol className="relative grid grid-cols-4">
+            {processSteps.map((s, i) => (
+              <Reveal key={s.step} delay={i * 120} as="li">
+                <div className="group flex h-[26rem] flex-col items-center px-5 text-center">
+                  <div className="flex h-1/2 w-full items-end justify-center pb-8">
+                    {i % 2 === 0 ? <StepText title={s.title} detail={s.detail} /> : null}
+                  </div>
+                  <Milestone step={s.step} className="-my-8" />
+                  <div className="flex h-1/2 w-full items-start justify-center pt-8">
+                    {i % 2 === 1 ? <StepText title={s.title} detail={s.detail} /> : null}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+
+        </div>
+
+        {/* --------------------------------------------------- mobile: vertical */}
+        <div className="relative mt-16 md:hidden">
+          <svg
+            viewBox="0 0 60 1000"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            className="absolute bottom-6 left-0 top-6 w-16 text-foreground/25"
+          >
+            <path
+              d="M30 0 C 0 120, 60 240, 30 360 S 0 600, 30 720 S 60 900, 30 1000"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeDasharray="4 8"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+
+          <ol className="relative space-y-12">
+            {processSteps.map((s, i) => (
+              <Reveal key={s.step} delay={i * 90} as="li">
+                <div className="flex items-start gap-6">
+                  <Milestone step={s.step} className="shrink-0" />
+                  <div className="min-w-0 pt-2">
+                    <h3 className="font-display text-xl">{s.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.detail}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
       </div>
     </section>
+  );
+}
+
+function Milestone({ step, className }: { step: string; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "glow-hover relative z-10 grid size-16 place-items-center rounded-full border border-hairline bg-background font-display text-sm tracking-[0.14em] text-muted-foreground transition-colors duration-700 group-hover:border-foreground/60 group-hover:text-foreground",
+        className,
+      )}
+    >
+      {step}
+    </span>
+  );
+}
+
+function StepText({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="max-w-xs">
+      <h3 className="font-display text-xl lg:text-2xl">{title}</h3>
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+    </div>
   );
 }

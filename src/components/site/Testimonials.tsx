@@ -6,41 +6,52 @@ import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
 
 /**
- * Horizontal testimonial rail that drifts slowly on its own and can be
- * stepped through with the arrows. Pauses on hover / interaction.
+ * Continuously drifting testimonial marquee. Transform-based so it never
+ * fights the browser's scroll anchoring — arrows nudge the drift along.
  */
 export function Testimonials({ className }: { className?: string }) {
-  const railRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
+  const posRef = useRef(0);
+  const boostRef = useRef(0);
 
-  // Slow, continuous drift.
   useEffect(() => {
-    const el = railRef.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const track = trackRef.current;
+    if (!track) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let raf = 0;
     let last = performance.now();
+
     const tick = (now: number) => {
-      const dt = now - last;
+      const dt = Math.min(now - last, 64);
       last = now;
-      if (!pausedRef.current) {
-        const max = el.scrollWidth - el.clientWidth;
-        if (max > 0) {
-          const next = el.scrollLeft + dt * 0.022;
-          el.scrollLeft = next >= max - 0.5 ? 0 : next;
-        }
+
+      const half = track.scrollWidth / 2;
+      if (half > 0) {
+        const drift = pausedRef.current || reduce ? 0 : dt * 0.022;
+        const ease = boostRef.current * 0.12;
+        boostRef.current -= ease;
+        if (Math.abs(boostRef.current) < 0.2) boostRef.current = 0;
+
+        let next = posRef.current + drift + ease;
+        next = ((next % half) + half) % half;
+        posRef.current = next;
+        track.style.transform = `translate3d(${-next}px, 0, 0)`;
       }
       raf = requestAnimationFrame(tick);
     };
+
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
 
   const step = useCallback((dir: number) => {
-    const el = railRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * (el.clientWidth * 0.6), behavior: "smooth" });
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.firstElementChild as HTMLElement | null;
+    const width = card ? card.offsetWidth + 24 : 320;
+    boostRef.current += dir * width;
   }, []);
 
   return (
@@ -73,19 +84,20 @@ export function Testimonials({ className }: { className?: string }) {
             <ChevronRight className="size-7" strokeWidth={1} />
           </button>
         </div>
+      </div>
 
-        <div
-          ref={railRef}
-          onMouseEnter={() => (pausedRef.current = true)}
-          onMouseLeave={() => (pausedRef.current = false)}
-          onFocusCapture={() => (pausedRef.current = true)}
-          onBlurCapture={() => (pausedRef.current = false)}
-          className="no-scrollbar mt-6 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2"
-        >
+      <div
+        className="mt-6 overflow-hidden"
+        onMouseEnter={() => (pausedRef.current = true)}
+        onMouseLeave={() => (pausedRef.current = false)}
+        onFocusCapture={() => (pausedRef.current = true)}
+        onBlurCapture={() => (pausedRef.current = false)}
+      >
+        <div ref={trackRef} className="flex w-max gap-6 px-6 will-change-transform">
           {[...testimonials, ...testimonials].map((t, i) => (
             <figure
               key={`${t.id}-${i}`}
-              className="glow-hover flex w-[85vw] shrink-0 snap-start flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[26rem] md:p-10"
+              className="glow-hover flex w-[80vw] shrink-0 flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
             >
               <div className="flex gap-1" aria-label={`${t.rating} out of 5`}>
                 {Array.from({ length: t.rating }).map((_, s) => (
@@ -95,7 +107,7 @@ export function Testimonials({ className }: { className?: string }) {
               <blockquote className="mt-6 font-display text-lg leading-relaxed md:text-xl">
                 “{t.quote}”
               </blockquote>
-              <figcaption className="mt-8 border-t border-hairline pt-5">
+              <figcaption className="mt-auto border-t border-hairline pt-5 [margin-top:2rem]">
                 <p className="text-sm text-foreground">{t.name}</p>
                 <p className="eyebrow mt-1">{t.role}</p>
               </figcaption>

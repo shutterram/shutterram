@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, photos, type CategorySlug } from "@/data/portfolio";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/gallery/")({
   head: () => ({
@@ -30,11 +31,17 @@ type Filter = "all" | CategorySlug;
 function Gallery() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [mobileCount, setMobileCount] = useState(4);
+  const isMobile = useIsMobile();
 
   const visible = useMemo(
     () => (filter === "all" ? photos : photos.filter((p) => p.category === filter)),
     [filter],
   );
+
+  const shown = isMobile ? visible.slice(0, mobileCount) : visible;
+  const allShown = mobileCount >= visible.length;
+
 
   return (
     <div className="mx-auto max-w-7xl px-6 pb-28 pt-56">
@@ -65,6 +72,7 @@ function Gallery() {
         onChange={(v) => {
           setFilter(v);
           setLightbox(null);
+          setMobileCount(4);
         }}
         options={[
           { value: "all" as Filter, label: `All (${photos.length})` },
@@ -76,8 +84,8 @@ function Gallery() {
       />
 
 
-      <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
-        {visible.map((p, i) => (
+      <div className="mt-12 grid grid-cols-2 gap-3 sm:block sm:columns-2 sm:gap-5 lg:columns-3 sm:[&>*]:mb-5">
+        {shown.map((p, i) => (
           <button
             key={p.id}
             type="button"
@@ -88,7 +96,7 @@ function Gallery() {
               src={p.src}
               alt={p.caption}
               loading="lazy"
-              className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03]"
+              className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03] sm:aspect-auto"
             />
             <div className="absolute inset-0 bg-background/40 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
@@ -98,6 +106,19 @@ function Gallery() {
           </button>
         ))}
       </div>
+
+      {isMobile && visible.length > 4 ? (
+        <div className="mt-8 flex justify-center sm:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
+            className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
+          >
+            {allShown ? "View Less" : "View More"}
+          </button>
+        </div>
+      ) : null}
+
 
 
 

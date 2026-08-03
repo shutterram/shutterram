@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
@@ -12,6 +12,8 @@ import { Reveal } from "@/components/site/Reveal";
 import { StatsStrip } from "@/components/site/StatsStrip";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Testimonials } from "@/components/site/Testimonials";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import {
   aboutShort,
   categories,
@@ -56,12 +58,26 @@ function Home() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
+  const [mobileCount, setMobileCount] = useState(4);
   const railRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const visible = useMemo(
     () => (filter === "all" ? featured : featured.filter((p) => p.category === filter)),
     [featured, filter],
   );
+
+  const shown = isMobile ? visible.slice(0, mobileCount) : visible;
+  const allShown = mobileCount >= visible.length;
+
+
+  const stepServices = (dir: number) => {
+    const el = servicesRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
+  };
+
 
   return (
     <>
@@ -113,8 +129,13 @@ function Home() {
           />
           </Reveal>
 
-          <div ref={railRef} className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-5">
-            {visible.map((p, i) => (
+          <div
+            ref={railRef}
+            className={cn(
+              "mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 xl:columns-4 md:[&>*]:mb-5",
+            )}
+          >
+            {shown.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
@@ -125,7 +146,7 @@ function Home() {
                   src={p.src}
                   alt={p.caption}
                   loading="lazy"
-                  className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05]"
+                  className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05] md:aspect-auto"
                 />
                 <div className="absolute inset-0 bg-background/55 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 <span className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 scale-75 items-center justify-center bg-foreground text-background opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
@@ -138,9 +159,23 @@ function Home() {
               </button>
             ))}
             {visible.length === 0 ? (
-              <p className="py-16 text-sm text-muted-foreground">Nothing in this category yet.</p>
+              <p className="col-span-2 py-16 text-sm text-muted-foreground">
+                Nothing in this category yet.
+              </p>
             ) : null}
           </div>
+
+          {isMobile && visible.length > 4 ? (
+            <div className="mt-8 flex justify-center md:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
+                className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
+              >
+                {allShown ? "View Less" : "View More"}
+              </button>
+            </div>
+          ) : null}
 
           <div className="mt-12 flex justify-center">
             <Link
@@ -150,6 +185,7 @@ function Home() {
               See the full gallery
             </Link>
           </div>
+
         </div>
       </section>
 
@@ -204,13 +240,47 @@ function Home() {
             intro="Every engagement is quoted individually — these are the starting points."
           />
           </Reveal>
-          <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* mobile: two-card snap slider */}
+          <div className="relative mt-10 md:hidden">
+            <p className="eyebrow text-center">Use the arrows to see more services</p>
+            <div className="mt-5 flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Previous services"
+                onClick={() => stepServices(-1)}
+                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+              >
+                <ChevronLeft className="size-7" strokeWidth={1} />
+              </button>
+              <div
+                ref={servicesRef}
+                className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto"
+              >
+                {services.map((s, i) => (
+                  <div key={s.slug} className="w-[calc(50%-0.375rem)] shrink-0 snap-start">
+                    <ServiceCard service={s} index={i} />
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-label="Next services"
+                onClick={() => stepServices(1)}
+                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+              >
+                <ChevronRight className="size-7" strokeWidth={1} />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-14 hidden gap-8 md:grid md:grid-cols-2 lg:grid-cols-3">
             {services.map((s, i) => (
               <Reveal key={s.slug} delay={(i % 3) * 110}>
                 <ServiceCard service={s} index={i} />
               </Reveal>
             ))}
           </div>
+
         </div>
       </section>
 
