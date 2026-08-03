@@ -46,20 +46,39 @@ const messageSchema = z.object({
   message: z.string().trim().min(10, "A little more detail, please").max(2000),
 });
 
-const quoteSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your name").max(100),
-  email: z.string().trim().email("Enter a valid email address").max(255),
-  phone: z.string().trim().min(6, "Enter a contact number").max(30),
-  eventType: z.string().min(1, "Choose an event type"),
-  eventDate: z.string().max(30).optional(),
-  hours: z.string().min(1, "Choose the coverage you need"),
-  budget: z.string().min(1, "Choose a budget range"),
-  location: z.string().trim().min(2, "Where is the shoot?").max(150),
-  details: z.string().trim().min(10, "Tell me a bit about the shoot").max(2000),
-  acknowledged: z.literal(true, {
-    errorMap: () => ({ message: "Please acknowledge the booking terms" }),
-  }),
-});
+const CUSTOM = "__custom";
+
+const quoteSchema = z
+  .object({
+    name: z.string().trim().min(2, "Please enter your name").max(100),
+    email: z.string().trim().email("Enter a valid email address").max(255),
+    phone: z.string().trim().min(6, "Enter a contact number").max(30),
+    eventType: z.string().min(1, "Choose an event type"),
+    eventTypeCustom: z.string().trim().max(120).optional(),
+    eventDate: z.string().max(30).optional(),
+    hours: z.string().min(1, "Choose the coverage you need"),
+    hoursCustom: z.string().trim().max(120).optional(),
+    budget: z.string().min(1, "Choose a budget range"),
+    budgetCustom: z.string().trim().max(120).optional(),
+    location: z.string().trim().min(2, "Where is the shoot?").max(150),
+    details: z.string().trim().min(10, "Tell me a bit about the shoot").max(2000),
+    acknowledged: z.literal(true, {
+      errorMap: () => ({ message: "Please acknowledge the booking terms" }),
+    }),
+  })
+  .superRefine((v, ctx) => {
+    const pairs = [
+      ["eventType", "eventTypeCustom", "Describe your event type"],
+      ["hours", "hoursCustom", "Enter the hours you need"],
+      ["budget", "budgetCustom", "Enter your budget"],
+    ] as const;
+    for (const [select, custom, msg] of pairs) {
+      if (v[select] === CUSTOM && !v[custom]?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [custom], message: msg });
+      }
+    }
+  });
+
 
 const fieldClass =
   "h-12 rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0";
@@ -235,6 +254,7 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof quoteSchema>>({
     resolver: zodResolver(quoteSchema),
@@ -244,6 +264,10 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
       budget: "",
     },
   });
+
+  const typeVal = watch("eventType");
+  const hoursVal = watch("hours");
+  const budgetVal = watch("budget");
 
   return (
     <section id="quote" className="mt-12 scroll-mt-40 border border-hairline bg-surface/30 p-8 md:p-12">
@@ -256,17 +280,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
       <form
         className="mt-8 grid gap-6 sm:grid-cols-2"
         onSubmit={handleSubmit(async (values) => {
-          const res = await submitForm(`Booking enquiry — ${values.eventType} — ${values.name}`, {
+          const pick = (v: string, custom?: string) => (v === CUSTOM ? (custom ?? "") : v);
+          const eventType = pick(values.eventType, values["eventTypeCustom"]);
+          const res = await submitForm(`Booking enquiry — ${eventType} — ${values.name}`, {
             name: values.name,
             email: values.email,
             phone: values.phone,
-            eventType: values.eventType,
+            eventType,
             eventDate: values["eventDate"] ?? "",
-            hours: values.hours,
-            budget: values.budget,
+            hours: pick(values.hours, values["hoursCustom"]),
+            budget: pick(values.budget, values["budgetCustom"]),
             location: values.location,
             details: values.details,
           });
+
           if (res.ok) {
             toast.success(
               res.mode === "endpoint"
@@ -307,8 +334,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {s.title}
               </option>
             ))}
+            <option value={CUSTOM}>Something else (enter my own)</option>
           </select>
           <ErrorText msg={errors.eventType?.message} />
+          {typeVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="Describe your event type"
+                aria-label="Custom event type"
+                {...register("eventTypeCustom")}
+              />
+              <ErrorText msg={errors.eventTypeCustom?.message} />
+            </>
+          ) : null}
         </div>
         <div>
           <Label htmlFor="q-date">Event date</Label>
@@ -328,8 +367,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {h}
               </option>
             ))}
+            <option value={CUSTOM}>Custom hours (enter my own)</option>
           </select>
           <ErrorText msg={errors.hours?.message} />
+          {hoursVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="e.g. 6.5 hours across two days"
+                aria-label="Custom hours needed"
+                {...register("hoursCustom")}
+              />
+              <ErrorText msg={errors.hoursCustom?.message} />
+            </>
+          ) : null}
         </div>
         <div>
           <Label htmlFor="q-budget">Estimated budget</Label>
@@ -344,9 +395,22 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {b}
               </option>
             ))}
+            <option value={CUSTOM}>Custom amount (enter my own)</option>
           </select>
           <ErrorText msg={errors.budget?.message} />
+          {budgetVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="e.g. $3,200"
+                aria-label="Custom budget"
+                {...register("budgetCustom")}
+              />
+              <ErrorText msg={errors.budgetCustom?.message} />
+            </>
+          ) : null}
         </div>
+
         <div className="sm:col-span-2">
           <Label htmlFor="q-location">Location</Label>
           <Input id="q-location" className={fieldClass} placeholder="City or venue" {...register("location")} />

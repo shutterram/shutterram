@@ -29,11 +29,20 @@ function About() {
           I'd rather wait for the real moment.
         </h1>
 
-        <Reveal className="mt-14 space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
-          {aboutLong.map((p) => (
-            <p key={p.slice(0, 24)}>{p}</p>
-          ))}
+        <Reveal className="mt-14 grid items-start gap-12 md:grid-cols-[0.8fr_1.2fr]">
+          <img
+            src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80"
+            alt="Ram's camera on the studio bench"
+            loading="lazy"
+            className="aspect-[4/5] w-full object-cover"
+          />
+          <div className="space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
+            {aboutLong.map((p) => (
+              <p key={p.slice(0, 24)}>{p}</p>
+            ))}
+          </div>
         </Reveal>
+
 
         <Reveal delay={100}>
           <dl className="mt-16 grid grid-cols-2 gap-y-10 border-y border-hairline py-12 md:grid-cols-4">

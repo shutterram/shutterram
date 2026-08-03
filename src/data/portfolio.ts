@@ -12,10 +12,10 @@ export const unedited = (url: string) =>
 
 export const site = {
   name: "Shutter Ram",
-  tagline: "Capturing your tomorrow's memories today",
+  tagline: "Clicking today — for a memory that outlives us",
   email: "hello@shutterram.com",
   phone: "+1 (555) 014-2280",
-  location: "Available worldwide — based in New York",
+  location: "Based in New York — available across New Jersey, New York and further",
   /**
    * Third-party form endpoint (Formspree, Basin, Getform, FormSubmit…).
    * Paste your endpoint URL here and submissions get emailed to you.
@@ -365,4 +365,37 @@ export const hourOptions = [
   "Full day+ (10–12 hours)",
   "Multi-day",
   "Not sure yet",
+];
+
+// ---------------------------------------------------------------------------
+// The experience of working together (client journey)
+// ---------------------------------------------------------------------------
+
+export interface ProcessStep {
+  step: string;
+  title: string;
+  detail: string;
+}
+
+export const processSteps: ProcessStep[] = [
+  {
+    step: "01",
+    title: "Connect",
+    detail: "Tell me the date, the place and what matters most. We talk it through — no scripts, no sales call.",
+  },
+  {
+    step: "02",
+    title: "Plan",
+    detail: "We shape coverage, locations and a timeline that leaves room for the moments worth waiting for.",
+  },
+  {
+    step: "03",
+    title: "Shoot",
+    detail: "You stay present. I stay out of the way, working quietly while the day happens on its own terms.",
+  },
+  {
+    step: "04",
+    title: "Keep",
+    detail: "Every frame hand-graded and delivered in a private gallery, ready to print, share and revisit for decades.",
+  },
 ];
