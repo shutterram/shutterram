@@ -26,8 +26,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -66,7 +66,7 @@
  * off-white type, cool silver accent. No warm/gold or vibrant hues.
  */
 :root {
-  --radius: 0.125rem;
+  --radius: 0.875rem;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.94 0 0);
   --surface: oklch(0.185 0 0);
@@ -124,8 +124,8 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    font-weight: 300;
-    letter-spacing: -0.01em;
+    font-weight: 600;
+    letter-spacing: -0.035em;
   }
 
   ::selection {
@@ -137,7 +137,8 @@
 @utility eyebrow {
   font-family: var(--font-sans);
   font-size: 0.6875rem;
-  letter-spacing: 0.32em;
+  font-weight: 500;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--color-muted-foreground);
 }
