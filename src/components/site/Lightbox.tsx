@@ -73,7 +73,7 @@ export function Lightbox({
       </div>
 
       <div
-        className="relative grid min-h-0 flex-1 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 px-3 pb-4 md:grid-cols-[4rem_minmax(0,1fr)_4rem] md:gap-4 md:px-8"
+        className="relative grid min-h-0 flex-1 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] grid-rows-[minmax(0,1fr)] items-center gap-2 overflow-hidden px-3 pb-4 md:grid-cols-[4rem_minmax(0,1fr)_4rem] md:gap-4 md:px-8"
         onTouchStart={(e) => {
           touchRef.current = e.touches[0]?.clientX ?? null;
         }}
@@ -99,7 +99,7 @@ export function Lightbox({
           key={photo.id}
           src={photo.src}
           alt={photo.caption}
-          className="mx-auto max-h-[62dvh] max-w-full object-contain fade-up md:max-h-full"
+          className="mx-auto h-full max-h-[62dvh] w-auto max-w-full object-contain fade-up md:max-h-full"
           draggable={false}
         />
 
