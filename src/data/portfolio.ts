@@ -366,3 +366,36 @@ export const hourOptions = [
   "Multi-day",
   "Not sure yet",
 ];
+
+// ---------------------------------------------------------------------------
+// The experience of working together (client journey)
+// ---------------------------------------------------------------------------
+
+export interface ProcessStep {
+  step: string;
+  title: string;
+  detail: string;
+}
+
+export const processSteps: ProcessStep[] = [
+  {
+    step: "01",
+    title: "Connect",
+    detail: "Tell me the date, the place and what matters most. We talk it through — no scripts, no sales call.",
+  },
+  {
+    step: "02",
+    title: "Plan",
+    detail: "We shape coverage, locations and a timeline that leaves room for the moments worth waiting for.",
+  },
+  {
+    step: "03",
+    title: "Shoot",
+    detail: "You stay present. I stay out of the way, working quietly while the day happens on its own terms.",
+  },
+  {
+    step: "04",
+    title: "Keep",
+    detail: "Every frame hand-graded and delivered in a private gallery, ready to print, share and revisit for decades.",
+  },
+];
