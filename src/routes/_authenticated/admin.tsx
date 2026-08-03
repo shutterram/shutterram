@@ -176,7 +176,6 @@ function AdminPage() {
     void (async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return setIsAdmin(false);
-      await supabase.rpc("claim_admin" as never);
       const { data: roles } = await supabase
         .from("user_roles" as never)
         .select("role")
