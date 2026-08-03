@@ -113,8 +113,13 @@ function Home() {
           />
           </Reveal>
 
-          <div ref={railRef} className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-5">
-            {visible.map((p, i) => (
+          <div
+            ref={railRef}
+            className={cn(
+              "mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 xl:columns-4 md:[&>*]:mb-5",
+            )}
+          >
+            {shown.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
@@ -125,7 +130,7 @@ function Home() {
                   src={p.src}
                   alt={p.caption}
                   loading="lazy"
-                  className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05]"
+                  className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05] md:aspect-auto"
                 />
                 <div className="absolute inset-0 bg-background/55 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 <span className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 scale-75 items-center justify-center bg-foreground text-background opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
@@ -138,9 +143,23 @@ function Home() {
               </button>
             ))}
             {visible.length === 0 ? (
-              <p className="py-16 text-sm text-muted-foreground">Nothing in this category yet.</p>
+              <p className="col-span-2 py-16 text-sm text-muted-foreground">
+                Nothing in this category yet.
+              </p>
             ) : null}
           </div>
+
+          {isMobile && visible.length > 4 ? (
+            <div className="mt-8 flex justify-center md:hidden">
+              <button
+                type="button"
+                onClick={() => setShowAll((v) => !v)}
+                className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
+              >
+                {showAll ? "View Less" : "View More"}
+              </button>
+            </div>
+          ) : null}
 
           <div className="mt-12 flex justify-center">
             <Link
@@ -150,6 +169,7 @@ function Home() {
               See the full gallery
             </Link>
           </div>
+
         </div>
       </section>
 
