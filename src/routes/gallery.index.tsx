@@ -99,19 +99,7 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-16 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
-        <p className="eyebrow mr-2">Jump to a category</p>
-        {categories.map((c) => (
-          <Link
-            key={c.slug}
-            to="/gallery/$category"
-            params={{ category: c.slug }}
-            className="border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
-          >
-            {c.label}
-          </Link>
-        ))}
-      </div>
+
 
       <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
     </div>
