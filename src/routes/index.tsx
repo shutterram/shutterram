@@ -214,6 +214,11 @@ function Home() {
         </div>
       </section>
 
+      <ExperienceSection />
+
+      <Testimonials />
+
+
       {/* --------------------------------------------------------------- Connect */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <div className="flex flex-col items-center text-center">
