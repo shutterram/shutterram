@@ -51,7 +51,7 @@ export function HeroSlider() {
             Shutter{" "}
             <span className="italic text-muted-foreground">Ram</span>
           </span>
-          <span className="mt-4 flex items-center gap-4">
+          <span className="mt-7 flex items-center gap-4">
             <span className="h-px w-10 bg-foreground/30 md:w-16" />
             <span className="eyebrow">{site.tagline}</span>
             <span className="h-px w-10 bg-foreground/30 md:w-16" />
