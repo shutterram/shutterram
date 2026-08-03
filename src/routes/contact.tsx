@@ -240,7 +240,7 @@ function QuoteForm({ initialService }: { initialService?: string }) {
           <Label htmlFor="q-service">Service</Label>
           <select
             id="q-service"
-            className={cn(fieldClass, "w-full border px-3 text-sm text-foreground outline-none")}
+            className={cn(fieldClass, "w-full bg-transparent text-sm text-foreground outline-none")}
             {...register("service")}
           >
             <option value="">Select a service</option>
@@ -261,7 +261,7 @@ function QuoteForm({ initialService }: { initialService?: string }) {
           <Label htmlFor="q-budget">Budget range</Label>
           <select
             id="q-budget"
-            className={cn(fieldClass, "w-full border px-3 text-sm text-foreground outline-none")}
+            className={cn(fieldClass, "w-full bg-transparent text-sm text-foreground outline-none")}
             {...register("budget")}
           >
             <option value="">Select a range</option>
