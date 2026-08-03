@@ -34,8 +34,9 @@ function About() {
             src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80"
             alt="Ram's camera on the studio bench"
             loading="lazy"
-            className="aspect-[4/5] w-full object-cover"
+            className="mx-auto aspect-[4/5] w-[60%] max-w-[16rem] object-cover md:mx-0 md:w-full md:max-w-none"
           />
+
           <div className="space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
             {aboutLong.map((p) => (
               <p key={p.slice(0, 24)}>{p}</p>
