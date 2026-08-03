@@ -19,8 +19,6 @@ export function HeroSlider() {
     return () => clearInterval(t);
   }, [paused, go]);
 
-  const logoVersion = active % 2 === 0;
-
   return (
     <section
       className="relative h-[100svh] w-full overflow-hidden"
