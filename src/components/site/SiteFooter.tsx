@@ -15,7 +15,7 @@ const navLinks = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-hairline bg-surface/30">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-6 pb-20 pt-12">
         <div className="grid gap-14 text-center md:grid-cols-12 md:text-left">
           <div className="md:col-span-12 lg:col-span-5">
             <Link to="/" className="inline-flex flex-col items-center md:items-start">
@@ -23,8 +23,7 @@ export function SiteFooter() {
               <span className="-mt-1 font-display text-3xl leading-none tracking-[0.02em]">
                 Shutter<span className="italic text-muted-foreground">Ram</span>
               </span>
-              <span className="eyebrow mt-2">{site.tagline}</span>
-
+              <span className="eyebrow mt-3">{site.tagline}</span>
             </Link>
             <p className="mx-auto mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground md:mx-0">
               A one-person studio photographing weddings, brands and people who would

@@ -307,7 +307,7 @@ function Home() {
               <div
                 className="min-w-0 overflow-hidden px-4"
                 onMouseEnter={pauseServices}
-                onMouseLeave={resumeServices}
+                onMouseLeave={() => resumeServices()}
                 onTouchStart={pauseServices}
                 onTouchEnd={() => resumeServices(2500)}
                 onTouchCancel={() => resumeServices(2500)}

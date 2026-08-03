@@ -82,6 +82,7 @@ function About() {
           <div>
             <Link
               to="/contact"
+              search={{ form: "message" as const }}
               className="glow-hover inline-flex items-center border border-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-foreground transition-colors hover:bg-foreground hover:text-background"
             >
               Work with me
