@@ -9,6 +9,9 @@ import { ServiceCard } from "@/components/site/ServiceCard";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { BeforeAfterSlider } from "@/components/site/BeforeAfterSlider";
 import { Reveal } from "@/components/site/Reveal";
+import { StatsStrip } from "@/components/site/StatsStrip";
+import { ExperienceSection } from "@/components/site/ExperienceSection";
+import { Testimonials } from "@/components/site/Testimonials";
 import {
   aboutShort,
   categories,
@@ -65,34 +68,26 @@ function Home() {
       <HeroSlider />
 
       {/* ---------------------------------------------------------------- About */}
-      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
-        <div className="grid items-center gap-14 md:grid-cols-[0.85fr_1.15fr]">
-          <Reveal className="relative">
-            <img
-              src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1000&q=80"
-              alt="Ram, photographer at Shutter Ram"
-              loading="lazy"
-              className="aspect-[4/5] w-full object-cover"
-            />
-            <div className="absolute -bottom-5 -right-5 hidden border border-hairline bg-background px-6 py-4 md:block">
-              <p className="font-display text-3xl leading-none">15</p>
-              <p className="eyebrow mt-1">Years behind the lens</p>
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <SectionHeading eyebrow="About Me" title="A quiet eye, fifteen years in." />
-            <p className="mt-6 text-sm leading-loose text-muted-foreground md:text-base">
-              {aboutShort}
-            </p>
-            <Link
-              to="/about"
-              className="group mt-9 inline-flex items-center gap-2 border-b border-hairline pb-2 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:border-foreground"
-            >
-              Read the full story
-              <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-          </Reveal>
-        </div>
+      <section className="mx-auto max-w-5xl px-6 py-24 md:py-32">
+        <Reveal className="flex flex-col items-center text-center">
+          <SectionHeading
+            eyebrow="About Me"
+            title="A quiet eye, fifteen years in."
+            align="center"
+          />
+          <p className="mt-6 max-w-2xl text-sm leading-loose text-muted-foreground md:text-base">
+            {aboutShort}
+          </p>
+          <Link
+            to="/about"
+            className="group mt-9 inline-flex items-center gap-2 border-b border-hairline pb-2 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:border-foreground"
+          >
+            Read the full story
+            <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </Reveal>
+
+        <StatsStrip className="mt-16" />
       </section>
 
       {/* --------------------------------------------------------- Featured work */}
@@ -218,6 +213,11 @@ function Home() {
           </div>
         </div>
       </section>
+
+      <ExperienceSection />
+
+      <Testimonials />
+
 
       {/* --------------------------------------------------------------- Connect */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">

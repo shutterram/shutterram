@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { services } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
+import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/services")({
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/services")({
 
 function ServicesPage() {
   return (
-    <div className="pb-28 pt-40">
+    <div className="pb-28 pt-56">
       <div className="mx-auto max-w-7xl px-6">
         <p className="eyebrow">Services</p>
         <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
@@ -88,8 +89,7 @@ function ServicesPage() {
                 </Link>
                 <Link
                   to="/contact"
-                  search={{ service: s.slug }}
-                  hash="quote"
+                  search={{ service: s.slug, form: "quote" as const }}
                   className="inline-flex items-center border border-foreground bg-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85"
                 >
                   Request a Quote
@@ -99,6 +99,8 @@ function ServicesPage() {
           </section>
         ))}
       </div>
+
+      <ExperienceSection className="mt-28" />
     </div>
   );
 }

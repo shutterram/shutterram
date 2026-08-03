@@ -37,7 +37,7 @@ function Gallery() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-6 pb-28 pt-40">
+    <div className="mx-auto max-w-7xl px-6 pb-28 pt-56">
       <p className="eyebrow">Previous Works</p>
       <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">The Gallery</h1>
       <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">

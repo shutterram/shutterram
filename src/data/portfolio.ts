@@ -260,3 +260,109 @@ export const aboutLong = [
 export const photoById = (id: string) => photos.find((p) => p.id === id);
 export const photosByCategory = (slug: CategorySlug) => photos.filter((p) => p.category === slug);
 export const categoryBySlug = (slug: string) => categories.find((c) => c.slug === slug);
+
+// ---------------------------------------------------------------------------
+// Stats / experience / testimonials
+// ---------------------------------------------------------------------------
+
+export interface Stat {
+  value: string;
+  label: string;
+}
+
+export const stats: Stat[] = [
+  { value: "15", label: "Years shooting" },
+  { value: "10,000+", label: "Hours shot" },
+  { value: "60+", label: "Clients" },
+  { value: "1,200+", label: "Projects delivered" },
+];
+
+export interface ExperienceItem {
+  period: string;
+  role: string;
+  place: string;
+  detail: string;
+}
+
+export const experience: ExperienceItem[] = [
+  {
+    period: "2021 — Present",
+    role: "Lead Photographer",
+    place: "Shutter Ram Studio",
+    detail:
+      "Running a one-person studio end to end: shooting, grading and delivering weddings, brand campaigns and editorial portraits for clients across three continents.",
+  },
+  {
+    period: "2018 — 2021",
+    role: "Senior Brand Photographer",
+    place: "Northline Creative",
+    detail:
+      "Built and maintained the visual language for a roster of hospitality and fashion brands — campaign shoots, product libraries and founder portraiture.",
+  },
+  {
+    period: "2015 — 2018",
+    role: "Wedding & Event Photographer",
+    place: "Freelance",
+    detail:
+      "Two hundred-plus weddings across coastlines, cathedrals and back gardens. Learned to read a room faster than a light meter.",
+  },
+  {
+    period: "2011 — 2015",
+    role: "Assistant & Second Shooter",
+    place: "Various studios",
+    detail:
+      "Carried bags, set lights, and quietly learned the craft from photographers far better than I was.",
+  },
+];
+
+export interface Testimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string;
+  rating: number;
+}
+
+export const testimonials: Testimonial[] = [
+  {
+    id: "t1",
+    quote:
+      "Ram spent the whole day almost invisible, and then handed us photographs that made our parents cry. Not one of them feels posed.",
+    name: "Ava & Daniel",
+    role: "Wedding — Hudson Valley",
+    rating: 5,
+  },
+  {
+    id: "t2",
+    quote:
+      "Our entire brand library came from one two-day shoot. Twelve months later we are still publishing from that set.",
+    name: "Marcus Rowe",
+    role: "Head of Brand, Northline",
+    rating: 5,
+  },
+  {
+    id: "t3",
+    quote:
+      "I hate having my photo taken. Ram somehow made it a conversation, and I now use that headshot everywhere.",
+    name: "Priya Anand",
+    role: "Founder, Corva Labs",
+    rating: 5,
+  },
+  {
+    id: "t4",
+    quote:
+      "Same-night previews were up on our socials before the gala had ended. Professional from the first email to the final gallery.",
+    name: "Helena Voss",
+    role: "Events Director, Meridian Foundation",
+    rating: 5,
+  },
+];
+
+export const hourOptions = [
+  "Up to 2 hours",
+  "Half day (4 hours)",
+  "Full day (8 hours)",
+  "Full day+ (10–12 hours)",
+  "Multi-day",
+  "Not sure yet",
+];

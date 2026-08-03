@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Photo } from "@/data/portfolio";
 
 export function Lightbox({
@@ -14,6 +15,9 @@ export function Lightbox({
   onIndexChange: (i: number) => void;
 }) {
   const open = index !== null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const step = useCallback(
     (dir: number) => {
@@ -38,18 +42,20 @@ export function Lightbox({
     };
   }, [open, step, onClose]);
 
-  if (!open) return null;
+  if (!mounted || !open) return null;
   const photo = photos[index];
   if (!photo) return null;
 
-  return (
+  // Rendered in a portal on <body> so no transformed / will-change ancestor
+  // can turn `position: fixed` into a document-relative box.
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-background/97 backdrop-blur-md animate-in fade-in duration-500"
+      className="fixed inset-0 z-[100] flex h-[100dvh] w-screen flex-col bg-background/97 backdrop-blur-md animate-in fade-in duration-500"
       role="dialog"
       aria-modal="true"
       aria-label={photo.caption}
     >
-      <div className="flex items-center justify-between px-6 py-5">
+      <div className="flex shrink-0 items-center justify-between px-6 py-5">
         <span className="eyebrow">
           {String(index + 1).padStart(2, "0")} / {String(photos.length).padStart(2, "0")}
         </span>
@@ -57,13 +63,14 @@ export function Lightbox({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className="group inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
         >
-          <X className="size-6" strokeWidth={1.4} />
+          Close
+          <X className="size-4" strokeWidth={1.4} />
         </button>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center px-4 pb-4">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4">
         <button
           type="button"
           aria-label="Previous image"
@@ -77,7 +84,7 @@ export function Lightbox({
           key={photo.id}
           src={photo.src}
           alt={photo.caption}
-          className="max-h-[78vh] max-w-full object-contain fade-up"
+          className="max-h-full max-w-full object-contain fade-up"
         />
 
         <button
@@ -90,10 +97,11 @@ export function Lightbox({
         </button>
       </div>
 
-      <div className="px-6 pb-8 text-center">
+      <div className="shrink-0 px-6 pb-8 text-center">
         <p className="font-display text-xl">{photo.caption}</p>
         <p className="eyebrow mt-1">{photo.category}</p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

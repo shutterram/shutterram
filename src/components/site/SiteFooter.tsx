@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import logo from "@/assets/SRLogo.svg.asset.json";
 import { categories, site } from "@/data/portfolio";
+import { LogoLockup } from "./LogoLockup";
 import { SocialLinks } from "./SocialLinks";
 
 const navLinks = [
@@ -9,7 +9,7 @@ const navLinks = [
   { label: "Gallery", to: "/gallery" as const },
   { label: "Services", to: "/services" as const },
   { label: "About Me", to: "/about" as const },
-  { label: "Contact Me", to: "/contact" as const },
+  { label: "Contact", to: "/contact" as const },
 ];
 
 export function SiteFooter() {
@@ -18,11 +18,9 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-6 py-20">
         <div className="grid gap-14 md:grid-cols-12">
           <div className="md:col-span-5">
-            <Link to="/" className="flex items-baseline gap-3">
-              <img src={logo.url} alt="" aria-hidden="true" className="h-9 w-auto translate-y-1 invert" />
-              <span className="font-display text-2xl font-medium tracking-[0.06em]">SHUTTER RAM</span>
+            <Link to="/" className="inline-flex">
+              <LogoLockup size="md" className="!items-start text-left" />
             </Link>
-            <p className="eyebrow mt-3">{site.tagline}</p>
             <p className="mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
               A one-person studio photographing weddings, brands and people who would
               rather be remembered honestly than perfectly.
@@ -89,6 +87,13 @@ export function SiteFooter() {
                 <span>{site.location}</span>
               </li>
             </ul>
+            <Link
+              to="/contact"
+              search={{ form: "quote" as const }}
+              className="glow-hover mt-7 inline-flex items-center border border-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            >
+              Book Your Date
+            </Link>
           </div>
         </div>
       </div>
