@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
+import { getSiteContent } from "@/lib/site-content.functions";
+import { applyContent } from "@/data/portfolio";
 
 function NotFoundComponent() {
   return (
@@ -101,11 +103,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
+  loader: () => getSiteContent(),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
+
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -123,16 +127,21 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const content = Route.useLoaderData();
+  applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // The private studio pages render without the public site chrome.
+  const isStudio = pathname.startsWith("/admin") || pathname.startsWith("/auth");
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteHeader />
+      {isStudio ? null : <SiteHeader />}
       <main key={pathname} className="page-in min-h-screen">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>
-      <SiteFooter />
+      {isStudio ? null : <SiteFooter />}
       <Toaster position="bottom-right" />
     </QueryClientProvider>
   );
