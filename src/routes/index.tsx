@@ -29,17 +29,17 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Shutter Ram — Wedding, Portrait & Corporate Photography" },
+      { title: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
       {
         name: "description",
         content:
           "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
       },
-      { property: "og:title", content: "Shutter Ram — Photography Studio" },
+      { property: "og:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
       {
         property: "og:description",
         content:
-          "Wedding, corporate, portrait, headshot, event and product photography. Capturing your tomorrow's memories today.",
+          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
       },
       { property: "og:image", content: categories[0]!.hero },
       { name: "twitter:image", content: categories[0]!.hero },

@@ -81,16 +81,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Shutter Ram — Photography" },
+      { title: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
       {
         name: "description",
         content:
-          "Shutter Ram — wedding, corporate, portrait and headshot photography. Capturing your tomorrow's memories today.",
+          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
       },
       { name: "author", content: "Shutter Ram" },
       { property: "og:site_name", content: "Shutter Ram" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
+      { name: "twitter:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
+      { property: "og:description", content: "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today." },
+      { name: "twitter:description", content: "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
