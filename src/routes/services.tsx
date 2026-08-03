@@ -48,7 +48,7 @@ function ServicesPage() {
             id={s.slug}
             className="grid scroll-mt-40 grid-cols-2 items-center gap-5 md:gap-12"
           >
-            <Reveal className={cn("overflow-hidden", i % 2 === 1 && "md:order-2")}>
+            <Reveal className={cn("overflow-hidden", i % 2 === 1 && "order-2")}>
               <img
                 src={s.image}
                 alt={s.title}
@@ -57,7 +57,7 @@ function ServicesPage() {
               />
             </Reveal>
 
-            <Reveal delay={120} className={cn("min-w-0", i % 2 === 1 && "md:order-1")}>
+            <Reveal delay={120} className={cn("min-w-0", i % 2 === 1 && "order-1")}>
               <p className="eyebrow">
                 {String(i + 1).padStart(2, "0")} — {s.subtitle}
               </p>

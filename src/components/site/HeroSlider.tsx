@@ -48,7 +48,7 @@ export function HeroSlider() {
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="fade-up mb-8 flex flex-col items-center">
           <span className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
-            Shutter <span className="italic text-muted-foreground">Ram</span>
+            Shutter<span className="italic text-muted-foreground">Ram</span>
           </span>
           <span className="mt-7 flex items-center gap-4">
             <span className="h-px w-10 bg-foreground/30 md:w-16" />

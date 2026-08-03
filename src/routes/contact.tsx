@@ -100,7 +100,7 @@ function ErrorText({ msg }: { msg?: string | undefined }) {
 function Contact() {
   const { service, form } = Route.useSearch();
   const navigate = useNavigate({ from: "/contact" });
-  const active: FormKind = form ?? "message";
+  const active: FormKind = form ?? "quote";
 
   const setActive = (kind: FormKind) =>
     navigate({ search: (prev: ContactSearch) => ({ ...prev, form: kind }), replace: true });
@@ -144,8 +144,8 @@ function Contact() {
       >
         {(
           [
-            { key: "message" as const, label: "Send a Message" },
             { key: "quote" as const, label: "Request a Quote" },
+            { key: "message" as const, label: "Send a Message" },
           ]
         ).map((t) => (
           <button
