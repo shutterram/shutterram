@@ -169,10 +169,10 @@ function Home() {
             <div className="mt-8 flex justify-center md:hidden">
               <button
                 type="button"
-                onClick={() => setShowAll((v) => !v)}
+                onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
                 className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
               >
-                {showAll ? "View Less" : "View More"}
+                {allShown ? "View Less" : "View More"}
               </button>
             </div>
           ) : null}
