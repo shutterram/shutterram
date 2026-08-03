@@ -131,14 +131,17 @@ function RootComponent() {
   applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  // The private studio pages render without the public site chrome.
+  const isStudio = pathname.startsWith("/admin") || pathname.startsWith("/auth");
+
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteHeader />
+      {isStudio ? null : <SiteHeader />}
       <main key={pathname} className="page-in min-h-screen">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>
-      <SiteFooter />
+      {isStudio ? null : <SiteFooter />}
       <Toaster position="bottom-right" />
     </QueryClientProvider>
   );

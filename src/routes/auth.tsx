@@ -60,7 +60,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 pb-24 pt-40">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 pb-24 pt-20">
       <p className="eyebrow">Studio</p>
       <h1 className="mt-4 font-display text-[clamp(2rem,5vw,3rem)] leading-tight">
         {mode === "signin" ? "Sign in" : "Create your account"}

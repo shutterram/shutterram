@@ -193,7 +193,7 @@ function AdminPage() {
   const section = SECTIONS.find((s) => s.id === active)!;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-28 pt-40">
+    <div className="mx-auto max-w-6xl px-6 pb-28 pt-20">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Content studio</p>
