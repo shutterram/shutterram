@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, photos, type CategorySlug } from "@/data/portfolio";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/gallery/")({
   head: () => ({
@@ -30,11 +31,17 @@ type Filter = "all" | CategorySlug;
 function Gallery() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [mobileCount, setMobileCount] = useState(4);
+  const isMobile = useIsMobile();
 
   const visible = useMemo(
     () => (filter === "all" ? photos : photos.filter((p) => p.category === filter)),
     [filter],
   );
+
+  const shown = isMobile ? visible.slice(0, mobileCount) : visible;
+  const allShown = mobileCount >= visible.length;
+
 
   return (
     <div className="mx-auto max-w-7xl px-6 pb-28 pt-56">
