@@ -50,7 +50,7 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-6 lg:col-span-2">
             <p className="eyebrow">Categories</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {categories.slice(0, 6).map((c) => (
