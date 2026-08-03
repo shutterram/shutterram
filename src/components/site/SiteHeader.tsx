@@ -56,8 +56,8 @@ export function SiteHeader() {
               />
               <span
                 className={cn(
-                  "eyebrow hidden overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:block",
-                  scrolled ? "mt-0 max-h-0 opacity-0" : "mt-2 max-h-6 opacity-100",
+                  "eyebrow hidden overflow-hidden text-[0.8125rem] tracking-[0.26em] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:block",
+                  scrolled ? "mt-0 max-h-0 opacity-0" : "mt-2 max-h-7 opacity-100",
                 )}
               >
                 {site.tagline}

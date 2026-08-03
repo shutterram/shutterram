@@ -72,6 +72,7 @@ function Gallery() {
         onChange={(v) => {
           setFilter(v);
           setLightbox(null);
+          setMobileCount(4);
         }}
         options={[
           { value: "all" as Filter, label: `All (${photos.length})` },
