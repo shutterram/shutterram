@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import logo from "@/assets/SRLogo.svg.asset.json";
 import { site } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
+import { LogoLockup } from "./LogoLockup";
 
 const nav = [
   { label: "Home", to: "/" },
   { label: "Gallery", to: "/gallery" },
   { label: "Services", to: "/services" },
   { label: "About Me", to: "/about" },
-  { label: "Contact Me", to: "/contact" },
+  { label: "Contact", to: "/contact" },
 ] as const;
 
 export function SiteHeader() {
@@ -41,32 +42,30 @@ export function SiteHeader() {
             : "border-b border-transparent bg-transparent py-6",
         )}
       >
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
           <div className="flex w-full items-center justify-between md:justify-center">
             <Link to="/" className="group flex flex-col items-center" onClick={() => setOpen(false)}>
-              <span className="flex items-baseline gap-3">
-                <img
-                  src={logo.url}
-                  alt=""
-                  aria-hidden="true"
-                  className={cn(
-                    "w-auto shrink-0 translate-y-1 invert transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                    scrolled ? "h-7" : "h-9 md:h-12",
-                  )}
-                />
-                <span
-                  className={cn(
-                    "font-display leading-none font-medium tracking-[0.06em] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                    scrolled ? "text-lg" : "text-xl md:text-[1.65rem]",
-                  )}
-                >
-                  SHUTTER RAM
-                </span>
+              <img
+                src={logo.url}
+                alt=""
+                aria-hidden="true"
+                className={cn(
+                  "w-auto shrink-0 invert transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  scrolled ? "h-10" : "h-14 md:h-[4.5rem]",
+                )}
+              />
+              <span
+                className={cn(
+                  "font-display mt-1 leading-none font-medium tracking-[0.14em] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  scrolled ? "text-base" : "text-xl md:text-[1.75rem]",
+                )}
+              >
+                SHUTTER RAM
               </span>
               <span
                 className={cn(
-                  "eyebrow mt-2 hidden overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:block",
-                  scrolled ? "max-h-0 opacity-0" : "max-h-6 opacity-100",
+                  "eyebrow hidden overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] md:block",
+                  scrolled ? "mt-0 max-h-0 opacity-0" : "mt-2 max-h-6 opacity-100",
                 )}
               >
                 {site.tagline}
@@ -97,6 +96,13 @@ export function SiteHeader() {
                 </span>
               </Link>
             ))}
+            <Link
+              to="/contact"
+              search={{ form: "quote" as const }}
+              className="glow-hover inline-flex items-center border border-foreground bg-foreground px-5 py-2.5 text-[0.6875rem] tracking-[0.24em] uppercase text-background hover:bg-transparent hover:text-foreground"
+            >
+              Book Your Date
+            </Link>
           </nav>
         </div>
       </header>
@@ -110,22 +116,19 @@ export function SiteHeader() {
         aria-hidden={!open}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between px-6 py-6">
-            <span className="flex items-baseline gap-2.5">
-              <img src={logo.url} alt="" aria-hidden="true" className="h-6 w-auto translate-y-1 invert" />
-              <span className="font-display text-lg font-medium tracking-[0.06em]">SHUTTER RAM</span>
-            </span>
+          <div className="relative flex items-start justify-center px-6 pt-8 pb-6">
+            <LogoLockup size="md" />
             <button
               type="button"
               aria-label="Close menu"
               onClick={() => setOpen(false)}
-              className="text-foreground"
+              className="absolute right-6 top-8 text-foreground"
             >
               <X className="size-6" strokeWidth={1.4} />
             </button>
           </div>
 
-          <nav className="flex flex-1 flex-col items-center justify-center gap-8">
+          <nav className="flex flex-1 flex-col items-center justify-center gap-7">
             {nav.map((item, i) => (
               <Link
                 key={item.to}
@@ -140,9 +143,15 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              to="/contact"
+              search={{ form: "quote" as const }}
+              onClick={() => setOpen(false)}
+              className="mt-2 inline-flex items-center border border-foreground bg-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.24em] uppercase text-background"
+            >
+              Book Your Date
+            </Link>
           </nav>
-
-          <p className="eyebrow px-6 pb-10 text-center">{site.tagline}</p>
         </div>
       </div>
     </>
