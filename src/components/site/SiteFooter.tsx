@@ -16,21 +16,25 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-hairline bg-surface/30">
       <div className="mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-14 md:grid-cols-12">
+        <div className="grid gap-14 text-center md:grid-cols-12 md:text-left">
           <div className="md:col-span-5">
-            <Link to="/" className="inline-flex">
-              <LogoLockup size="md" className="!items-start text-left" />
+            <Link to="/" className="inline-flex flex-col items-center md:items-start">
+              <LogoLockup size="md" showTagline={false} />
+              <span className="mt-3 font-display text-xl tracking-[0.12em] uppercase">
+                Shutter Ram
+              </span>
+              <span className="eyebrow mt-2">{site.tagline}</span>
             </Link>
-            <p className="mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            <p className="mx-auto mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground md:mx-0">
               A one-person studio photographing weddings, brands and people who would
               rather be remembered honestly than perfectly.
             </p>
-            <SocialLinks className="mt-9" />
+            <SocialLinks className="mt-9 justify-center md:justify-start" />
           </div>
 
           <div className="md:col-span-2">
             <p className="eyebrow">Navigate</p>
-            <ul className="mt-6 space-y-3 text-sm">
+            <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {navLinks.map((l) => (
                 <li key={l.to}>
                   <Link
@@ -46,8 +50,8 @@ export function SiteFooter() {
 
           <div className="md:col-span-2">
             <p className="eyebrow">Categories</p>
-            <ul className="mt-6 space-y-3 text-sm">
-              {categories.slice(0, 5).map((c) => (
+            <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
+              {categories.slice(0, 6).map((c) => (
                 <li key={c.slug}>
                   <Link
                     to="/gallery/$category"
@@ -64,7 +68,7 @@ export function SiteFooter() {
           <div className="md:col-span-3">
             <p className="eyebrow">Get in touch</p>
             <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Phone className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
                 <a
                   href={`tel:${site.phone.replace(/[^+\d]/g, "")}`}
@@ -73,7 +77,7 @@ export function SiteFooter() {
                   {site.phone}
                 </a>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Mail className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
                 <a
                   href={`mailto:${site.email}`}
@@ -82,7 +86,7 @@ export function SiteFooter() {
                   {site.email}
                 </a>
               </li>
-              <li className="flex items-start gap-3">
+              <li className="flex items-start justify-center gap-3 md:justify-start">
                 <MapPin className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
                 <span>{site.location}</span>
               </li>
