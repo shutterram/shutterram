@@ -126,7 +126,7 @@ export const photos: Photo[] = [
   { id: "h5", category: "headshots", caption: "Natural light headshot", src: u("1524504388940-b1c1722653e1") },
 
   { id: "e1", category: "events", caption: "Gala, main hall", src: u("1492684223066-81342ee5ff30") },
-  { id: "e2", category: "events", caption: "Crowd at midnight", src: u("1470229722913-7ea0d1e5b1fe") },
+  { id: "e2", category: "events", caption: "Crowd at midnight", src: u("1493809842364-78817add7ffb") },
   { id: "e3", category: "events", caption: "Awards night", src: u("1511632765486-a01980e01a18") },
   { id: "e4", category: "events", caption: "Backstage", src: u("1454165804606-c3d57bc86b40") },
   { id: "e5", category: "events", caption: "Street festival", src: u("1517457373958-b7bdd4587205") },
