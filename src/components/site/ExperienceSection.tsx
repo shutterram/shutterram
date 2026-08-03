@@ -38,22 +38,19 @@ export function ExperienceSection({ className }: { className?: string }) {
           <ol className="relative grid grid-cols-4">
             {processSteps.map((s, i) => (
               <Reveal key={s.step} delay={i * 120} as="li">
-                <div
-                  className={cn(
-                    "group flex h-[26rem] flex-col items-center px-5 text-center",
-                    i % 2 === 0 ? "justify-start" : "justify-end",
-                  )}
-                >
-                  {i % 2 === 1 ? <Milestone step={s.step} /> : null}
-                  <div className={cn("max-w-xs", i % 2 === 0 ? "order-first" : "")}>
-                    <h3 className="font-display text-xl lg:text-2xl">{s.title}</h3>
-                    <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{s.detail}</p>
+                <div className="group flex h-[26rem] flex-col items-center px-5 text-center">
+                  <div className="flex h-1/2 w-full items-end justify-center pb-8">
+                    {i % 2 === 0 ? <StepText title={s.title} detail={s.detail} /> : null}
                   </div>
-                  {i % 2 === 0 ? <Milestone step={s.step} className="mt-auto" /> : null}
+                  <Milestone step={s.step} className="-my-8" />
+                  <div className="flex h-1/2 w-full items-start justify-center pt-8">
+                    {i % 2 === 1 ? <StepText title={s.title} detail={s.detail} /> : null}
+                  </div>
                 </div>
               </Reveal>
             ))}
           </ol>
+
         </div>
 
         {/* --------------------------------------------------- mobile: vertical */}
