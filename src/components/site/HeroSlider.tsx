@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import logo from "@/assets/SRLogoIcon.svg.asset.json";
+import logo from "@/assets/SRLogo.svg.asset.json";
 import { categories, site } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,7 @@ export function HeroSlider() {
               <img
                 src={logo.url}
                 alt="Ram"
-                className="h-[0.95em] w-auto shrink-0 invert"
+                className="h-[1.05em] w-auto shrink-0 translate-y-[0.06em] invert"
               />
             </span>
           ) : (
