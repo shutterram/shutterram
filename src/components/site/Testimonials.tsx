@@ -49,7 +49,7 @@ export function Testimonials({ className }: { className?: string }) {
   const step = useCallback((dir: number) => {
     const track = trackRef.current;
     if (!track) return;
-    const card = track.firstElementChild as HTMLElement | null;
+    const card = track.firstElementChild?.firstElementChild as HTMLElement | null;
     const width = card ? card.offsetWidth + 24 : 320;
     boostRef.current += dir * width;
   }, []);
@@ -87,33 +87,38 @@ export function Testimonials({ className }: { className?: string }) {
       </div>
 
       <div
-        className="mt-6 overflow-hidden"
+        className="mt-6 overflow-hidden pl-6"
         onMouseEnter={() => (pausedRef.current = true)}
         onMouseLeave={() => (pausedRef.current = false)}
         onFocusCapture={() => (pausedRef.current = true)}
         onBlurCapture={() => (pausedRef.current = false)}
       >
-        <div ref={trackRef} className="flex w-max gap-6 px-6 will-change-transform">
-          {[...testimonials, ...testimonials].map((t, i) => (
-            <figure
-              key={`${t.id}-${i}`}
-              className="glow-hover flex w-[80vw] shrink-0 flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
-            >
-              <div className="flex gap-1" aria-label={`${t.rating} out of 5`}>
-                {Array.from({ length: t.rating }).map((_, s) => (
-                  <Star key={s} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
-                ))}
-              </div>
-              <blockquote className="mt-6 font-display text-lg leading-relaxed md:text-xl">
-                “{t.quote}”
-              </blockquote>
-              <figcaption className="mt-auto border-t border-hairline pt-5 [margin-top:2rem]">
-                <p className="text-sm text-foreground">{t.name}</p>
-                <p className="eyebrow mt-1">{t.role}</p>
-              </figcaption>
-            </figure>
+        <div ref={trackRef} className="flex w-max will-change-transform">
+          {[0, 1].map((group) => (
+            <div key={group} className="flex shrink-0" aria-hidden={group === 1}>
+              {testimonials.map((t) => (
+                <figure
+                  key={`${group}-${t.id}`}
+                  className="glow-hover mr-6 flex w-[80vw] shrink-0 flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
+                >
+                  <div className="flex gap-1" aria-label={`${t.rating} out of 5`}>
+                    {Array.from({ length: t.rating }).map((_, s) => (
+                      <Star key={s} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
+                    ))}
+                  </div>
+                  <blockquote className="mt-6 font-display text-lg leading-relaxed md:text-xl">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-auto border-t border-hairline pt-5 [margin-top:2rem]">
+                    <p className="text-sm text-foreground">{t.name}</p>
+                    <p className="eyebrow mt-1">{t.role}</p>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
           ))}
         </div>
+
       </div>
     </section>
   );

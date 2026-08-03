@@ -54,28 +54,31 @@ export function ExperienceSection({ className }: { className?: string }) {
         </div>
 
         {/* --------------------------------------------------- mobile: vertical */}
-        <div className="relative mt-16 overflow-hidden md:hidden">
-          <svg
-            viewBox="0 0 60 1000"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-            className="absolute bottom-6 left-0 top-6 w-16 overflow-hidden text-foreground/25"
-          >
-            <path
-              d="M30 0 C 0 120, 60 240, 30 360 S 0 600, 30 720 S 60 900, 30 1000"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeDasharray="4 8"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-
-          <ol className="relative space-y-12">
+        <div className="relative mt-16 md:hidden">
+          <ol className="relative">
             {processSteps.map((s, i) => (
               <Reveal key={s.step} delay={i * 90} as="li">
-                <div className="flex items-start gap-6">
-                  <Milestone step={s.step} className="shrink-0" />
+                <div className="flex items-stretch gap-6 pb-12 last:pb-0">
+                  <div className="flex shrink-0 flex-col items-center">
+                    <Milestone step={s.step} className="shrink-0" />
+                    {i < processSteps.length - 1 ? (
+                      <svg
+                        viewBox="0 0 60 120"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                        className="w-16 flex-1 text-foreground/25"
+                      >
+                        <path
+                          d="M30 0 C 0 35, 60 85, 30 120"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeDasharray="4 8"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      </svg>
+                    ) : null}
+                  </div>
                   <div className="min-w-0 pt-2">
                     <h3 className="font-display text-xl">{s.title}</h3>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.detail}</p>
@@ -85,6 +88,7 @@ export function ExperienceSection({ className }: { className?: string }) {
             ))}
           </ol>
         </div>
+
       </div>
     </section>
   );

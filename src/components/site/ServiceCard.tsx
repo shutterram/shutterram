@@ -12,6 +12,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         className="absolute inset-0 -z-10 size-full object-cover transition-transform duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/70 to-background/10 transition-opacity duration-700 group-hover:from-background group-hover:via-background/80" />
+      <div className="absolute inset-0 -z-10 bg-background/45 md:hidden" />
 
       {/* index rule */}
       <div className="absolute top-0 left-0 flex items-center gap-3 p-6">
@@ -26,13 +27,14 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         <h3 className="mt-2 font-display text-2xl leading-tight">{service.title}</h3>
 
         {/* description + actions slide open on hover, always visible on touch */}
-        <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr] max-md:grid-rows-[1fr]">
+        <div className="hidden grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr] md:grid">
           <div className="overflow-hidden">
-            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground md:line-clamp-none">
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {service.description}
             </p>
           </div>
         </div>
+
 
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link

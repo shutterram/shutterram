@@ -20,8 +20,8 @@ export function SiteFooter() {
           <div className="md:col-span-5">
             <Link to="/" className="inline-flex flex-col items-center md:items-start">
               <LogoLockup size="md" showTagline={false} />
-              <span className="mt-3 font-display text-xl tracking-[0.12em] uppercase">
-                Shutter Ram
+              <span className="mt-3 font-display text-3xl leading-none tracking-[0.02em]">
+                Shutter<span className="italic text-muted-foreground">Ram</span>
               </span>
               <span className="eyebrow mt-2">{site.tagline}</span>
             </Link>
