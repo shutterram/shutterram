@@ -67,13 +67,13 @@ function Gallery() {
             key={p.id}
             type="button"
             onClick={() => setLightbox(i)}
-            className="group relative block w-full overflow-hidden break-inside-avoid"
+            className="group relative block w-full overflow-hidden rounded-2xl break-inside-avoid"
           >
             <img
               src={p.src}
               alt={p.caption}
               loading="lazy"
-              className="w-full object-cover grayscale-[45%] transition-all duration-[1200ms] ease-out group-hover:scale-[1.03] group-hover:grayscale-0"
+              className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-background/40 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
@@ -91,7 +91,7 @@ function Gallery() {
             key={c.slug}
             to="/gallery/$category"
             params={{ category: c.slug }}
-            className="border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+            className="rounded-full border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
           >
             {c.label}
           </Link>

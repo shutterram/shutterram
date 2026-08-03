@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
@@ -71,9 +71,9 @@ function Home() {
               src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1000&q=80"
               alt="Ram, photographer at Shutter Ram"
               loading="lazy"
-              className="aspect-[4/5] w-full object-cover grayscale-[40%]"
+              className="aspect-[4/5] w-full rounded-2xl object-cover"
             />
-            <div className="absolute -bottom-5 -right-5 hidden border border-hairline bg-background px-6 py-4 md:block">
+            <div className="absolute -bottom-5 -right-5 hidden rounded-2xl border border-hairline bg-background px-6 py-4 md:block">
               <p className="font-display text-3xl leading-none">15</p>
               <p className="eyebrow mt-1">Years behind the lens</p>
             </div>
@@ -174,7 +174,7 @@ function Home() {
               type="button"
               onClick={() => setEdit(i)}
               className={cn(
-                "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
+                "relative size-20 overflow-hidden rounded-xl border transition-all duration-300 md:size-24",
                 i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
               )}
               aria-label={s.title}
@@ -228,7 +228,7 @@ function Home() {
           </p>
           <Link
             to="/contact"
-            className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            className="mt-10 inline-flex items-center rounded-full border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             Start a conversation
           </Link>
