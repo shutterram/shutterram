@@ -12,7 +12,7 @@ export const unedited = (url: string) =>
 
 export const site = {
   name: "Shutter Ram",
-  tagline: "Clicking today — for a memory that outlives us",
+  tagline: "Clicking today — for a memory that lives forever",
   email: "hello@shutterram.com",
   phone: "+1 (555) 014-2280",
   location: "Based in New York — available across New Jersey, New York and further",
