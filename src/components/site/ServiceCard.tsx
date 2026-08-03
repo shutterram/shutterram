@@ -5,12 +5,12 @@ import type { Service } from "@/data/portfolio";
 export function ServiceCard({ service }: { service: Service }) {
   return (
     <article className="group flex flex-col border border-hairline bg-surface/30">
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
         <img
           src={service.image}
           alt={service.title}
           loading="lazy"
-          className="size-full object-cover grayscale-[35%] transition-all duration-[1200ms] ease-out group-hover:scale-105 group-hover:grayscale-0"
+          className="size-full object-cover grayscale-[35%] transition-all duration-[1200ms] ease-out group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
       </div>
@@ -26,7 +26,7 @@ export function ServiceCard({ service }: { service: Service }) {
           <Link
             to="/services"
             hash={service.slug}
-            className="group/btn inline-flex items-center gap-2 border border-hairline px-5 py-2.5 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
+            className="group/btn inline-flex items-center gap-2 rounded-full border border-hairline px-5 py-2.5 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
           >
             View More
             <ArrowUpRight className="size-3.5 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />

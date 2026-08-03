@@ -59,7 +59,7 @@ export function HeroSlider() {
           <Link
             to="/gallery/$category"
             params={{ category: categories[active]!.slug }}
-            className="mt-10 inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            className="mt-10 inline-flex items-center rounded-full border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             View More
           </Link>
@@ -70,17 +70,17 @@ export function HeroSlider() {
         type="button"
         aria-label="Previous category"
         onClick={() => go(-1)}
-        className="absolute left-3 top-1/2 z-20 hidden size-12 -translate-y-1/2 items-center justify-center border border-hairline text-foreground/70 transition-colors hover:border-foreground hover:text-foreground md:flex"
+        className="absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center text-foreground/60 transition-all hover:-translate-x-1 hover:text-foreground md:flex"
       >
-        <ChevronLeft className="size-5" strokeWidth={1.2} />
+        <ChevronLeft className="size-9" strokeWidth={1} />
       </button>
       <button
         type="button"
         aria-label="Next category"
         onClick={() => go(1)}
-        className="absolute right-3 top-1/2 z-20 hidden size-12 -translate-y-1/2 items-center justify-center border border-hairline text-foreground/70 transition-colors hover:border-foreground hover:text-foreground md:flex"
+        className="absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center text-foreground/60 transition-all hover:translate-x-1 hover:text-foreground md:flex"
       >
-        <ChevronRight className="size-5" strokeWidth={1.2} />
+        <ChevronRight className="size-9" strokeWidth={1} />
       </button>
 
       <div className="absolute inset-x-0 bottom-8 z-20 flex justify-center gap-3">

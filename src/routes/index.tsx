@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
@@ -71,9 +71,9 @@ function Home() {
               src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1000&q=80"
               alt="Ram, photographer at Shutter Ram"
               loading="lazy"
-              className="aspect-[4/5] w-full object-cover grayscale-[40%]"
+              className="aspect-[4/5] w-full rounded-2xl object-cover"
             />
-            <div className="absolute -bottom-5 -right-5 hidden border border-hairline bg-background px-6 py-4 md:block">
+            <div className="absolute -bottom-5 -right-5 hidden rounded-2xl border border-hairline bg-background px-6 py-4 md:block">
               <p className="font-display text-3xl leading-none">15</p>
               <p className="eyebrow mt-1">Years behind the lens</p>
             </div>
@@ -97,54 +97,45 @@ function Home() {
       {/* --------------------------------------------------------- Featured work */}
       <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
-            <SectionHeading
-              eyebrow="Featured Work"
-              title="A handful of favourites."
-              intro="A rotating selection from recent commissions. Click any frame to open it full screen."
-            />
-            <Link
-              to="/gallery"
-              className="eyebrow shrink-0 border-b border-hairline pb-2 transition-colors hover:border-foreground hover:text-foreground"
-            >
-              See the full gallery
-            </Link>
-          </div>
+          <SectionHeading
+            eyebrow="Featured Work"
+            title="A handful of favourites."
+            intro="A rotating selection from recent commissions. Click any frame to open it full screen."
+            align="center"
+          />
 
           <FilterPills
-            className="mt-10"
+            variant="tabs"
+            className="mt-10 justify-center"
             value={filter}
-            onChange={(v) => {
-              setFilter(v);
-              railRef.current?.scrollTo({ left: 0, behavior: "smooth" });
-            }}
+            onChange={setFilter}
             options={[
               { value: "all" as Filter, label: "All" },
               ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
             ]}
           />
 
-          <div
-            ref={railRef}
-            className="no-scrollbar mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4"
-          >
+          <div ref={railRef} className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-5">
             {visible.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => setLightbox(i)}
-                className="group relative aspect-[3/4] w-[78vw] shrink-0 snap-start overflow-hidden sm:w-[46vw] lg:w-[26vw]"
+                className="group relative block w-full break-inside-avoid overflow-hidden rounded-2xl"
               >
                 <img
                   src={p.src}
                   alt={p.caption}
                   loading="lazy"
-                  className="size-full object-cover grayscale-[45%] transition-all duration-[1200ms] ease-out group-hover:scale-[1.04] group-hover:grayscale-0"
+                  className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
-                <div className="absolute inset-x-0 bottom-0 p-5 text-left">
+                <div className="absolute inset-0 bg-background/55 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <span className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 scale-75 items-center justify-center rounded-full bg-foreground text-background opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
+                  <Plus className="size-5" />
+                </span>
+                <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
                   <p className="eyebrow">{p.category}</p>
-                  <p className="mt-1 font-display text-lg">{p.caption}</p>
+                  <p className="mt-1 font-display text-base">{p.caption}</p>
                 </div>
               </button>
             ))}
@@ -152,8 +143,18 @@ function Home() {
               <p className="py-16 text-sm text-muted-foreground">Nothing in this category yet.</p>
             ) : null}
           </div>
+
+          <div className="mt-12 flex justify-center">
+            <Link
+              to="/gallery"
+              className="inline-flex items-center rounded-full border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            >
+              See the full gallery
+            </Link>
+          </div>
         </div>
       </section>
+
 
       <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
 
@@ -173,7 +174,7 @@ function Home() {
               type="button"
               onClick={() => setEdit(i)}
               className={cn(
-                "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
+                "relative size-20 overflow-hidden rounded-xl border transition-all duration-300 md:size-24",
                 i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
               )}
               aria-label={s.title}
@@ -227,7 +228,7 @@ function Home() {
           </p>
           <Link
             to="/contact"
-            className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            className="mt-10 inline-flex items-center rounded-full border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             Start a conversation
           </Link>

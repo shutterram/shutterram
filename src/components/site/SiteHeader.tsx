@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import logoIcon from "@/assets/SRLogoIcon.svg.asset.json";
 import { site } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -42,17 +43,28 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
         <div className="flex w-full items-center justify-between md:justify-center">
           <Link to="/" className="group flex flex-col items-center" onClick={() => setOpen(false)}>
-            <span
-              className={cn(
-                "font-display leading-none tracking-[0.18em] transition-all duration-500",
-                scrolled ? "text-xl" : "text-2xl md:text-3xl",
-              )}
-            >
-              SHUTTER RAM
+            <span className="flex items-center gap-3">
+              <img
+                src={logoIcon.url}
+                alt=""
+                aria-hidden="true"
+                className={cn(
+                  "w-auto shrink-0 invert transition-all duration-500",
+                  scrolled ? "h-7" : "h-9 md:h-11",
+                )}
+              />
+              <span
+                className={cn(
+                  "font-display font-semibold leading-none tracking-[0.14em] transition-all duration-500",
+                  scrolled ? "text-lg" : "text-xl md:text-2xl",
+                )}
+              >
+                SHUTTER RAM
+              </span>
             </span>
             <span
               className={cn(
-                "eyebrow mt-1 hidden overflow-hidden transition-all duration-500 md:block",
+                "eyebrow mt-1.5 hidden overflow-hidden transition-all duration-500 md:block",
                 scrolled ? "max-h-0 opacity-0" : "max-h-6 opacity-100",
               )}
             >
