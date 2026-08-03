@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import logo from "@/assets/SRLogo.svg.asset.json";
 import { categories, site } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
