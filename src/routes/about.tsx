@@ -23,7 +23,7 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <>
-      <div className="mx-auto max-w-5xl px-6 pb-24 pt-40">
+      <div className="mx-auto max-w-5xl px-6 pb-24 pt-56">
         <p className="eyebrow">About Me</p>
         <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
           I'd rather wait for the real moment.

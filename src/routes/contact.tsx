@@ -87,7 +87,7 @@ function Contact() {
     navigate({ search: (prev: ContactSearch) => ({ ...prev, form: kind }), replace: true });
 
   return (
-    <div className="mx-auto max-w-6xl px-6 pb-28 pt-40">
+    <div className="mx-auto max-w-6xl px-6 pb-28 pt-56">
       <p className="eyebrow">Contact</p>
       <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
         Let's talk about your shoot.

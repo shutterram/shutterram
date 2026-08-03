@@ -53,7 +53,7 @@ function ReviewPage() {
   } = useForm<z.infer<typeof reviewSchema>>({ resolver: zodResolver(reviewSchema) });
 
   return (
-    <div className="mx-auto max-w-3xl px-6 pb-28 pt-40">
+    <div className="mx-auto max-w-3xl px-6 pb-28 pt-56">
       <div className="flex flex-col items-center text-center">
         <LogoLockup size="md" />
         <p className="eyebrow mt-10">Private link — clients only</p>
