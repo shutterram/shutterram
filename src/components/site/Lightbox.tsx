@@ -73,7 +73,7 @@ export function Lightbox({
       </div>
 
       <div
-        className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4"
+        className="relative grid min-h-0 flex-1 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2 px-3 pb-4 md:grid-cols-[4rem_minmax(0,1fr)_4rem] md:gap-4 md:px-8"
         onTouchStart={(e) => {
           touchRef.current = e.touches[0]?.clientX ?? null;
         }}
@@ -90,16 +90,16 @@ export function Lightbox({
           type="button"
           aria-label="Previous image"
           onClick={() => step(-1)}
-          className="absolute left-2 z-10 hidden items-center justify-center text-foreground/60 transition-all duration-500 hover:-translate-x-1 hover:text-foreground md:left-8 md:flex"
+          className="flex shrink-0 items-center justify-center text-foreground/70 transition-all duration-500 hover:-translate-x-1 hover:text-foreground"
         >
-          <ChevronLeft className="size-9" strokeWidth={1} />
+          <ChevronLeft className="size-7 md:size-9" strokeWidth={1} />
         </button>
 
         <img
           key={photo.id}
           src={photo.src}
           alt={photo.caption}
-          className="max-h-full max-w-full object-contain fade-up"
+          className="mx-auto max-h-[62dvh] max-w-full object-contain fade-up md:max-h-full"
           draggable={false}
         />
 
@@ -107,9 +107,9 @@ export function Lightbox({
           type="button"
           aria-label="Next image"
           onClick={() => step(1)}
-          className="absolute right-2 z-10 hidden items-center justify-center text-foreground/60 transition-all duration-500 hover:translate-x-1 hover:text-foreground md:right-8 md:flex"
+          className="flex shrink-0 items-center justify-center text-foreground/70 transition-all duration-500 hover:translate-x-1 hover:text-foreground"
         >
-          <ChevronRight className="size-9" strokeWidth={1} />
+          <ChevronRight className="size-7 md:size-9" strokeWidth={1} />
         </button>
       </div>
 

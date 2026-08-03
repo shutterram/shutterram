@@ -128,7 +128,7 @@ export function SiteHeader() {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "font-display text-2xl tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                   "font-display text-lg tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   open ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
                 )}
                 style={{ transitionDelay: open ? `${120 + i * 60}ms` : "0ms" }}
