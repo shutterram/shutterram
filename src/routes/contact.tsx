@@ -51,7 +51,7 @@ const quoteSchema = z.object({
 });
 
 const fieldClass =
-  "border-hairline bg-surface/40 h-12 focus-visible:ring-0 focus-visible:border-foreground";
+  "h-12 rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0";
 
 function Label({ children, htmlFor }: { children: string; htmlFor: string }) {
   return (
@@ -160,7 +160,7 @@ function MessageForm() {
           <Textarea
             id="m-message"
             rows={6}
-            className="border-hairline bg-surface/40 focus-visible:border-foreground focus-visible:ring-0"
+            className="rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0"
             placeholder="Tell me what you have in mind…"
             {...register("message")}
           />
@@ -278,7 +278,7 @@ function QuoteForm({ initialService }: { initialService?: string }) {
           <Textarea
             id="q-details"
             rows={6}
-            className="border-hairline bg-surface/40 focus-visible:border-foreground focus-visible:ring-0"
+            className="rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0"
             placeholder="Location, timings, number of people, anything that matters…"
             {...register("details")}
           />
