@@ -222,7 +222,7 @@ function Home() {
       {/* --------------------------------------------------------------- Connect */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <div className="flex flex-col items-center text-center">
-          <Reveal>
+          <Reveal className="flex flex-col items-center">
           <SectionHeading
             eyebrow="Connect With Me"
             title="Follow the work in progress."
@@ -242,6 +242,7 @@ function Home() {
           >
             Start a conversation
           </Link>
+          </Reveal>
         </div>
       </section>
     </>
