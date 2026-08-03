@@ -238,13 +238,47 @@ function Home() {
             intro="Every engagement is quoted individually — these are the starting points."
           />
           </Reveal>
-          <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {/* mobile: two-card snap slider */}
+          <div className="relative mt-10 md:hidden">
+            <p className="eyebrow text-center">Use the arrows to see more services</p>
+            <div className="mt-5 flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Previous services"
+                onClick={() => stepServices(-1)}
+                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+              >
+                <ChevronLeft className="size-7" strokeWidth={1} />
+              </button>
+              <div
+                ref={servicesRef}
+                className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto"
+              >
+                {services.map((s, i) => (
+                  <div key={s.slug} className="w-[calc(50%-0.375rem)] shrink-0 snap-start">
+                    <ServiceCard service={s} index={i} />
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-label="Next services"
+                onClick={() => stepServices(1)}
+                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+              >
+                <ChevronRight className="size-7" strokeWidth={1} />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-14 hidden gap-8 md:grid md:grid-cols-2 lg:grid-cols-3">
             {services.map((s, i) => (
               <Reveal key={s.slug} delay={(i % 3) * 110}>
                 <ServiceCard service={s} index={i} />
               </Reveal>
             ))}
           </div>
+
         </div>
       </section>
 
