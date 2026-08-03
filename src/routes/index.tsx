@@ -275,17 +275,17 @@ function Home() {
           {/* mobile: two-card snap slider */}
           <div className="relative mt-10 md:hidden">
             <p className="eyebrow text-center">Use the arrows to see more services</p>
-            <div className="mt-5 flex items-center gap-2">
+            <div className="relative mt-5">
               <button
                 type="button"
                 aria-label="Previous services"
                 onClick={() => stepServices(-1)}
-                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+                className="absolute left-0 top-1/2 z-10 -translate-y-1/2 text-foreground/70 transition-colors hover:text-foreground"
               >
                 <ChevronLeft className="size-7" strokeWidth={1} />
               </button>
               <div
-                className="min-w-0 flex-1 overflow-hidden"
+                className="min-w-0 overflow-hidden px-4"
                 onTouchStart={() => (servicesPausedRef.current = true)}
                 onTouchEnd={() => (servicesPausedRef.current = false)}
               >
@@ -293,7 +293,7 @@ function Home() {
                   {[0, 1, 2].map((group) => (
                     <div key={group} className="flex shrink-0 gap-3 pr-3" aria-hidden={group > 0}>
                       {services.map((s, i) => (
-                        <div key={`${group}-${s.slug}`} className="w-[calc((100vw-6rem)/2)] shrink-0">
+                        <div key={`${group}-${s.slug}`} className="w-[calc((100vw-4.5rem)/2)] shrink-0">
                           <ServiceCard service={s} index={i} />
                         </div>
                       ))}
@@ -305,7 +305,7 @@ function Home() {
                 type="button"
                 aria-label="Next services"
                 onClick={() => stepServices(1)}
-                className="shrink-0 text-foreground/60 transition-colors hover:text-foreground"
+                className="absolute right-0 top-1/2 z-10 -translate-y-1/2 text-foreground/70 transition-colors hover:text-foreground"
               >
                 <ChevronRight className="size-7" strokeWidth={1} />
               </button>
