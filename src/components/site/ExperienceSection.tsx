@@ -102,3 +102,12 @@ function Milestone({ step, className }: { step: string; className?: string }) {
     </span>
   );
 }
+
+function StepText({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="max-w-xs">
+      <h3 className="font-display text-xl lg:text-2xl">{title}</h3>
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
