@@ -79,14 +79,15 @@ export function SiteFooter() {
                   {site.phone}
                 </a>
               </li>
-              <li className="flex items-start justify-center gap-3 md:justify-start">
+              <li className="flex min-w-0 items-start justify-center gap-3 md:justify-start">
                 <Mail className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
                 <a
                   href={`mailto:${site.email}`}
-                  className="transition-colors duration-500 hover:text-foreground"
+                  className="break-all transition-colors duration-500 hover:text-foreground"
                 >
                   {site.email}
                 </a>
+
               </li>
               <li className="flex items-start justify-center gap-3 md:justify-start">
                 <MapPin className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
