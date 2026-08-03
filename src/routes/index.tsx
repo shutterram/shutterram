@@ -1,24 +1,238 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { HeroSlider } from "@/components/site/HeroSlider";
+import { Lightbox } from "@/components/site/Lightbox";
+import { FilterPills } from "@/components/site/FilterPills";
+import { SectionHeading } from "@/components/site/SectionHeading";
+import { ServiceCard } from "@/components/site/ServiceCard";
+import { SocialLinks } from "@/components/site/SocialLinks";
+import { BeforeAfterSlider } from "@/components/site/BeforeAfterSlider";
+import {
+  aboutShort,
+  categories,
+  editSamples,
+  featuredIds,
+  photoById,
+  services,
+  site,
+  type CategorySlug,
+} from "@/data/portfolio";
+import { cn } from "@/lib/utils";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Shutter Ram — Wedding, Portrait & Corporate Photography" },
+      {
+        name: "description",
+        content:
+          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
+      },
+      { property: "og:title", content: "Shutter Ram — Photography Studio" },
+      {
+        property: "og:description",
+        content:
+          "Wedding, corporate, portrait, headshot, event and product photography. Capturing your tomorrow's memories today.",
+      },
+      { property: "og:image", content: categories[0]!.hero },
+      { name: "twitter:image", content: categories[0]!.hero },
+    ],
+  }),
+  component: Home,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Filter = "all" | CategorySlug;
+
+function Home() {
+  const featured = useMemo(
+    () => featuredIds.map(photoById).filter((p) => p !== undefined),
+    [],
+  );
+  const [filter, setFilter] = useState<Filter>("all");
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [edit, setEdit] = useState(0);
+  const railRef = useRef<HTMLDivElement>(null);
+
+  const visible = useMemo(
+    () => (filter === "all" ? featured : featured.filter((p) => p.category === filter)),
+    [featured, filter],
+  );
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      <HeroSlider />
+
+      {/* ---------------------------------------------------------------- About */}
+      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+        <div className="grid items-center gap-14 md:grid-cols-[0.85fr_1.15fr]">
+          <div className="relative">
+            <img
+              src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1000&q=80"
+              alt="Ram, photographer at Shutter Ram"
+              loading="lazy"
+              className="aspect-[4/5] w-full object-cover grayscale-[40%]"
+            />
+            <div className="absolute -bottom-5 -right-5 hidden border border-hairline bg-background px-6 py-4 md:block">
+              <p className="font-display text-3xl leading-none">15</p>
+              <p className="eyebrow mt-1">Years behind the lens</p>
+            </div>
+          </div>
+          <div>
+            <SectionHeading eyebrow="About Me" title="A quiet eye, fifteen years in." />
+            <p className="mt-6 text-sm leading-loose text-muted-foreground md:text-base">
+              {aboutShort}
+            </p>
+            <Link
+              to="/about"
+              className="group mt-9 inline-flex items-center gap-2 border-b border-hairline pb-2 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:border-foreground"
+            >
+              Read the full story
+              <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* --------------------------------------------------------- Featured work */}
+      <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col justify-between gap-8 md:flex-row md:items-end">
+            <SectionHeading
+              eyebrow="Featured Work"
+              title="A handful of favourites."
+              intro="A rotating selection from recent commissions. Click any frame to open it full screen."
+            />
+            <Link
+              to="/gallery"
+              className="eyebrow shrink-0 border-b border-hairline pb-2 transition-colors hover:border-foreground hover:text-foreground"
+            >
+              See the full gallery
+            </Link>
+          </div>
+
+          <FilterPills
+            className="mt-10"
+            value={filter}
+            onChange={(v) => {
+              setFilter(v);
+              railRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+            }}
+            options={[
+              { value: "all" as Filter, label: "All" },
+              ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
+            ]}
+          />
+
+          <div
+            ref={railRef}
+            className="no-scrollbar mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4"
+          >
+            {visible.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setLightbox(i)}
+                className="group relative aspect-[3/4] w-[78vw] shrink-0 snap-start overflow-hidden sm:w-[46vw] lg:w-[26vw]"
+              >
+                <img
+                  src={p.src}
+                  alt={p.caption}
+                  loading="lazy"
+                  className="size-full object-cover grayscale-[45%] transition-all duration-[1200ms] ease-out group-hover:scale-[1.04] group-hover:grayscale-0"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-70 transition-opacity group-hover:opacity-90" />
+                <div className="absolute inset-x-0 bottom-0 p-5 text-left">
+                  <p className="eyebrow">{p.category}</p>
+                  <p className="mt-1 font-display text-lg">{p.caption}</p>
+                </div>
+              </button>
+            ))}
+            {visible.length === 0 ? (
+              <p className="py-16 text-sm text-muted-foreground">Nothing in this category yet.</p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
+
+      {/* ------------------------------------------------------ Power of editing */}
+      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+        <SectionHeading
+          eyebrow="The Power of Editing"
+          title="Same frame. Two different photographs."
+          intro="Drag the handle across the image to reveal the unedited capture on one side and the finished, hand-graded frame on the other."
+          align="center"
+        />
+
+        <div className="mt-12 flex flex-wrap justify-center gap-3">
+          {editSamples.map((s, i) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setEdit(i)}
+              className={cn(
+                "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
+                i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
+              )}
+              aria-label={s.title}
+              aria-pressed={i === edit}
+            >
+              <img src={s.src} alt={s.title} loading="lazy" className="size-full object-cover" />
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-10">
+          <BeforeAfterSlider key={editSamples[edit]!.id} src={editSamples[edit]!.src} alt={editSamples[edit]!.title} />
+          <div className="mt-5 flex flex-col items-center gap-1 text-center">
+            <p className="font-display text-2xl">{editSamples[edit]!.title}</p>
+            <p className="text-sm text-muted-foreground">{editSamples[edit]!.note}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------- Services */}
+      <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
+        <div className="mx-auto max-w-7xl px-6">
+          <SectionHeading
+            eyebrow="Services"
+            title="What I can photograph for you."
+            intro="Every engagement is quoted individually — these are the starting points."
+          />
+          <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {services.map((s) => (
+              <ServiceCard key={s.slug} service={s} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* --------------------------------------------------------------- Connect */}
+      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+        <div className="flex flex-col items-center text-center">
+          <SectionHeading
+            eyebrow="Connect With Me"
+            title="Follow the work in progress."
+            intro="New frames, behind-the-scenes and the occasional 4am street photograph."
+            align="center"
+          />
+          <SocialLinks className="mt-10 justify-center" size="lg" />
+          <p className="mt-10 text-sm text-muted-foreground">
+            Prefer email?{" "}
+            <a href={`mailto:${site.email}`} className="text-foreground underline underline-offset-4">
+              {site.email}
+            </a>
+          </p>
+          <Link
+            to="/contact"
+            className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+          >
+            Start a conversation
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }
