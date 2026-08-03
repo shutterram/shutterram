@@ -33,7 +33,8 @@ export function SiteFooter() {
             <SocialLinks className="mt-9 justify-center md:justify-start" />
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-6 lg:col-span-2">
+
             <p className="eyebrow">Navigate</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {navLinks.map((l) => (
