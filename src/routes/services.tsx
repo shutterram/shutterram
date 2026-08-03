@@ -41,34 +41,34 @@ function ServicesPage() {
         </p>
       </div>
 
-      <div className="mx-auto mt-20 max-w-7xl space-y-24 px-6 md:space-y-32">
+      <div className="mx-auto mt-16 max-w-7xl space-y-10 px-6 md:mt-20 md:space-y-32">
         {services.map((s, i) => (
           <section
             key={s.slug}
             id={s.slug}
-            className="grid scroll-mt-40 items-center gap-12 md:grid-cols-2"
+            className="grid scroll-mt-40 grid-cols-2 items-center gap-5 md:gap-12"
           >
             <Reveal className={cn("overflow-hidden", i % 2 === 1 && "md:order-2")}>
               <img
                 src={s.image}
                 alt={s.title}
                 loading="lazy"
-                className="aspect-[4/3] w-full object-cover transition-transform duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03]"
+                className="aspect-[3/4] w-full object-cover transition-transform duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] md:aspect-[4/3]"
               />
             </Reveal>
 
-            <Reveal delay={120} className={cn(i % 2 === 1 && "md:order-1")}>
+            <Reveal delay={120} className={cn("min-w-0", i % 2 === 1 && "md:order-1")}>
               <p className="eyebrow">
                 {String(i + 1).padStart(2, "0")} — {s.subtitle}
               </p>
-              <h2 className="mt-4 font-display text-[clamp(1.85rem,3.5vw,3rem)] leading-tight">
+              <h2 className="mt-3 font-display text-[clamp(1.15rem,3.5vw,3rem)] leading-tight md:mt-4">
                 {s.title}
               </h2>
-              <p className="mt-5 text-sm leading-loose text-muted-foreground md:text-base">
+              <p className="mt-3 line-clamp-4 text-xs leading-relaxed text-muted-foreground md:mt-5 md:line-clamp-none md:text-base md:leading-loose">
                 {s.description}
               </p>
 
-              <ul className="mt-7 space-y-2.5">
+              <ul className="mt-5 hidden space-y-2.5 md:block md:mt-7">
                 {s.includes.map((inc) => (
                   <li key={inc} className="flex items-start gap-3 text-sm text-muted-foreground">
                     <Check className="mt-0.5 size-4 shrink-0 text-foreground" strokeWidth={1.4} />
@@ -77,20 +77,20 @@ function ServicesPage() {
                 ))}
               </ul>
 
-              <p className="eyebrow mt-7 text-foreground">{s.from}</p>
+              <p className="eyebrow mt-4 text-foreground md:mt-7">{s.from}</p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-wrap gap-2 md:mt-8 md:gap-3">
                 <Link
                   to="/gallery/$category"
                   params={{ category: s.category }}
-                  className="inline-flex items-center border border-hairline px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
+                  className="inline-flex items-center border border-hairline px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
                   View More
                 </Link>
                 <Link
                   to="/contact"
                   search={{ service: s.slug, form: "quote" as const }}
-                  className="inline-flex items-center border border-foreground bg-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85"
+                  className="inline-flex items-center border border-foreground bg-foreground px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85 md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
                   Request a Quote
                 </Link>
@@ -99,6 +99,7 @@ function ServicesPage() {
           </section>
         ))}
       </div>
+
 
       <ExperienceSection className="mt-28" />
     </div>
