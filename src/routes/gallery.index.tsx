@@ -45,6 +45,20 @@ function Gallery() {
         category, or open any frame full screen and step through with the arrow keys.
       </p>
 
+      <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
+        <p className="eyebrow mr-2">Jump to a category</p>
+        {categories.map((c) => (
+          <Link
+            key={c.slug}
+            to="/gallery/$category"
+            params={{ category: c.slug }}
+            className="border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+          >
+            {c.label}
+          </Link>
+        ))}
+      </div>
+
       <FilterPills
         className="mt-10"
         value={filter}
@@ -60,6 +74,7 @@ function Gallery() {
           })),
         ]}
       />
+
 
       <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
         {visible.map((p, i) => (
