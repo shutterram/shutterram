@@ -334,8 +334,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {s.title}
               </option>
             ))}
+            <option value={CUSTOM}>Something else (enter my own)</option>
           </select>
           <ErrorText msg={errors.eventType?.message} />
+          {typeVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="Describe your event type"
+                aria-label="Custom event type"
+                {...register("eventTypeCustom")}
+              />
+              <ErrorText msg={errors.eventTypeCustom?.message} />
+            </>
+          ) : null}
         </div>
         <div>
           <Label htmlFor="q-date">Event date</Label>
@@ -355,8 +367,20 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {h}
               </option>
             ))}
+            <option value={CUSTOM}>Custom hours (enter my own)</option>
           </select>
           <ErrorText msg={errors.hours?.message} />
+          {hoursVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="e.g. 6.5 hours across two days"
+                aria-label="Custom hours needed"
+                {...register("hoursCustom")}
+              />
+              <ErrorText msg={errors.hoursCustom?.message} />
+            </>
+          ) : null}
         </div>
         <div>
           <Label htmlFor="q-budget">Estimated budget</Label>
@@ -371,9 +395,22 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
                 {b}
               </option>
             ))}
+            <option value={CUSTOM}>Custom amount (enter my own)</option>
           </select>
           <ErrorText msg={errors.budget?.message} />
+          {budgetVal === CUSTOM ? (
+            <>
+              <Input
+                className={cn(fieldClass, "mt-3")}
+                placeholder="e.g. $3,200"
+                aria-label="Custom budget"
+                {...register("budgetCustom")}
+              />
+              <ErrorText msg={errors.budgetCustom?.message} />
+            </>
+          ) : null}
         </div>
+
         <div className="sm:col-span-2">
           <Label htmlFor="q-location">Location</Label>
           <Input id="q-location" className={fieldClass} placeholder="City or venue" {...register("location")} />
