@@ -56,13 +56,22 @@ export function HeroSlider() {
           <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
             {categories[active]!.tagline}
           </p>
-          <Link
-            to="/gallery/$category"
-            params={{ category: categories[active]!.slug }}
-            className="mt-10 inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
-          >
-            View More
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to="/gallery/$category"
+              params={{ category: categories[active]!.slug }}
+              className="glow-hover inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            >
+              View More
+            </Link>
+            <Link
+              to="/contact"
+              search={{ form: "quote" as const, service: categories[active]!.slug }}
+              className="glow-hover inline-flex items-center border border-foreground bg-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-background hover:bg-transparent hover:text-foreground"
+            >
+              Book Your Date
+            </Link>
+          </div>
         </div>
       </div>
 
