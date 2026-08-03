@@ -36,7 +36,7 @@ function About() {
           <img
             src={portrait}
             alt="Ram, photographer"
-            className="aspect-[4/5] w-full object-cover grayscale-[40%]"
+            className="aspect-[4/5] w-full object-cover"
           />
           <dl className="mt-8 grid grid-cols-2 gap-6 border-t border-hairline pt-8">
             {[
