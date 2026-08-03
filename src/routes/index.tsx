@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/site/SectionHeading";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { BeforeAfterSlider } from "@/components/site/BeforeAfterSlider";
+import { Reveal } from "@/components/site/Reveal";
 import {
   aboutShort,
   categories,
@@ -66,19 +67,19 @@ function Home() {
       {/* ---------------------------------------------------------------- About */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <div className="grid items-center gap-14 md:grid-cols-[0.85fr_1.15fr]">
-          <div className="relative">
+          <Reveal className="relative">
             <img
               src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1000&q=80"
               alt="Ram, photographer at Shutter Ram"
               loading="lazy"
-              className="aspect-[4/5] w-full rounded-2xl object-cover"
+              className="aspect-[4/5] w-full object-cover"
             />
-            <div className="absolute -bottom-5 -right-5 hidden rounded-2xl border border-hairline bg-background px-6 py-4 md:block">
+            <div className="absolute -bottom-5 -right-5 hidden border border-hairline bg-background px-6 py-4 md:block">
               <p className="font-display text-3xl leading-none">15</p>
               <p className="eyebrow mt-1">Years behind the lens</p>
             </div>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal delay={120}>
             <SectionHeading eyebrow="About Me" title="A quiet eye, fifteen years in." />
             <p className="mt-6 text-sm leading-loose text-muted-foreground md:text-base">
               {aboutShort}
@@ -90,13 +91,14 @@ function Home() {
               Read the full story
               <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* --------------------------------------------------------- Featured work */}
       <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
+          <Reveal as="div">
           <SectionHeading
             eyebrow="Featured Work"
             title="A handful of favourites."
@@ -114,6 +116,7 @@ function Home() {
               ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
             ]}
           />
+          </Reveal>
 
           <div ref={railRef} className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [&>*]:mb-5">
             {visible.map((p, i) => (
@@ -121,7 +124,7 @@ function Home() {
                 key={p.id}
                 type="button"
                 onClick={() => setLightbox(i)}
-                className="group relative block w-full break-inside-avoid overflow-hidden rounded-2xl"
+                className="group relative block w-full break-inside-avoid overflow-hidden"
               >
                 <img
                   src={p.src}
@@ -130,7 +133,7 @@ function Home() {
                   className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05]"
                 />
                 <div className="absolute inset-0 bg-background/55 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <span className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 scale-75 items-center justify-center rounded-full bg-foreground text-background opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
+                <span className="absolute left-1/2 top-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 scale-75 items-center justify-center bg-foreground text-background opacity-0 transition-all duration-500 group-hover:scale-100 group-hover:opacity-100">
                   <Plus className="size-5" />
                 </span>
                 <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
@@ -147,7 +150,7 @@ function Home() {
           <div className="mt-12 flex justify-center">
             <Link
               to="/gallery"
-              className="inline-flex items-center rounded-full border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
+              className="inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
             >
               See the full gallery
             </Link>
@@ -160,6 +163,7 @@ function Home() {
 
       {/* ------------------------------------------------------ Power of editing */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+        <Reveal>
         <SectionHeading
           eyebrow="The Power of Editing"
           title="Same frame. Two different photographs."
@@ -174,7 +178,7 @@ function Home() {
               type="button"
               onClick={() => setEdit(i)}
               className={cn(
-                "relative size-20 overflow-hidden rounded-xl border transition-all duration-300 md:size-24",
+                "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
                 i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
               )}
               aria-label={s.title}
@@ -184,6 +188,7 @@ function Home() {
             </button>
           ))}
         </div>
+        </Reveal>
 
         <div className="mt-10">
           <BeforeAfterSlider key={editSamples[edit]!.id} src={editSamples[edit]!.src} alt={editSamples[edit]!.title} />
@@ -197,14 +202,18 @@ function Home() {
       {/* ------------------------------------------------------------- Services */}
       <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
+          <Reveal>
           <SectionHeading
             eyebrow="Services"
             title="What I can photograph for you."
             intro="Every engagement is quoted individually — these are the starting points."
           />
+          </Reveal>
           <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((s) => (
-              <ServiceCard key={s.slug} service={s} />
+            {services.map((s, i) => (
+              <Reveal key={s.slug} delay={(i % 3) * 110}>
+                <ServiceCard service={s} index={i} />
+              </Reveal>
             ))}
           </div>
         </div>
@@ -213,6 +222,7 @@ function Home() {
       {/* --------------------------------------------------------------- Connect */}
       <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <div className="flex flex-col items-center text-center">
+          <Reveal className="flex flex-col items-center">
           <SectionHeading
             eyebrow="Connect With Me"
             title="Follow the work in progress."
@@ -228,10 +238,11 @@ function Home() {
           </p>
           <Link
             to="/contact"
-            className="mt-10 inline-flex items-center rounded-full border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             Start a conversation
           </Link>
+          </Reveal>
         </div>
       </section>
     </>

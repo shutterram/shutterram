@@ -29,7 +29,7 @@ export function FilterPills<T extends string>({
             {o.label}
             <span
               className={cn(
-                "absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-foreground transition-all duration-300",
+                "absolute inset-x-0 bottom-0 h-0.5 bg-foreground transition-all duration-300",
                 value === o.value ? "opacity-100" : "opacity-0",
               )}
             />
@@ -47,7 +47,7 @@ export function FilterPills<T extends string>({
           type="button"
           onClick={() => onChange(o.value)}
           className={cn(
-            "rounded-full border px-5 py-2 text-[0.6875rem] tracking-[0.2em] uppercase transition-all duration-300",
+            "border-hairline border px-5 py-2 text-[0.6875rem] tracking-[0.2em] uppercase transition-all duration-300",
             value === o.value
               ? "border-foreground bg-foreground text-background"
               : "border-hairline text-muted-foreground hover:border-foreground/50 hover:text-foreground",

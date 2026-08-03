@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { services } from "@/data/portfolio";
+import { Reveal } from "@/components/site/Reveal";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/services")({
@@ -46,16 +47,16 @@ function ServicesPage() {
             id={s.slug}
             className="grid scroll-mt-40 items-center gap-12 md:grid-cols-2"
           >
-            <div className={cn("overflow-hidden", i % 2 === 1 && "md:order-2")}>
+            <Reveal className={cn("overflow-hidden", i % 2 === 1 && "md:order-2")}>
               <img
                 src={s.image}
                 alt={s.title}
                 loading="lazy"
-                className="aspect-[4/3] w-full object-cover grayscale-[35%] transition-all duration-[1400ms] hover:grayscale-0"
+                className="aspect-[4/3] w-full object-cover transition-transform duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03]"
               />
-            </div>
+            </Reveal>
 
-            <div className={cn(i % 2 === 1 && "md:order-1")}>
+            <Reveal delay={120} className={cn(i % 2 === 1 && "md:order-1")}>
               <p className="eyebrow">
                 {String(i + 1).padStart(2, "0")} — {s.subtitle}
               </p>
@@ -94,7 +95,7 @@ function ServicesPage() {
                   Request a Quote
                 </Link>
               </div>
-            </div>
+            </Reveal>
           </section>
         ))}
       </div>

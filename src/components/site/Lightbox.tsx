@@ -44,7 +44,7 @@ export function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-background/97 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex flex-col bg-background/97 backdrop-blur-md animate-in fade-in duration-500"
       role="dialog"
       aria-modal="true"
       aria-label={photo.caption}
@@ -68,9 +68,9 @@ export function Lightbox({
           type="button"
           aria-label="Previous image"
           onClick={() => step(-1)}
-          className="absolute left-2 z-10 flex size-12 items-center justify-center border border-hairline bg-background/40 text-foreground transition-colors hover:bg-background md:left-8"
+          className="absolute left-2 z-10 flex items-center justify-center text-foreground/60 transition-all duration-500 hover:-translate-x-1 hover:text-foreground md:left-8"
         >
-          <ChevronLeft className="size-5" strokeWidth={1.4} />
+          <ChevronLeft className="size-9" strokeWidth={1} />
         </button>
 
         <img
@@ -84,9 +84,9 @@ export function Lightbox({
           type="button"
           aria-label="Next image"
           onClick={() => step(1)}
-          className="absolute right-2 z-10 flex size-12 items-center justify-center border border-hairline bg-background/40 text-foreground transition-colors hover:bg-background md:right-8"
+          className="absolute right-2 z-10 flex items-center justify-center text-foreground/60 transition-all duration-500 hover:translate-x-1 hover:text-foreground md:right-8"
         >
-          <ChevronRight className="size-5" strokeWidth={1.4} />
+          <ChevronRight className="size-9" strokeWidth={1} />
         </button>
       </div>
 
