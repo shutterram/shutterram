@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Photo } from "@/data/portfolio";
 
@@ -16,6 +16,8 @@ export function Lightbox({
 }) {
   const open = index !== null;
   const [mounted, setMounted] = useState(false);
+  const touchRef = useRef<number | null>(null);
+
 
   useEffect(() => setMounted(true), []);
 
