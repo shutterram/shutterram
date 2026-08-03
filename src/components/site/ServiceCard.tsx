@@ -28,7 +28,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         {/* description + actions slide open on hover, always visible on touch */}
         <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:grid-rows-[1fr] group-focus-within:grid-rows-[1fr] max-md:grid-rows-[1fr]">
           <div className="overflow-hidden">
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground md:line-clamp-none">
               {service.description}
             </p>
           </div>

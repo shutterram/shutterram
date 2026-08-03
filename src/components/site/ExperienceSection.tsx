@@ -24,10 +24,10 @@ export function ExperienceSection({ className }: { className?: string }) {
             viewBox="0 0 1200 120"
             preserveAspectRatio="none"
             aria-hidden="true"
-            className="absolute inset-x-0 top-1/2 h-32 w-full -translate-y-1/2 text-foreground/25"
+            className="absolute inset-x-0 top-1/2 h-32 w-full -translate-y-1/2 overflow-hidden text-foreground/25"
           >
             <path
-              d="M0 60 C 150 0, 300 120, 450 60 S 750 0, 900 60 S 1100 110, 1200 60"
+              d="M0 30 C 60 90, 100 60, 150 60 S 340 20, 450 60 S 620 100, 750 60 S 940 20, 1050 60 C 1120 60, 1150 80, 1200 95"
               fill="none"
               stroke="currentColor"
               strokeWidth="1"
@@ -54,12 +54,12 @@ export function ExperienceSection({ className }: { className?: string }) {
         </div>
 
         {/* --------------------------------------------------- mobile: vertical */}
-        <div className="relative mt-16 md:hidden">
+        <div className="relative mt-16 overflow-hidden md:hidden">
           <svg
             viewBox="0 0 60 1000"
             preserveAspectRatio="none"
             aria-hidden="true"
-            className="absolute bottom-6 left-0 top-6 w-16 text-foreground/25"
+            className="absolute bottom-6 left-0 top-6 w-16 overflow-hidden text-foreground/25"
           >
             <path
               d="M30 0 C 0 120, 60 240, 30 360 S 0 600, 30 720 S 60 900, 30 1000"
