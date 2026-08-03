@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
@@ -61,6 +61,9 @@ function Home() {
   const [mobileCount, setMobileCount] = useState(4);
   const railRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
+  const servicesPausedRef = useRef(false);
+  const servicesPosRef = useRef(0);
+  const servicesBoostRef = useRef(0);
   const isMobile = useIsMobile();
 
   const visible = useMemo(
@@ -72,11 +75,40 @@ function Home() {
   const allShown = mobileCount >= visible.length;
 
 
-  const stepServices = (dir: number) => {
-    const el = servicesRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: "smooth" });
-  };
+  useEffect(() => {
+    const track = servicesRef.current;
+    if (!track || !isMobile) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    let last = performance.now();
+
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+      const firstGroup = track.firstElementChild as HTMLElement | null;
+      const loopWidth = firstGroup?.offsetWidth ?? 0;
+      if (loopWidth > 0) {
+        const drift = servicesPausedRef.current || reduce ? 0 : dt * 0.018;
+        const ease = servicesBoostRef.current * 0.12;
+        servicesBoostRef.current -= ease;
+        if (Math.abs(servicesBoostRef.current) < 0.2) servicesBoostRef.current = 0;
+        const next = ((servicesPosRef.current + drift + ease) % loopWidth + loopWidth) % loopWidth;
+        servicesPosRef.current = next;
+        track.style.transform = `translate3d(${-next}px, 0, 0)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isMobile]);
+
+  const stepServices = useCallback((dir: number) => {
+    const track = servicesRef.current;
+    if (!track) return;
+    const card = track.firstElementChild?.firstElementChild as HTMLElement | null;
+    servicesBoostRef.current += dir * (card ? card.offsetWidth + 12 : 180);
+  }, []);
 
 
   return (
@@ -253,14 +285,21 @@ function Home() {
                 <ChevronLeft className="size-7" strokeWidth={1} />
               </button>
               <div
-                ref={servicesRef}
-                className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto"
+                className="min-w-0 flex-1 overflow-hidden"
+                onTouchStart={() => (servicesPausedRef.current = true)}
+                onTouchEnd={() => (servicesPausedRef.current = false)}
               >
-                {services.map((s, i) => (
-                  <div key={s.slug} className="w-[calc(50%-0.375rem)] shrink-0 snap-start">
-                    <ServiceCard service={s} index={i} />
-                  </div>
-                ))}
+                <div ref={servicesRef} className="flex w-max will-change-transform">
+                  {[0, 1, 2].map((group) => (
+                    <div key={group} className="flex shrink-0 gap-3 pr-3" aria-hidden={group > 0}>
+                      {services.map((s, i) => (
+                        <div key={`${group}-${s.slug}`} className="w-[calc((100vw-6rem)/2)] shrink-0">
+                          <ServiceCard service={s} index={i} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
               <button
                 type="button"

@@ -27,15 +27,16 @@ export function Testimonials({ className }: { className?: string }) {
       const dt = Math.min(now - last, 64);
       last = now;
 
-      const half = track.scrollWidth / 2;
-      if (half > 0) {
+      const firstGroup = track.firstElementChild as HTMLElement | null;
+      const loopWidth = firstGroup?.offsetWidth ?? 0;
+      if (loopWidth > 0) {
         const drift = pausedRef.current || reduce ? 0 : dt * 0.022;
         const ease = boostRef.current * 0.12;
         boostRef.current -= ease;
         if (Math.abs(boostRef.current) < 0.2) boostRef.current = 0;
 
         let next = posRef.current + drift + ease;
-        next = ((next % half) + half) % half;
+        next = ((next % loopWidth) + loopWidth) % loopWidth;
         posRef.current = next;
         track.style.transform = `translate3d(${-next}px, 0, 0)`;
       }
@@ -94,7 +95,7 @@ export function Testimonials({ className }: { className?: string }) {
         onBlurCapture={() => (pausedRef.current = false)}
       >
         <div ref={trackRef} className="flex w-max will-change-transform">
-          {[0, 1].map((group) => (
+          {[0, 1, 2, 3].map((group) => (
             <div key={group} className="flex shrink-0" aria-hidden={group === 1}>
               {testimonials.map((t) => (
                 <figure
