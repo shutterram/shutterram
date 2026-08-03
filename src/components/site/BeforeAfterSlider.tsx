@@ -29,7 +29,7 @@ export function BeforeAfterSlider({ src, alt }: { src: string; alt: string }) {
   return (
     <div
       ref={ref}
-      className="relative aspect-[16/10] w-full touch-none select-none overflow-hidden rounded-2xl bg-surface"
+      className="relative aspect-[16/10] w-full touch-none select-none overflow-hidden bg-surface"
       onPointerDown={(e) => {
         setDragging(true);
         setFromClientX(e.clientX);
