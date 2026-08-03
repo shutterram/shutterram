@@ -87,7 +87,7 @@ export function Testimonials({ className }: { className?: string }) {
       </div>
 
       <div
-        className="mt-6 overflow-hidden"
+        className="mt-6 overflow-hidden pl-6"
         onMouseEnter={() => (pausedRef.current = true)}
         onMouseLeave={() => (pausedRef.current = false)}
         onFocusCapture={() => (pausedRef.current = true)}
