@@ -89,8 +89,7 @@ function ServicesPage() {
                 </Link>
                 <Link
                   to="/contact"
-                  search={{ service: s.slug }}
-                  hash="quote"
+                  search={{ service: s.slug, form: "quote" as const }}
                   className="inline-flex items-center border border-foreground bg-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85"
                 >
                   Request a Quote
