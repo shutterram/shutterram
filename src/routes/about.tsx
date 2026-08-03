@@ -5,6 +5,8 @@ import { SocialLinks } from "@/components/site/SocialLinks";
 const portrait =
   "https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=1200&q=80";
 
+import { Reveal } from "@/components/site/Reveal";
+
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
@@ -32,7 +34,7 @@ function About() {
       </h1>
 
       <div className="mt-16 grid gap-14 md:grid-cols-[1fr_1.2fr]">
-        <div>
+        <Reveal>
           <img
             src={portrait}
             alt="Ram, photographer"
@@ -51,9 +53,9 @@ function About() {
               </div>
             ))}
           </dl>
-        </div>
+        </Reveal>
 
-        <div className="space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
+        <Reveal delay={120} className="space-y-6 text-sm leading-loose text-muted-foreground md:text-base">
           {aboutLong.map((p) => (
             <p key={p.slice(0, 24)}>{p}</p>
           ))}
