@@ -59,7 +59,7 @@ export function HeroSlider() {
           <Link
             to="/gallery/$category"
             params={{ category: categories[active]!.slug }}
-            className="mt-10 inline-flex items-center rounded-full border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            className="mt-10 inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             View More
           </Link>

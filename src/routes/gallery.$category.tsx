@@ -64,7 +64,7 @@ function CategoryGallery() {
               key={p.id}
               type="button"
               onClick={() => setLightbox(i)}
-              className="group relative block w-full overflow-hidden rounded-2xl break-inside-avoid"
+              className="group relative block w-full overflow-hidden break-inside-avoid"
             >
               <img
                 src={p.src}
@@ -97,7 +97,7 @@ function CategoryGallery() {
                   key={c.slug}
                   to="/gallery/$category"
                   params={{ category: c.slug }}
-                  className="rounded-full border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                  className="border border-hairline px-5 py-2 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                 >
                   {c.label}
                 </Link>
