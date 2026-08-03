@@ -103,6 +103,26 @@ function Home() {
     return () => cancelAnimationFrame(raf);
   }, [isMobile]);
 
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pauseServices = useCallback(() => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    servicesPausedRef.current = true;
+  }, []);
+
+  const resumeServices = useCallback((delay = 0) => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    if (delay <= 0) {
+      servicesPausedRef.current = false;
+      return;
+    }
+    resumeTimer.current = setTimeout(() => (servicesPausedRef.current = false), delay);
+  }, []);
+
+  useEffect(() => () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+  }, []);
+
   const stepServices = useCallback((dir: number) => {
     const track = servicesRef.current;
     if (!track) return;
@@ -286,8 +306,13 @@ function Home() {
               </button>
               <div
                 className="min-w-0 overflow-hidden px-4"
-                onTouchStart={() => (servicesPausedRef.current = true)}
-                onTouchEnd={() => (servicesPausedRef.current = false)}
+                onMouseEnter={pauseServices}
+                onMouseLeave={() => resumeServices()}
+                onTouchStart={pauseServices}
+                onTouchEnd={() => resumeServices(2500)}
+                onTouchCancel={() => resumeServices(2500)}
+                onFocusCapture={pauseServices}
+                onBlurCapture={() => resumeServices()}
               >
                 <div ref={servicesRef} className="flex w-max will-change-transform">
                   {[0, 1, 2].map((group) => (
@@ -347,6 +372,7 @@ function Home() {
           </p>
           <Link
             to="/contact"
+            search={{ form: "message" }}
             className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
           >
             Start a conversation
