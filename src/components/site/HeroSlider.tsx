@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import logo from "@/assets/SRLogo.svg.asset.json";
 import { categories, site } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +17,6 @@ export function HeroSlider() {
     const t = setInterval(() => go(1), 6500);
     return () => clearInterval(t);
   }, [paused, go]);
-
-  const logoVersion = active % 2 === 0;
 
   return (
     <section
@@ -50,28 +47,9 @@ export function HeroSlider() {
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
         <div className="fade-up mb-8 flex flex-col items-center">
-          {logoVersion ? (
-            /* Version A — the mark stands in for "Ram" */
-            <span
-              key="brand-logo"
-              className="fade-up flex items-center gap-[0.18em] font-display text-[clamp(2.5rem,8.5vw,6.5rem)] leading-[0.9] tracking-[0.02em]"
-            >
-              Shutter
-              <img
-                src={logo.url}
-                alt="Ram"
-                className="h-[1.05em] w-auto shrink-0 translate-y-[0.06em] invert"
-              />
-            </span>
-          ) : (
-            /* Version B — joined wordmark */
-            <span
-              key="brand-joined"
-              className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]"
-            >
-              Shutte<span className="italic text-muted-foreground">Ram</span>
-            </span>
-          )}
+          <span className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
+            Shutter <span className="italic text-muted-foreground">Ram</span>
+          </span>
           <span className="mt-7 flex items-center gap-4">
             <span className="h-px w-10 bg-foreground/30 md:w-16" />
             <span className="eyebrow">{site.tagline}</span>

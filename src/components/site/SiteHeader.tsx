@@ -121,14 +121,14 @@ export function SiteHeader() {
             </button>
           </div>
 
-          <nav className="flex flex-1 flex-col items-center justify-center gap-7">
+          <nav className="flex flex-1 flex-col items-center gap-5 pt-6">
             {nav.map((item, i) => (
               <Link
                 key={item.to}
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "font-display text-3xl tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  "font-display text-2xl tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   open ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
                 )}
                 style={{ transitionDelay: open ? `${120 + i * 60}ms` : "0ms" }}

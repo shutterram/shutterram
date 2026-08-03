@@ -84,7 +84,7 @@ function Gallery() {
       />
 
 
-      <div className="mt-12 grid grid-cols-2 gap-3 sm:block sm:columns-2 sm:gap-5 lg:columns-3 sm:[&>*]:mb-5">
+      <div className="mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 md:[&>*]:mb-5">
         {shown.map((p, i) => (
           <button
             key={p.id}
@@ -96,7 +96,7 @@ function Gallery() {
               src={p.src}
               alt={p.caption}
               loading="lazy"
-              className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03] sm:aspect-auto"
+              className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03] md:aspect-auto"
             />
             <div className="absolute inset-0 bg-background/40 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
@@ -108,7 +108,7 @@ function Gallery() {
       </div>
 
       {isMobile && visible.length > 4 ? (
-        <div className="mt-8 flex justify-center sm:hidden">
+        <div className="mt-8 flex justify-center md:hidden">
           <button
             type="button"
             onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
