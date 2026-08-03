@@ -12,6 +12,8 @@ import { Reveal } from "@/components/site/Reveal";
 import { StatsStrip } from "@/components/site/StatsStrip";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Testimonials } from "@/components/site/Testimonials";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import {
   aboutShort,
   categories,
