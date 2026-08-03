@@ -46,20 +46,39 @@ const messageSchema = z.object({
   message: z.string().trim().min(10, "A little more detail, please").max(2000),
 });
 
-const quoteSchema = z.object({
-  name: z.string().trim().min(2, "Please enter your name").max(100),
-  email: z.string().trim().email("Enter a valid email address").max(255),
-  phone: z.string().trim().min(6, "Enter a contact number").max(30),
-  eventType: z.string().min(1, "Choose an event type"),
-  eventDate: z.string().max(30).optional(),
-  hours: z.string().min(1, "Choose the coverage you need"),
-  budget: z.string().min(1, "Choose a budget range"),
-  location: z.string().trim().min(2, "Where is the shoot?").max(150),
-  details: z.string().trim().min(10, "Tell me a bit about the shoot").max(2000),
-  acknowledged: z.literal(true, {
-    errorMap: () => ({ message: "Please acknowledge the booking terms" }),
-  }),
-});
+const CUSTOM = "__custom";
+
+const quoteSchema = z
+  .object({
+    name: z.string().trim().min(2, "Please enter your name").max(100),
+    email: z.string().trim().email("Enter a valid email address").max(255),
+    phone: z.string().trim().min(6, "Enter a contact number").max(30),
+    eventType: z.string().min(1, "Choose an event type"),
+    eventTypeCustom: z.string().trim().max(120).optional(),
+    eventDate: z.string().max(30).optional(),
+    hours: z.string().min(1, "Choose the coverage you need"),
+    hoursCustom: z.string().trim().max(120).optional(),
+    budget: z.string().min(1, "Choose a budget range"),
+    budgetCustom: z.string().trim().max(120).optional(),
+    location: z.string().trim().min(2, "Where is the shoot?").max(150),
+    details: z.string().trim().min(10, "Tell me a bit about the shoot").max(2000),
+    acknowledged: z.literal(true, {
+      errorMap: () => ({ message: "Please acknowledge the booking terms" }),
+    }),
+  })
+  .superRefine((v, ctx) => {
+    const pairs = [
+      ["eventType", "eventTypeCustom", "Describe your event type"],
+      ["hours", "hoursCustom", "Enter the hours you need"],
+      ["budget", "budgetCustom", "Enter your budget"],
+    ] as const;
+    for (const [select, custom, msg] of pairs) {
+      if (v[select] === CUSTOM && !v[custom]?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [custom], message: msg });
+      }
+    }
+  });
+
 
 const fieldClass =
   "h-12 rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0";
