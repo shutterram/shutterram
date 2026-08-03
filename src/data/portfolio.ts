@@ -12,10 +12,10 @@ export const unedited = (url: string) =>
 
 export const site = {
   name: "Shutter Ram",
-  tagline: "Capturing your tomorrow's memories today",
+  tagline: "Clicking today — for a memory that outlives us",
   email: "hello@shutterram.com",
   phone: "+1 (555) 014-2280",
-  location: "Available worldwide — based in New York",
+  location: "Based in New York — available across New Jersey, New York and further",
   /**
    * Third-party form endpoint (Formspree, Basin, Getform, FormSubmit…).
    * Paste your endpoint URL here and submissions get emailed to you.
