@@ -82,7 +82,10 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
       ] = await Promise.all([
         supabase
           .from("settings" as never)
-          .select("*")
+          // form_endpoint is intentionally omitted: it is not readable by anon
+          .select(
+            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,updated_at",
+          )
           .limit(1)
           .then((r) => (r.data ?? []) as unknown as Row[]),
         table("socials"),
