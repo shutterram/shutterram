@@ -51,7 +51,7 @@ export function SiteHeader() {
                   aria-hidden="true"
                   className={cn(
                     "w-auto shrink-0 translate-y-1 invert transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                    scrolled ? "h-6" : "h-8 md:h-10",
+                    scrolled ? "h-7" : "h-9 md:h-12",
                   )}
                 />
                 <span
