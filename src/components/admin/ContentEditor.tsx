@@ -383,6 +383,205 @@ export function ListEditor({
   );
 }
 
+interface StagedFile {
+  id: string;
+  file: File;
+  preview: string;
+  attrs: Row;
+  status: "pending" | "uploading" | "done" | "error";
+  error?: string;
+}
+
+/** Multi-file uploader: stage files, set attributes per file, then create all rows at once. */
+function BulkUploader({
+  table,
+  fields,
+  imageKey,
+  itemLabel,
+  titleKey,
+  startOrder,
+  onCreated,
+}: {
+  table: string;
+  fields: FieldSpec[];
+  imageKey: string;
+  itemLabel: string;
+  titleKey: string;
+  startOrder: number;
+  onCreated: (rows: Row[]) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [staged, setStaged] = useState<StagedFile[]>([]);
+  const [running, setRunning] = useState(false);
+  const attrFields = fields.filter((f) => f.key !== imageKey);
+
+  useEffect(() => {
+    return () => staged.forEach((s) => URL.revokeObjectURL(s.preview));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function blankAttrs(file: File): Row {
+    const attrs: Row = {};
+    const base = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+    for (const f of attrFields) {
+      if (f.type === "list") attrs[f.key] = [];
+      else if (f.type === "number") attrs[f.key] = 0;
+      else if (f.type === "bool") attrs[f.key] = false;
+      else attrs[f.key] = f.key === titleKey ? base : "";
+    }
+    return attrs;
+  }
+
+  function addFiles(files: FileList | null) {
+    if (!files?.length) return;
+    const next: StagedFile[] = Array.from(files).map((file, i) => ({
+      id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+      file,
+      preview: URL.createObjectURL(file),
+      attrs: blankAttrs(file),
+      status: "pending" as const,
+    }));
+    setStaged((prev) => [...prev, ...next]);
+  }
+
+  function patch(id: string, attrs: Row) {
+    setStaged((prev) => prev.map((s) => (s.id === id ? { ...s, attrs: { ...s.attrs, ...attrs } } : s)));
+  }
+
+  /** Copies the first item's attributes onto every other staged file. */
+  function applyToAll() {
+    setStaged((prev) => {
+      const first = prev[0];
+      if (!first) return prev;
+      return prev.map((s, i) => (i === 0 ? s : { ...s, attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] } }));
+    });
+  }
+
+  async function uploadAll() {
+    setRunning(true);
+    const created: Row[] = [];
+    let order = startOrder;
+
+    for (const item of staged) {
+      if (item.status === "done") continue;
+      setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
+      try {
+        const src = await uploadSiteImage(item.file);
+        const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
+        if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
+          draft["photo_key"] = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        }
+        if ("slug" in draft && !String(draft["slug"] ?? "").trim()) {
+          draft["slug"] = `new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        }
+        const { data, error } = await supabase.from(table as never).insert(draft as never).select();
+        if (error) throw error;
+        const row = (((data ?? [])[0] ?? null) as unknown) as Row | null;
+        if (row) created.push(row);
+        setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "done" } : s)));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed";
+        setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "error", error: message } : s)));
+      }
+    }
+
+    setRunning(false);
+    if (created.length) {
+      onCreated(created);
+      toast.success(`Added ${created.length} ${itemLabel}${created.length === 1 ? "" : "s"}`);
+      setStaged((prev) => prev.filter((s) => s.status !== "done"));
+    }
+    const failed = staged.filter((s) => s.status === "error").length;
+    if (failed) toast.error(`${failed} file${failed === 1 ? "" : "s"} failed`);
+  }
+
+  return (
+    <div className="border border-hairline p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="eyebrow">Bulk upload</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pick several files, set details for each, then add them all at once.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+          >
+            <Upload className="size-3" /> Choose files
+          </button>
+          {staged.length > 1 ? (
+            <button
+              type="button"
+              onClick={applyToAll}
+              className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+            >
+              Apply first to all
+            </button>
+          ) : null}
+          {staged.length ? (
+            <button
+              type="button"
+              onClick={() => void uploadAll()}
+              disabled={running}
+              className="inline-flex items-center gap-2 border border-foreground bg-foreground px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85 disabled:opacity-50"
+            >
+              {running ? <Loader2 className="size-3 animate-spin" /> : null}
+              Upload {staged.length}
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {staged.length ? (
+        <ul className="mt-5 divide-y divide-hairline border-t border-hairline">
+          {staged.map((s) => (
+            <li key={s.id} className="flex gap-4 py-4">
+              <img src={s.preview} alt="" className="size-20 shrink-0 border border-hairline object-cover" />
+              <div className="grid min-w-0 flex-1 gap-5 md:grid-cols-2">
+                {attrFields.map((f) => (
+                  <FieldInput
+                    key={f.key}
+                    spec={f}
+                    value={s.attrs[f.key]}
+                    onChange={(v) => patch(s.id, { [f.key]: v })}
+                  />
+                ))}
+              </div>
+              <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
+                {s.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : null}
+                {s.status === "error" ? <span className="text-right normal-case tracking-normal">{s.error}</span> : null}
+                <button
+                  type="button"
+                  aria-label="Remove file"
+                  onClick={() => setStaged((prev) => prev.filter((x) => x.id !== s.id))}
+                  className="hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function SaveButton({ onClick, saving }: { onClick: () => void; saving: boolean }) {
   return (
     <button
