@@ -305,8 +305,22 @@ export function ListEditor({
     );
   }
 
+  const bulkImageKey = fields.find((f) => f.type === "image")?.key;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {bulkImageKey ? (
+        <BulkUploader
+          table={table}
+          fields={fields}
+          imageKey={bulkImageKey}
+          itemLabel={itemLabel}
+          titleKey={titleKey}
+          startOrder={rows.length}
+          onCreated={(created) => setRows([...(rows ?? []), ...created])}
+        />
+      ) : null}
+
       <div className="flex items-center justify-between">
         <p className="eyebrow">
           {rows.length} {itemLabel}
@@ -320,6 +334,7 @@ export function ListEditor({
           Add {itemLabel}
         </button>
       </div>
+
 
       <ul className="divide-y divide-hairline border-y border-hairline">
         {rows.map((row, i) => {
