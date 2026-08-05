@@ -62,10 +62,12 @@ function ReviewPage() {
     if (!list) return;
     const picked = Array.from(list).slice(0, 6 - files.length);
     const next: Attachment[] = [];
-    for (const file of picked) {
-      if (!file.type.startsWith("image/")) continue;
+    for (const raw of picked) {
+      if (!raw.type.startsWith("image/")) continue;
+      // Downscale/convert in the browser so big camera exports still go through.
+      const { file } = await optimiseImage(raw);
       if (file.size > 6_000_000) {
-        toast.error(`${file.name} is larger than 6MB`);
+        toast.error(`${raw.name} is larger than 6MB`);
         continue;
       }
       const dataUrl = await readFile(file);
@@ -73,6 +75,7 @@ function ReviewPage() {
     }
     setFiles((f) => [...f, ...next].slice(0, 6));
   }
+
 
   return (
     <div className="mx-auto max-w-3xl px-6 pb-28 pt-56">
