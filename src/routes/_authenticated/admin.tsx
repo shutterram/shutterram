@@ -34,6 +34,30 @@ const SECTIONS = [
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
       { key: "hour_options", label: "Quote form: hours options", type: "list" },
+      {
+        key: "loader_shape",
+        label: "Loading screen — shape",
+        type: "select",
+        options: [
+          { value: "square", label: "Square" },
+          { value: "circle", label: "Circle" },
+        ],
+      },
+      { key: "loader_size", label: "Loading screen — inner size (px)", type: "number" },
+      {
+        key: "loader_pulse_scale",
+        label: "Loading screen — pulse growth (1 = none, 1.8 = 80% larger)",
+        type: "number",
+      },
+      {
+        key: "loader_fade",
+        label: "Loading screen — opacity direction",
+        type: "select",
+        options: [
+          { value: "out", label: "100% → 0% (fade out while growing)" },
+          { value: "in", label: "0% → 100% (fade in while shrinking)" },
+        ],
+      },
     ] satisfies FieldSpec[],
   },
   {
