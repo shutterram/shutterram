@@ -274,7 +274,12 @@ function Home() {
         </Reveal>
 
         <div className="mt-10">
-          <BeforeAfterSlider key={editSamples[edit]!.id} src={editSamples[edit]!.src} alt={editSamples[edit]!.title} />
+          <BeforeAfterSlider
+            key={editSamples[edit]!.id}
+            before={editSamples[edit]!.srcBefore}
+            after={editSamples[edit]!.src}
+            alt={editSamples[edit]!.title}
+          />
           <div className="mt-5 flex flex-col items-center gap-1 text-center">
             <p className="font-display text-2xl">{editSamples[edit]!.title}</p>
             <p className="text-sm text-muted-foreground">{editSamples[edit]!.note}</p>

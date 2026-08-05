@@ -53,6 +53,7 @@ export type Database = {
           note: string
           sort_order: number
           src: string
+          src_before: string
           title: string
           updated_at: string
         }
@@ -61,6 +62,7 @@ export type Database = {
           note?: string
           sort_order?: number
           src: string
+          src_before?: string
           title: string
           updated_at?: string
         }
@@ -69,6 +71,7 @@ export type Database = {
           note?: string
           sort_order?: number
           src?: string
+          src_before?: string
           title?: string
           updated_at?: string
         }

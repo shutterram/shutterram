@@ -84,7 +84,110 @@ export function ImageField({
   );
 }
 
-export type FieldType = "text" | "textarea" | "image" | "list" | "number" | "bool";
+/** Dropdown of gallery categories, with inline add / remove. */
+export function CategoryField({
+  value,
+  onChange,
+  label = "Category",
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  label?: string;
+}) {
+  const [cats, setCats] = useState<{ id: string; slug: string; label: string }[]>([]);
+
+  async function load() {
+    const { data, error } = await supabase
+      .from("categories" as never)
+      .select("id,slug,label")
+      .order("sort_order", { ascending: true });
+    if (error) toast.error(error.message);
+    setCats(((data ?? []) as unknown) as { id: string; slug: string; label: string }[]);
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function addCategory() {
+    const name = prompt("New category name (e.g. Maternity)")?.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const { error } = await supabase.from("categories" as never).insert({
+      slug,
+      title: `${name} Photography`,
+      label: name,
+      tagline: "",
+      hero: "",
+      sort_order: cats.length,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await load();
+    onChange(slug);
+    toast.success("Category added — add its hero image under “Hero categories”.");
+  }
+
+  async function removeCategory() {
+    const current = cats.find((c) => c.slug === value);
+    if (!current) {
+      toast.error("Pick a category first");
+      return;
+    }
+    if (!confirm(`Remove the “${current.label}” category? Photos keep their slug until you change it.`)) return;
+    const { error } = await supabase.from("categories" as never).delete().eq("id", current.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await load();
+    onChange("");
+    toast.success("Category removed");
+  }
+
+  return (
+    <div>
+      <span className="eyebrow">{label}</span>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="min-w-40 flex-1 border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
+        >
+          <option value="">— none —</option>
+          {cats.map((c) => (
+            <option key={c.id} value={c.slug} className="bg-background">
+              {c.label} ({c.slug})
+            </option>
+          ))}
+          {value && !cats.some((c) => c.slug === value) ? (
+            <option value={value} className="bg-background">
+              {value} (missing)
+            </option>
+          ) : null}
+        </select>
+        <button
+          type="button"
+          onClick={() => void addCategory()}
+          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+        >
+          Add
+        </button>
+        <button
+          type="button"
+          onClick={() => void removeCategory()}
+          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export type FieldType = "text" | "textarea" | "image" | "list" | "number" | "bool" | "category";
 
 export interface FieldSpec {
   key: string;
@@ -121,6 +224,16 @@ function FieldInput({
   if (type === "image") {
     return (
       <ImageField
+        label={spec.label}
+        value={typeof value === "string" ? value : ""}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (type === "category") {
+    return (
+      <CategoryField
         label={spec.label}
         value={typeof value === "string" ? value : ""}
         onChange={onChange}

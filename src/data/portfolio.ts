@@ -139,7 +139,8 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       id: str(r["id"], `ed${i}`),
       title: str(r["title"]),
       note: str(r["note"]),
-      src: str(r["src"]),
+      src: str(r["src"]) || "/placeholders/after.svg",
+      srcBefore: str(r["src_before"]) || "/placeholders/before.svg",
     }));
   }
 

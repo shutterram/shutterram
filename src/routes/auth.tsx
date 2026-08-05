@@ -18,7 +18,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,6 +35,14 @@ function AuthPage() {
     setBusy(true);
     setNotice("");
     try {
+      if (mode === "reset") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setNotice("Check your email for a link to set a new password.");
+        return;
+      }
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -62,10 +70,12 @@ function AuthPage() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 pb-24 pt-20">
       <p className="eyebrow">Studio</p>
       <h1 className="mt-4 font-display text-[clamp(2rem,5vw,3rem)] leading-tight">
-        {mode === "signin" ? "Sign in" : "Create your account"}
+        {mode === "signin" ? "Sign in" : mode === "signup" ? "Create your account" : "Reset password"}
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        This area is private — it is where the website content is managed.
+        {mode === "reset"
+          ? "Enter your studio email and we'll send you a link to set a new password."
+          : "This area is private — it is where the website content is managed."}
       </p>
 
       <form onSubmit={onSubmit} className="mt-10 space-y-8">
@@ -79,17 +89,19 @@ function AuthPage() {
             className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
           />
         </label>
-        <label className="block">
-          <span className="eyebrow">Password</span>
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
-          />
-        </label>
+        {mode === "reset" ? null : (
+          <label className="block">
+            <span className="eyebrow">Password</span>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
+            />
+          </label>
+        )}
 
         {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
 
@@ -98,17 +110,38 @@ function AuthPage() {
           disabled={busy}
           className="w-full border border-foreground bg-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85 disabled:opacity-50"
         >
-          {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+          {busy
+            ? "Please wait…"
+            : mode === "signin"
+              ? "Sign in"
+              : mode === "signup"
+                ? "Create account"
+                : "Send reset link"}
         </button>
       </form>
 
-      <button
-        type="button"
-        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-        className="mt-6 text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        {mode === "signin" ? "Need an account?" : "Already have an account?"}
-      </button>
+      <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+        <button
+          type="button"
+          onClick={() => {
+            setNotice("");
+            setMode(mode === "signup" ? "signin" : "signup");
+          }}
+          className="text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {mode === "signup" ? "Already have an account?" : "Need an account?"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setNotice("");
+            setMode(mode === "reset" ? "signin" : "reset");
+          }}
+          className="text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {mode === "reset" ? "Back to sign in" : "Forgot password?"}
+        </button>
+      </div>
 
       <Link
         to="/"
