@@ -324,8 +324,8 @@ html {
 .light .hero-scrim {
   background-image: linear-gradient(
     to top,
-    color-mix(in oklab, var(--background) 92%, transparent),
-    color-mix(in oklab, var(--background) 30%, transparent),
-    color-mix(in oklab, var(--background) 55%, transparent)
+    color-mix(in oklab, var(--background) 62%, transparent),
+    color-mix(in oklab, var(--background) 12%, transparent),
+    color-mix(in oklab, var(--background) 26%, transparent)
   );
 }
