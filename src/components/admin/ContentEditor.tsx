@@ -447,7 +447,7 @@ export function ListEditor({
           itemLabel={itemLabel}
           titleKey={titleKey}
           startOrder={rows.length}
-          onCreated={(created) => setRows([...(rows ?? []), ...created])}
+          onCreated={(created) => void persistOrder([...created, ...(rows ?? [])])}
         />
       ) : null}
 
