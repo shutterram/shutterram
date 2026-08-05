@@ -104,7 +104,9 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("services"),
         table("stats"),
         table("experience"),
-        // email is intentionally omitted: reviewer emails are studio-only
+        // The explicit column list is required: the email column is revoked at the
+        // database level, so a `select("*")` here would fail with a permission error.
+        // Reviewer emails are read only through the admin-only studio path.
         supabase
           .from("testimonials" as never)
           .select("id,name,role,occasion,quote,rating,images,status,sort_order")
