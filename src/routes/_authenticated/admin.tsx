@@ -458,7 +458,8 @@ function AdminPage() {
                 ? "id,name,role,occasion,quote,rating,images,status,sort_order"
                 : undefined
             }
-          />
+            />
+          </>
         )}
       </div>
 
