@@ -5,29 +5,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { LogoLockup } from "@/components/site/LogoLockup";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { t } from "@/data/portfolio";
 import { submitReview } from "@/lib/submit-review.functions";
 import { cn } from "@/lib/utils";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/review")({
-  head: () => ({
-    meta: [
-      { title: "Leave a Review | Shutter Ram" },
-      { name: "robots", content: "noindex, nofollow" },
-      {
-        name: "description",
-        content: "A private page for Shutter Ram clients to leave a review of their shoot.",
-      },
-      { property: "og:title", content: "Leave a Review | Shutter Ram" },
-      {
-        property: "og:description",
-        content: "Share a few words about your shoot with Shutter Ram.",
-      },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/review" } }),
+  head: ({ loaderData }) =>
+    buildSeoHead(loaderData, {
+      path: "/review",
+      title: "Leave a Review | Shutter Ram",
+      description: "A private page for Shutter Ram clients to leave a review of their shoot.",
+      robots: "noindex, nofollow",
+    }),
   component: ReviewPage,
 });
 
@@ -83,8 +77,7 @@ function ReviewPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 pb-28 pt-56">
       <div className="flex flex-col items-center text-center">
-        <LogoLockup size="md" />
-        <p className="eyebrow mt-10">{t("review.eyebrow")}</p>
+        <p className="eyebrow">{t("review.eyebrow")}</p>
         <h1 className="mt-4 font-display text-[clamp(2.25rem,5vw,3.5rem)] leading-tight">
           {t("review.title")}
         </h1>
