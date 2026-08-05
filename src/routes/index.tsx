@@ -359,7 +359,9 @@ function Home() {
           </Reveal>
           {/* mobile: two-card snap slider */}
           <div className="relative mt-10 md:hidden">
-            <p className="eyebrow text-center">Use the arrows to see more services</p>
+            <p className="eyebrow text-center">
+              Swipe or use the arrows to see more services
+            </p>
             <div className="relative mt-5">
               <button
                 type="button"
@@ -370,15 +372,23 @@ function Home() {
                 <ChevronLeft className="size-7" strokeWidth={1} />
               </button>
               <div
-                className="min-w-0 overflow-hidden px-4"
+                className="min-w-0 touch-pan-y overflow-hidden px-4"
                 onMouseEnter={pauseServices}
-                onMouseLeave={() => resumeServices()}
+                onMouseLeave={() => {
+                  onDragEnd();
+                  resumeServices();
+                }}
                 onTouchStart={pauseServices}
                 onTouchEnd={() => resumeServices(2500)}
                 onTouchCancel={() => resumeServices(2500)}
                 onFocusCapture={pauseServices}
                 onBlurCapture={() => resumeServices()}
+                onPointerDown={onDragStart}
+                onPointerMove={onDragMove}
+                onPointerUp={onDragEnd}
+                onPointerCancel={onDragEnd}
               >
+
                 <div ref={servicesRef} className="flex w-max will-change-transform">
                   {[0, 1, 2].map((group) => (
                     <div key={group} className="flex shrink-0 gap-3 pr-3" aria-hidden={group > 0}>
