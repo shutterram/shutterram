@@ -93,7 +93,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
           .from("settings" as never)
           // The form endpoint now lives in the admin-only admin_settings table.
           .select(
-            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,glow_size,glow_blend,glow_softness,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,updated_at",
+            "id,name,tagline,email,phone,location,og_image,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,glow_size,glow_blend,glow_softness,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,updated_at",
           )
           .limit(1)
           .then((r) => (r.data ?? []) as unknown as Row[]),
@@ -104,7 +104,9 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("services"),
         table("stats"),
         table("experience"),
-        // email is intentionally omitted: reviewer emails are studio-only
+        // The explicit column list is required: the email column is revoked at the
+        // database level, so a `select("*")` here would fail with a permission error.
+        // Reviewer emails are read only through the admin-only studio path.
         supabase
           .from("testimonials" as never)
           .select("id,name,role,occasion,quote,rating,images,status,sort_order")
