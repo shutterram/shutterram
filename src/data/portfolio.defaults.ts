@@ -17,7 +17,7 @@ export interface SiteInfo {
   phone: string;
   location: string;
   formEndpoint: string;
-  socials: { name: string; href: string; icon: string }[];
+  socials: { name: string; href: string; icon: string; iconUrl?: string }[];
 }
 
 export const defaultSite: SiteInfo = {
