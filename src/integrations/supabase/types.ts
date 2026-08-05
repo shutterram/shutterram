@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string
+          form_endpoint: string
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          form_endpoint?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          form_endpoint?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           hero: string
@@ -311,7 +332,6 @@ export type Database = {
           about_short: string
           budget_ranges: string[]
           email: string
-          form_endpoint: string
           hour_options: string[]
           id: boolean
           loader_fade: string
@@ -347,7 +367,6 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
-          form_endpoint?: string
           hour_options?: string[]
           id?: boolean
           loader_fade?: string
@@ -383,7 +402,6 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
-          form_endpoint?: string
           hour_options?: string[]
           id?: boolean
           loader_fade?: string
