@@ -6,6 +6,7 @@ import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/
 import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
+import { SeoPageSync } from "@/components/admin/SeoPageSync";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 
