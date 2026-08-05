@@ -68,6 +68,7 @@
 :root {
   --radius: 0rem;
   --glow: oklch(1 0 0 / 28%);
+  --cursor-glow: oklch(1 0 0 / 10%);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.94 0 0);
   --surface: oklch(0.185 0 0);
