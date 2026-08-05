@@ -273,10 +273,22 @@ export type Database = {
           location: string
           logo_favicon: string
           logo_footer: string
+          logo_footer_height: number
+          logo_footer_offset_x: number
+          logo_footer_offset_y: number
           logo_header: string
+          logo_header_height: number
+          logo_header_offset_x: number
+          logo_header_offset_y: number
           logo_invert: boolean
           logo_loader: string
+          logo_loader_height: number
+          logo_loader_offset_x: number
+          logo_loader_offset_y: number
           logo_mobile: string
+          logo_mobile_height: number
+          logo_mobile_offset_x: number
+          logo_mobile_offset_y: number
           name: string
           phone: string
           tagline: string
@@ -297,10 +309,22 @@ export type Database = {
           location?: string
           logo_favicon?: string
           logo_footer?: string
+          logo_footer_height?: number
+          logo_footer_offset_x?: number
+          logo_footer_offset_y?: number
           logo_header?: string
+          logo_header_height?: number
+          logo_header_offset_x?: number
+          logo_header_offset_y?: number
           logo_invert?: boolean
           logo_loader?: string
+          logo_loader_height?: number
+          logo_loader_offset_x?: number
+          logo_loader_offset_y?: number
           logo_mobile?: string
+          logo_mobile_height?: number
+          logo_mobile_offset_x?: number
+          logo_mobile_offset_y?: number
           name?: string
           phone?: string
           tagline?: string
@@ -321,14 +345,56 @@ export type Database = {
           location?: string
           logo_favicon?: string
           logo_footer?: string
+          logo_footer_height?: number
+          logo_footer_offset_x?: number
+          logo_footer_offset_y?: number
           logo_header?: string
+          logo_header_height?: number
+          logo_header_offset_x?: number
+          logo_header_offset_y?: number
           logo_invert?: boolean
           logo_loader?: string
+          logo_loader_height?: number
+          logo_loader_offset_x?: number
+          logo_loader_offset_y?: number
           logo_mobile?: string
+          logo_mobile_height?: number
+          logo_mobile_offset_x?: number
+          logo_mobile_offset_y?: number
           name?: string
           phone?: string
           tagline?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_copy: {
+        Row: {
+          group_label: string
+          id: string
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          group_label?: string
+          id?: string
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          group_label?: string
+          id?: string
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }
@@ -388,30 +454,45 @@ export type Database = {
       }
       testimonials: {
         Row: {
+          email: string
           id: string
+          images: string[]
           name: string
+          occasion: string
           quote: string
           rating: number
           role: string
           sort_order: number
+          status: string
+          submitted_at: string
           updated_at: string
         }
         Insert: {
+          email?: string
           id?: string
+          images?: string[]
           name: string
+          occasion?: string
           quote: string
           rating?: number
           role?: string
           sort_order?: number
+          status?: string
+          submitted_at?: string
           updated_at?: string
         }
         Update: {
+          email?: string
           id?: string
+          images?: string[]
           name?: string
+          occasion?: string
           quote?: string
           rating?: number
           role?: string
           sort_order?: number
+          status?: string
+          submitted_at?: string
           updated_at?: string
         }
         Relationships: []

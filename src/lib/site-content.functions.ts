@@ -17,6 +17,7 @@ export interface SiteContentPayload {
   testimonials: Row[];
   process_steps: Row[];
   page_sections: Row[];
+  site_copy: Row[];
 }
 
 const EMPTY: SiteContentPayload = {
@@ -31,6 +32,7 @@ const EMPTY: SiteContentPayload = {
   testimonials: [],
   process_steps: [],
   page_sections: [],
+  site_copy: [],
 };
 
 /**
@@ -82,12 +84,13 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         testimonials,
         process_steps,
         page_sections,
+        site_copy,
       ] = await Promise.all([
         supabase
           .from("settings" as never)
           // form_endpoint is intentionally omitted: it is not readable by anon
           .select(
-            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,updated_at",
+            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,updated_at",
           )
           .limit(1)
           .then((r) => (r.data ?? []) as unknown as Row[]),
@@ -101,6 +104,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("testimonials"),
         table("process_steps"),
         table("page_sections"),
+        table("site_copy"),
       ]);
 
       return {
@@ -115,6 +119,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         testimonials,
         process_steps,
         page_sections,
+        site_copy,
       };
     } catch (error) {
       console.error("[content] unexpected failure", error);
