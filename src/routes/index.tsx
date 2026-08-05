@@ -24,7 +24,9 @@ import {
   sectionFor,
   sectionsFor,
   site,
-  type CategorySlug,, t } from "@/data/portfolio";
+  type CategorySlug,
+  t,
+} from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
