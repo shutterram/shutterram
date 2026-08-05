@@ -1,8 +1,10 @@
 import logo from "@/assets/SRLogo.svg.asset.json";
+import { useTheme } from "@/hooks/use-theme";
 import { loader, logos, t } from "@/data/portfolio";
 
 /** Full-screen loading state shown while a page's content is being fetched. */
 export function PageLoader() {
+  const { theme } = useTheme();
   const size = Math.max(32, loader.size);
   const round = loader.shape === "circle" ? "rounded-full" : "";
   const animation = `loader-pulse-${loader.fade === "in" ? "in" : "out"} 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite`;
@@ -29,7 +31,7 @@ export function PageLoader() {
         <img
           src={logos.loader || logo.url}
           alt="Shutter Ram"
-          className={`w-auto ${logos.invert ? "brightness-0 invert" : ""}`}
+          className={`w-auto ${logos.invert && theme === "dark" ? "brightness-0 invert" : ""}`}
           style={{ height: size * 0.5 }}
         />
       </div>
