@@ -28,7 +28,7 @@ export const Route = createFileRoute("/services")({
           itemListElement: services.map((s, i) => ({
             "@type": "Offer",
             position: i + 1,
-            ...(s.price_from ? { price: s.price_from, priceCurrency: "USD" } : {}),
+            ...(s.from ? { description: s.from } : {}),
             itemOffered: {
               "@type": "Service",
               name: s.title,
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/services")({
               provider: { "@type": "LocalBusiness", name: "Shutter Ram" },
             },
           })),
+
         }),
       },
     ],
