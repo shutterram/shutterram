@@ -9,16 +9,41 @@ import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/services")({
   loader: () => getSeo({ data: { path: "/services" } }),
-  head: ({ loaderData }) =>
-    buildSeoHead(loaderData, {
+  head: ({ loaderData }) => ({
+    ...buildSeoHead(loaderData, {
       path: "/services",
       title: "Photography Services & Rates | Shutter Ram",
       description:
         "Wedding, corporate, portrait, headshot, event and product photography services with what is included and starting rates.",
       image: services[0]!.image,
     }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "OfferCatalog",
+          name: "Photography services — Shutter Ram",
+          url: "https://shutterram.lovable.app/services",
+          itemListElement: services.map((s, i) => ({
+            "@type": "Offer",
+            position: i + 1,
+            ...(s.price_from ? { price: s.price_from, priceCurrency: "USD" } : {}),
+            itemOffered: {
+              "@type": "Service",
+              name: s.title,
+              description: s.description || s.subtitle,
+              serviceType: s.title,
+              provider: { "@type": "LocalBusiness", name: "Shutter Ram" },
+            },
+          })),
+        }),
+      },
+    ],
+  }),
   component: ServicesPage,
 });
+
 
 function ServicesPage() {
   return (
