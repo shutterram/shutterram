@@ -187,13 +187,23 @@ export function CategoryField({
   );
 }
 
-export type FieldType = "text" | "textarea" | "image" | "list" | "number" | "bool" | "category";
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "image"
+  | "list"
+  | "number"
+  | "bool"
+  | "category"
+  | "select";
 
 export interface FieldSpec {
   key: string;
   label: string;
   type?: FieldType;
   placeholder?: string;
+  /** Choices for `select` fields. */
+  options?: { value: string; label: string }[];
 }
 
 type Row = Record<string, unknown>;
@@ -238,6 +248,25 @@ function FieldInput({
         value={typeof value === "string" ? value : ""}
         onChange={onChange}
       />
+    );
+  }
+
+  if (type === "select") {
+    return (
+      <label className="block">
+        <span className="eyebrow">{spec.label}</span>
+        <select
+          value={typeof value === "string" ? value : ""}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
+        >
+          {(spec.options ?? []).map((o) => (
+            <option key={o.value} value={o.value} className="bg-background">
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
     );
   }
 
@@ -332,11 +361,16 @@ export function ListEditor({
   fields,
   itemLabel,
   titleKey,
+  allowAdd = true,
+  note,
 }: {
   table: string;
   fields: FieldSpec[];
   itemLabel: string;
   titleKey: string;
+  /** Set false for lists whose rows are tied to the code (e.g. page sections). */
+  allowAdd?: boolean;
+  note?: string;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [saving, setSaving] = useState(false);
@@ -389,6 +423,7 @@ export function ListEditor({
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
       else if (f.type === "bool") draft[f.key] = false;
+      else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
     if ("photo_key" in draft) draft["photo_key"] = `img-${Date.now()}`;
@@ -439,7 +474,9 @@ export function ListEditor({
 
   return (
     <div className="space-y-6">
-      {bulkImageKey ? (
+      {note ? <p className="text-xs leading-relaxed text-muted-foreground">{note}</p> : null}
+
+      {allowAdd && bulkImageKey ? (
         <BulkUploader
           table={table}
           fields={fields}
@@ -456,13 +493,15 @@ export function ListEditor({
           {rows.length} {itemLabel}
           {rows.length === 1 ? "" : "s"}
         </p>
-        <button
-          type="button"
-          onClick={() => void addRow()}
-          className="border border-foreground bg-foreground px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85"
-        >
-          Add {itemLabel}
-        </button>
+        {allowAdd ? (
+          <button
+            type="button"
+            onClick={() => void addRow()}
+            className="border border-foreground bg-foreground px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85"
+          >
+            Add {itemLabel}
+          </button>
+        ) : null}
       </div>
 
 
