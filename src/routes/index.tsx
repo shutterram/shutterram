@@ -149,6 +149,28 @@ function Home() {
     servicesBoostRef.current += dir * (card ? card.offsetWidth + 12 : 180);
   }, []);
 
+  // Drag / swipe the services rail horizontally.
+  const dragX = useRef<number | null>(null);
+  const onDragStart = useCallback(
+    (e: React.PointerEvent) => {
+      dragX.current = e.clientX;
+      pauseServices();
+    },
+    [pauseServices],
+  );
+  const onDragMove = useCallback((e: React.PointerEvent) => {
+    if (dragX.current === null) return;
+    const dx = e.clientX - dragX.current;
+    dragX.current = e.clientX;
+    servicesPosRef.current -= dx;
+  }, []);
+  const onDragEnd = useCallback(() => {
+    if (dragX.current === null) return;
+    dragX.current = null;
+    resumeServices(2500);
+  }, [resumeServices]);
+
+
   // Section copy, order and visibility all come from the content studio.
   const ordered = sectionsFor("home");
   const copy = (key: string, fallback: { eyebrow: string; heading: string; intro?: string }) => {
