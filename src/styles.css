@@ -318,7 +318,7 @@ html {
   background: radial-gradient(
     circle,
     var(--cursor-glow, oklch(1 0 0 / 10%)) 0%,
-    transparent 68%
+    transparent var(--cursor-glow-stop, 68%)
   );
 }
 

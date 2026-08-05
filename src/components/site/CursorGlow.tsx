@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { glow } from "@/data/portfolio";
 
 /**
  * A soft light that follows the cursor across the site.
@@ -45,5 +46,15 @@ export function CursorGlow() {
   }, []);
 
   if (!enabled) return null;
-  return <div ref={ref} className="cursor-glow" aria-hidden="true" />;
+
+  // Studio-controlled size, falloff and Photoshop-style blending mode.
+  const style = {
+    width: `${glow.size}px`,
+    height: `${glow.size}px`,
+    margin: `${-glow.size / 2}px 0 0 ${-glow.size / 2}px`,
+    mixBlendMode: glow.blend,
+    "--cursor-glow-stop": `${glow.softness}%`,
+  } as CSSProperties;
+
+  return <div ref={ref} className="cursor-glow" style={style} aria-hidden="true" />;
 }
