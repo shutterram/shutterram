@@ -105,7 +105,7 @@ function About() {
           </div>
 
           <div className="border-t border-hairline pt-8">
-            <p className="eyebrow">{t("about.hello_heading")}</p>
+            <h2 className="eyebrow">{t("about.hello_heading")}</h2>
             <p className="mt-3">
               <a
                 href={`mailto:${site.email}`}
