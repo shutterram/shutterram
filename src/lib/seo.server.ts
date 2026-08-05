@@ -12,13 +12,11 @@ export type SeoRow = {
   robots: string;
 };
 
-/** Reads the studio-managed SEO record for a single page path. */
-export async function fetchSeo(path: string): Promise<SeoRow | null> {
+function client() {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return null;
-
-  const supabase = createClient(url, key, {
+  return createClient(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     global: {
       fetch: (input, init) => {
@@ -31,19 +29,40 @@ export async function fetchSeo(path: string): Promise<SeoRow | null> {
       },
     },
   });
+}
 
-  const { data, error } = await supabase
-    .from("seo_pages")
-    .select("path,title,description,keywords,og_title,og_description,og_image,canonical,robots")
-    .eq("path", path)
-    .maybeSingle();
+/** Site-wide default social share image, editable in the studio. */
+async function fetchDefaultOgImage(
+  supabase: NonNullable<ReturnType<typeof client>>,
+): Promise<string> {
+  const { data } = await supabase.from("settings").select("og_image").limit(1).maybeSingle();
+  return ((data as { og_image?: string } | null)?.og_image ?? "").trim();
+}
+
+/** Reads the studio-managed SEO record for a single page path. */
+export async function fetchSeo(path: string): Promise<SeoRow | null> {
+  const supabase = client();
+  if (!supabase) return null;
+
+  const [{ data, error }, defaultImage] = await Promise.all([
+    supabase
+      .from("seo_pages")
+      .select("path,title,description,keywords,og_title,og_description,og_image,canonical,robots")
+      .eq("path", path)
+      .maybeSingle(),
+    fetchDefaultOgImage(supabase),
+  ]);
 
   if (error) {
     console.error(`[seo] failed to read ${path}: ${error.message}`);
     return null;
   }
-  return (data as SeoRow | null) ?? null;
+  const row = (data as SeoRow | null) ?? null;
+  if (!row && !defaultImage) return null;
+  if (!row) return { og_image: defaultImage } as SeoRow;
+  return { ...row, og_image: row.og_image?.trim() ? row.og_image : defaultImage };
 }
+
 
 /** Reads every SEO record (used by the sitemap). */
 export async function fetchAllSeo(): Promise<SeoRow[]> {
