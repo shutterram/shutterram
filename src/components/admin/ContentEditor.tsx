@@ -380,6 +380,7 @@ export function ListEditor({
   titleKey,
   allowAdd = true,
   note,
+  columns,
 }: {
   table: string;
   fields: FieldSpec[];
@@ -388,6 +389,8 @@ export function ListEditor({
   /** Set false for lists whose rows are tied to the code (e.g. page sections). */
   allowAdd?: boolean | undefined;
   note?: string | undefined;
+  /** Explicit column list for tables with protected columns (e.g. reviewer email). */
+  columns?: string | undefined;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [saving, setSaving] = useState(false);
@@ -396,7 +399,7 @@ export function ListEditor({
   async function load() {
     const { data, error } = await supabase
       .from(table as never)
-      .select("*")
+      .select(columns ?? "*")
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
     setRows((data ?? []) as Row[]);
