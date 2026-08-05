@@ -332,6 +332,9 @@ export type Database = {
           about_short: string
           budget_ranges: string[]
           email: string
+          glow_blend: string
+          glow_size: number
+          glow_softness: number
           hour_options: string[]
           id: boolean
           loader_fade: string
@@ -367,6 +370,9 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
+          glow_blend?: string
+          glow_size?: number
+          glow_softness?: number
           hour_options?: string[]
           id?: boolean
           loader_fade?: string
@@ -402,6 +408,9 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
+          glow_blend?: string
+          glow_size?: number
+          glow_softness?: number
           hour_options?: string[]
           id?: boolean
           loader_fade?: string

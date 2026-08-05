@@ -51,6 +51,21 @@ export interface LoaderConfig {
   fade: string;
 }
 
+export interface GlowConfig {
+  /** Diameter of the cursor light in px. */
+  size: number;
+  /** CSS mix-blend-mode used to blend the light with the page. */
+  blend: string;
+  /** How far out the light fades, 0–100 (higher = softer, wider falloff). */
+  softness: number;
+}
+
+export const defaultGlow: GlowConfig = {
+  size: 544,
+  blend: "normal",
+  softness: 68,
+};
+
 export const defaultLoader: LoaderConfig = {
   shape: "square",
   size: 72,
