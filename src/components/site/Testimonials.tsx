@@ -87,6 +87,7 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
           </div>
         ) : null}
       </div>
+    </div>
 
       <Lightbox
         photos={images.map((src, i) => ({
@@ -99,9 +100,10 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
         onClose={() => setLightboxIndex(null)}
         onIndexChange={setLightboxIndex}
       />
-    </div>,
+    </>,
     document.body,
   );
+
 }
 
 /**
