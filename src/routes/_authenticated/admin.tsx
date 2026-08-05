@@ -39,7 +39,13 @@ const SECTIONS = [
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone" },
       { key: "location", label: "Location line" },
+      {
+        key: "og_image",
+        label: "Default social share image (used when a page has none)",
+        type: "image",
+      },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
+
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
       { key: "hour_options", label: "Quote form: hours options", type: "list" },
