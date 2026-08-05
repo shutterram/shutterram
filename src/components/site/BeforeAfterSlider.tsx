@@ -43,16 +43,16 @@ export function BeforeAfterSlider({
       }}
     >
       {/* AFTER — the edited frame */}
-      <img src={src} alt={alt} className="absolute inset-0 size-full object-cover" draggable={false} />
+      <img src={after} alt={`${alt} — edited`} className="absolute inset-0 size-full object-cover" draggable={false} />
 
-      {/* BEFORE — the same frame, straight out of camera, clipped by the handle */}
+      {/* BEFORE — the original capture, clipped by the handle */}
       <div
         className="absolute inset-0 overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}
       >
         <img
-          src={unedited(src)}
-          alt={`${alt} — unedited`}
+          src={before}
+          alt={`${alt} — before editing`}
           className="absolute inset-0 size-full object-cover"
           draggable={false}
         />
