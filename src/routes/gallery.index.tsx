@@ -4,25 +4,19 @@ import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, photos, type CategorySlug, t } from "@/data/portfolio";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/")({
-  head: () => ({
-    meta: [
-      { title: "Gallery — Previous Works | Shutter Ram" },
-      {
-        name: "description",
-        content:
-          "Browse the full Shutter Ram gallery: wedding, corporate, portrait, headshot, event and product photography, filterable by category.",
-      },
-      { property: "og:title", content: "Gallery — Previous Works | Shutter Ram" },
-      {
-        property: "og:description",
-        content: "The complete Shutter Ram archive, filterable by category.",
-      },
-      { property: "og:image", content: photos[0]!.src },
-      { name: "twitter:image", content: photos[0]!.src },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/gallery" } }),
+  head: ({ loaderData }) =>
+    buildSeoHead(loaderData, {
+      path: "/gallery",
+      title: "Photography Portfolio & Gallery | Shutter Ram",
+      description:
+        "Browse the Shutter Ram portfolio: wedding days, corporate brand work, portraits, headshots and events, filterable by category.",
+      image: photos[0]!.src,
+    }),
   component: Gallery,
 });
 
