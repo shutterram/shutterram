@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getReviewEmails } from "@/lib/review-emails.functions";
 
 type ReviewRow = {
   id: string;
@@ -25,15 +26,19 @@ export function ReviewModeration() {
   async function load() {
     const { data, error } = await supabase
       .from("testimonials" as never)
-      .select("*")
+      .select("id,name,role,occasion,quote,rating,images,status,sort_order")
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
-    setRows((data ?? []) as unknown as ReviewRow[]);
+    const list = (data ?? []) as unknown as ReviewRow[];
+    // Reviewer emails are admin-only and never exposed through the Data API.
+    const emails = await getReviewEmails().catch(() => ({}) as Record<string, string>);
+    setRows(list.map((r) => ({ ...r, email: emails[r.id] ?? "" })));
   }
 
   useEffect(() => {
     void load();
   }, []);
+
 
   if (!rows) {
     return (
