@@ -469,7 +469,14 @@ function Home() {
     <>
       <HeroSlider />
 
-      {ordered.map((s) => blocks[s.key] ?? null)}
+      {ordered.map((s) =>
+        blocks[s.key] ? (
+          // The id lets the studio target this section's fonts individually.
+          <div key={s.key} id={`sec-${s.key}`}>
+            {blocks[s.key]}
+          </div>
+        ) : null,
+      )}
 
       <Lightbox
         photos={visible}
