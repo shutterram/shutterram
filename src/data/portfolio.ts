@@ -26,6 +26,7 @@ import {
   defaultHourOptions,
   defaultPageSections,
   defaultLoader,
+  defaultGlow,
   defaultLogos,
   defaultCopy,
   emptyPlacement,
