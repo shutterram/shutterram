@@ -24,8 +24,7 @@ import {
   sectionFor,
   sectionsFor,
   site,
-  type CategorySlug,
-} from "@/data/portfolio";
+  type CategorySlug,, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -190,7 +189,7 @@ function Home() {
               value={filter}
               onChange={setFilter}
               options={[
-                { value: "all" as Filter, label: "All" },
+                { value: "all" as Filter, label: t("gallery.filter_all") },
                 ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
               ]}
             />
@@ -239,7 +238,7 @@ function Home() {
                 onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
                 className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
               >
-                {allShown ? "View Less" : "View More"}
+                {allShown ? t("btn.view_less") : t("btn.view_more")}
               </button>
             </div>
           ) : null}

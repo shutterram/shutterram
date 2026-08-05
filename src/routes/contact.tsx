@@ -7,7 +7,7 @@ import { z } from "zod";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { budgetRanges, hourOptions, services, site } from "@/data/portfolio";
+import { budgetRanges, hourOptions, services, site, t } from "@/data/portfolio";
 import { submitForm } from "@/lib/submit-form";
 import { cn } from "@/lib/utils";
 
@@ -144,8 +144,8 @@ function Contact() {
       >
         {(
           [
-            { key: "quote" as const, label: "Request a Quote" },
-            { key: "message" as const, label: "Send a Message" },
+            { key: "quote" as const, label: t("contact.tab_quote") },
+            { key: "message" as const, label: t("contact.tab_message") },
           ]
         ).map((t) => (
           <button
@@ -241,7 +241,7 @@ function MessageForm() {
             disabled={isSubmitting}
             className="glow-hover inline-flex items-center border border-foreground bg-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-background hover:bg-transparent hover:text-foreground disabled:opacity-50"
           >
-            {isSubmitting ? "Sending…" : "Send Message"}
+            {isSubmitting ? "Sending…" : t("contact.submit_message")}
           </button>
         </div>
       </form>
@@ -271,7 +271,7 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
 
   return (
     <section id="quote" className="mt-12 scroll-mt-40 border border-hairline bg-surface/30 p-8 md:p-12">
-      <p className="eyebrow">Book Your Date</p>
+      <p className="eyebrow">{t("btn.book_date")}</p>
       <h2 className="mt-3 font-display text-3xl">Tell me about the shoot</h2>
       <p className="mt-2 text-sm text-muted-foreground">
         The more detail you give, the more accurate the quote comes back.

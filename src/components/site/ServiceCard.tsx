@@ -42,7 +42,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
             hash={service.slug}
             className="group/btn inline-flex items-center gap-2 border-b border-hairline pb-1.5 text-[0.6875rem] tracking-[0.24em] uppercase hover:border-foreground"
           >
-            View More
+            {t("btn.view_more")}
             <ArrowUpRight className="size-3.5 transition-transform duration-500 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
           </Link>
           <Link
@@ -51,7 +51,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
             hash="quote"
             className="inline-flex items-center border border-foreground bg-foreground px-5 py-2.5 text-[0.6875rem] tracking-[0.24em] uppercase text-background hover:bg-transparent hover:text-foreground"
           >
-            Request a Quote
+            {t("btn.request_quote")}
           </Link>
         </div>
       </div>

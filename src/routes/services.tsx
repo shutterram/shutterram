@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
-import { sectionFor, services } from "@/data/portfolio";
+import { sectionFor, services, t } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
@@ -85,14 +85,14 @@ function ServicesPage() {
                   params={{ category: s.category }}
                   className="inline-flex items-center border border-hairline px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
-                  View More
+                  {t("btn.view_more")}
                 </Link>
                 <Link
                   to="/contact"
                   search={{ service: s.slug, form: "quote" as const }}
                   className="inline-flex items-center border border-foreground bg-foreground px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85 md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
-                  Request a Quote
+                  {t("btn.request_quote")}
                 </Link>
               </div>
             </Reveal>

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
-import { categories, photos, type CategorySlug } from "@/data/portfolio";
+import { categories, photos, type CategorySlug, t } from "@/data/portfolio";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/gallery/")({
@@ -45,15 +45,15 @@ function Gallery() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 pb-28 pt-56">
-      <p className="eyebrow">Previous Works</p>
-      <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">The Gallery</h1>
+      <p className="eyebrow">{t("gallery.eyebrow")}</p>
+      <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">{t("gallery.title")}</h1>
       <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
         Everything worth keeping from the last few years, in one place. Filter by
         category, or open any frame full screen and step through with the arrow keys.
       </p>
 
       <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
-        <p className="eyebrow mr-2">Jump to a category</p>
+        <p className="eyebrow mr-2">{t("gallery.jump")}</p>
         {categories.map((c) => (
           <Link
             key={c.slug}
@@ -114,7 +114,7 @@ function Gallery() {
             onClick={() => setMobileCount((c) => (allShown ? 4 : c + 4))}
             className="inline-flex items-center border border-hairline px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:border-foreground"
           >
-            {allShown ? "View Less" : "View More"}
+            {allShown ? t("btn.view_less") : t("btn.view_more")}
           </button>
         </div>
       ) : null}

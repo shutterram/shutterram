@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { aboutLong, aboutProcessSteps, aboutShort, sectionFor, site, stats } from "@/data/portfolio";
+import { aboutLong, aboutProcessSteps, aboutShort, sectionFor, site, stats, t } from "@/data/portfolio";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
@@ -58,7 +58,7 @@ function About() {
 
         <Reveal delay={120} className="mt-14 space-y-10 text-sm leading-loose text-muted-foreground md:text-base">
           <div className="border-t border-hairline pt-8">
-            <p className="eyebrow">Kit, briefly</p>
+            <p className="eyebrow">{t("about.kit_heading")}</p>
             <p className="mt-3">
               Two mirrorless bodies, three primes, one very tired 24–70, and a pair of
               lights that only come out when the room refuses to cooperate.
@@ -66,7 +66,7 @@ function About() {
           </div>
 
           <div className="border-t border-hairline pt-8">
-            <p className="eyebrow">Say hello</p>
+            <p className="eyebrow">{t("about.hello_heading")}</p>
             <p className="mt-3">
               <a href={`mailto:${site.email}`} className="text-foreground underline underline-offset-4">
                 {site.email}
@@ -85,7 +85,7 @@ function About() {
               search={{ form: "message" as const }}
               className="glow-hover inline-flex items-center border border-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-foreground transition-colors hover:bg-foreground hover:text-background"
             >
-              Work with me
+              {t("btn.work_with_me")}
             </Link>
           </div>
         </Reveal>
