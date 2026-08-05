@@ -8,6 +8,7 @@
 
 import type { CSSProperties } from "react";
 import type { SiteContentPayload, Row } from "@/lib/site-content.functions";
+import type { ThemeToken } from "@/lib/theme-css";
 import {
   defaultSite,
   defaultCategories,
@@ -87,6 +88,7 @@ export let hourOptions: string[] = [...defaultHourOptions];
 export let loader: LoaderConfig = defaultLoader;
 export let logos: LogoSet = defaultLogos;
 export let copyMap: Record<string, string> = { ...defaultCopy };
+export let themeTokens: ThemeToken[] = [];
 
 /** Editable label lookup — falls back to the built-in wording. */
 export function t(key: string, fallback?: string): string {
@@ -292,6 +294,17 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
     }
     copyMap = next;
   }
+
+  themeTokens = (payload.theme_tokens ?? []).map((r: Row) => ({
+    token: str(r["token"]),
+    label: str(r["label"]),
+    group: str(r["group_label"], "General"),
+    hint: str(r["hint"]),
+    darkValue: str(r["dark_value"], "#000000"),
+    darkOpacity: num(r["dark_opacity"], 100),
+    lightValue: str(r["light_value"], "#ffffff"),
+    lightOpacity: num(r["light_opacity"], 100),
+  }));
 }
 
 /** Enabled sections for a page, in the order set in the content studio. */
