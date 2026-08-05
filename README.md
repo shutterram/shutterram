@@ -24,6 +24,8 @@ headline, paragraph, photo, service and testimonial can be edited without touchi
 | Notifications | sonner |
 | Validation | zod |
 | Database / Auth / Storage | Supabase (Postgres + Row Level Security, Supabase Auth, Supabase Storage) |
+| Auth flows | Email + password sign-in, email-link password recovery (`/reset-password`), role check via `user_roles` table |
+| Global UX states | Route-level pending loader (`PageLoader`), error boundary screen (`SiteErrorScreen`), scroll-to-top control |
 | Fonts | Literata (display) + Manrope (body), loaded via `<link>` in `src/routes/__root.tsx` |
 | Deployment target | Edge/Node server (Cloudflare Workers by default; Vercel/Netlify/Node also work) |
 
