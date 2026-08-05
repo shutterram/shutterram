@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
@@ -21,6 +21,8 @@ import {
   featuredIds,
   photoById,
   services,
+  sectionFor,
+  sectionsFor,
   site,
   type CategorySlug,
 } from "@/data/portfolio";
@@ -142,7 +144,9 @@ function Home() {
     };
   };
 
-  const blocks: Record<string, JSX.Element> = {
+  const sample = editSamples[Math.min(edit, editSamples.length - 1)];
+
+  const blocks: Record<string, ReactElement> = {
     about: (
       <section key="about" className="mx-auto max-w-5xl px-6 py-24 md:py-32">
         <Reveal className="flex flex-col items-center text-center">
@@ -286,14 +290,14 @@ function Home() {
 
         <div className="mt-10">
           <BeforeAfterSlider
-            key={sample.id}
-            before={sample.srcBefore}
-            after={sample.src}
-            alt={sample.title}
+            key={sample?.id}
+            before={sample?.srcBefore ?? ""}
+            after={sample?.src ?? ""}
+            alt={sample?.title ?? ""}
           />
           <div className="mt-5 flex flex-col items-center gap-1 text-center">
-            <p className="font-display text-2xl">{sample.title}</p>
-            <p className="text-sm text-muted-foreground">{sample.note}</p>
+            <p className="font-display text-2xl">{sample?.title}</p>
+            <p className="text-sm text-muted-foreground">{sample?.note}</p>
           </div>
         </div>
       </section>
