@@ -19,8 +19,10 @@ type Row = {
   size_desktop: string;
   size_tablet: string;
   size_mobile: string;
+  sample_text: string;
   sort_order: number;
 };
+
 
 type Site = {
   id: boolean;
