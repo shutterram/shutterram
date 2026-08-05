@@ -9,6 +9,7 @@
 import type { CSSProperties } from "react";
 import type { SiteContentPayload, Row } from "@/lib/site-content.functions";
 import type { ThemeToken } from "@/lib/theme-css";
+import { defaultTypography, type TypeToken, type Typography } from "@/lib/type-css";
 import {
   defaultSite,
   defaultCategories,
@@ -93,6 +94,8 @@ export let glow: GlowConfig = defaultGlow;
 export let logos: LogoSet = defaultLogos;
 export let copyMap: Record<string, string> = { ...defaultCopy };
 export let themeTokens: ThemeToken[] = [];
+export let typeTokens: TypeToken[] = [];
+export let typography: Typography = defaultTypography;
 
 /** Editable label lookup — falls back to the built-in wording. */
 export function t(key: string, fallback?: string): string {
@@ -177,6 +180,13 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
           offsetY: num(s["logo_loader_offset_y"]),
         },
       },
+    };
+    typography = {
+      heading: str(s["font_heading"], defaultTypography.heading),
+      body: str(s["font_body"], defaultTypography.body),
+      scaleDesktop: num(s["font_scale_desktop"], 1) || 1,
+      scaleTablet: num(s["font_scale_tablet"], 1) || 1,
+      scaleMobile: num(s["font_scale_mobile"], 1) || 1,
     };
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
@@ -314,6 +324,22 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
     darkOpacity: num(r["dark_opacity"], 100),
     lightValue: str(r["light_value"], "#ffffff"),
     lightOpacity: num(r["light_opacity"], 100),
+  }));
+
+  typeTokens = (payload.type_tokens ?? []).map((r: Row) => ({
+    role: str(r["role"]),
+    label: str(r["label"]),
+    group: str(r["group_label"], "General"),
+    hint: str(r["hint"]),
+    selector: str(r["selector"]),
+    fontFamily: str(r["font_family"]),
+    weight: str(r["weight"]),
+    letterSpacing: str(r["letter_spacing"]),
+    lineHeight: str(r["line_height"]),
+    textTransform: str(r["text_transform"]),
+    sizeDesktop: str(r["size_desktop"]),
+    sizeTablet: str(r["size_tablet"]),
+    sizeMobile: str(r["size_mobile"]),
   }));
 }
 

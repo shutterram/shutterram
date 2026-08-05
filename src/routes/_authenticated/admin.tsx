@@ -7,6 +7,7 @@ import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
+import { TypographyStudio } from "@/components/admin/TypographyStudio";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -126,6 +127,13 @@ const SECTIONS = [
     label: "Colours",
     kind: "theme" as const,
     table: "theme_tokens",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "fonts",
+    label: "Fonts",
+    kind: "type" as const,
+    table: "type_tokens",
     fields: [] satisfies FieldSpec[],
   },
   {
@@ -419,6 +427,8 @@ function AdminPage() {
       <div className="mt-12">
         {section.kind === "theme" ? (
           <ThemeStudio />
+        ) : section.kind === "type" ? (
+          <TypographyStudio />
         ) : section.kind === "logos" ? (
           <LogoStudio />
         ) : section.kind === "copy" ? (
