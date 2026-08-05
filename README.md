@@ -25,6 +25,7 @@ headline, paragraph, photo, service and testimonial can be edited without touchi
 | Validation | zod |
 | Database / Auth / Storage | Supabase (Postgres + Row Level Security, Supabase Auth, Supabase Storage) |
 | Auth flows | Email + password sign-in, email-link password recovery (`/reset-password`), role check via `user_roles` table |
+| Section management | `page_sections` table drives per-page section order, visibility and wording |
 | Global UX states | Route-level pending loader (`PageLoader`), error boundary screen (`SiteErrorScreen`), scroll-to-top control |
 | Fonts | Literata (display) + Manrope (body), loaded via `<link>` in `src/routes/__root.tsx` |
 | Deployment target | Edge/Node server (Cloudflare Workers by default; Vercel/Netlify/Node also work) |
@@ -87,10 +88,24 @@ The studio ships with a self-service reset flow:
 ### What's editable
 `Site & About` (studio name, tagline, email, phone, location, form endpoint, about copy, quote-form
 dropdown options), `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
-`Experience`, `Testimonials`, `Process steps`, `Social links`. Every list supports add, edit,
+`Experience`, `Testimonials`, `Process steps`, `Page sections`, `Social links`. Every list supports add, edit,
 reorder (↑ ↓) and delete. **New entries (single or bulk) are inserted at the top of the list**, right
 under the Add / Bulk upload controls, so you never have to scroll to fill them in; use ↑ ↓ to move
 them wherever you want afterwards.
+
+**Page sections** controls the sections themselves rather than their contents. Each row is one
+section of one page (`Home — Featured work`, `About page — The Experience`, …) and lets you:
+
+- rename it (studio-only label), edit its small eyebrow label, heading, italic second line and intro
+  paragraph;
+- reorder it with ↑ ↓ — the order in this list is the order the sections appear on the page;
+- hide it with the **Show on site** switch, or delete it entirely (deleting removes the section from
+  the page; re-add it by re-inserting the row with the same `page` + `section_key`).
+
+The **Experience** section is configured per page, so the About page can use its own wording (for
+example *"How you can work with me"*). Its milestones live in **Process steps**, where each step is
+assigned to either *Home & Services pages* or *About Me page* via the “Which Experience section”
+dropdown.
 
 Photos and Services use a **Category** dropdown with inline *Add* / *Remove*, so gallery categories
 can be created and deleted from the studio. Editing samples take two images — a **Before**
@@ -110,6 +125,12 @@ Two ways, both in the studio:
      per-file) — handy when uploading a whole wedding set into one category.
   4. **Upload N** uploads every file and creates its row. Failures are reported per file and stay
      in the list so you can retry; successful ones disappear and appear in the list below.
+
+**Social links** accept either a built-in icon name (`instagram`, `facebook`, `twitter`, `flickr`)
+or a **custom icon** you upload (SVG or PNG). Uploaded icons are rendered through a CSS mask, so they
+are automatically resized to the standard icon box and recoloured to match the site's text colour on
+hover — upload a single-colour silhouette with a transparent background for best results. All social
+links open in a new tab (`target="_blank" rel="noreferrer noopener"`).
 
 Uploads go to the **private** `site-images` Supabase Storage bucket and are served through
 `/api/public/img/<key>`, so the bucket never has to be public.
@@ -150,7 +171,7 @@ The app is ordinary TanStack Start code — nothing is tied to the platform it w
 ### 4.1 Prepare a Supabase project
 1. Create a project at supabase.com (or self-host Supabase).
 2. Recreate the schema: tables `settings`, `categories`, `photos`, `services`, `edit_samples`,
-   `stats`, `experience`, `testimonials`, `process_steps`, `socials`, `user_roles`, plus the
+   `stats`, `experience`, `testimonials`, `process_steps`, `page_sections`, `socials`, `user_roles`, plus the
    `app_role` enum, the `has_role()` function and the `touch_updated_at()` trigger. Export from the
    current database with `pg_dump --schema-only` (plus `--data-only` for your content) and import
    into the new one, or copy the SQL from `supabase/migrations/` if present.
@@ -194,6 +215,10 @@ npm run preview   # serve the build locally
 - **The first account created becomes the admin.** Create yours before sharing the URL, and keep
   `/admin` and `/auth` unlinked (both are `noindex`).
 - **Backups**: schedule Supabase database backups; storage objects are not covered by SQL dumps.
+- **Deleting a page section** removes it from the live site immediately; keep a note of the
+  `page` / `section_key` pair if you might want it back.
+- **External links** (socials and anything you add) must open in a new tab — the shared components
+  already set `target="_blank" rel="noreferrer noopener"`.
 - **Route metadata**: each route defines its own `head()` with title/description/OG tags — update
   these if you rename the studio.
 
