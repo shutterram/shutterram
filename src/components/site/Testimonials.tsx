@@ -1,13 +1,16 @@
 import { ChevronLeft, ChevronRight, Images, Star, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { t, testimonials, type Testimonial } from "@/data/portfolio";
+import { t, testimonials, type Photo, type Testimonial } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
+import { Lightbox } from "./Lightbox";
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
 
 /** Pop-up with the full review and any photographs the client attached. */
 function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () => void }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
