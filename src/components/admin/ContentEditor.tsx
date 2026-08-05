@@ -2,18 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { optimiseImage, kb } from "@/lib/optimise-image";
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
 export async function uploadSiteImage(file: File): Promise<string> {
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const { file: optimised, changed, originalSize } = await optimiseImage(file);
+  if (changed) {
+    toast.message(`Optimised ${file.name}`, {
+      description: `${kb(originalSize)} → ${kb(optimised.size)} (WebP)`,
+    });
+  }
+  const ext = optimised.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from("site-images").upload(key, file, {
+  const { error } = await supabase.storage.from("site-images").upload(key, optimised, {
     cacheControl: "31536000",
-    contentType: file.type || "application/octet-stream",
+    contentType: optimised.type || "application/octet-stream",
   });
   if (error) throw error;
   return `/api/public/img/${key}`;
 }
+
 
 export function ImageField({
   value,
