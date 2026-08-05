@@ -11,20 +11,19 @@ import {
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: [
-      { title: "About Ram — Photographer | Shutter Ram" },
-      {
-        name: "description",
-        content:
-          "Meet Ram, the photographer behind Shutter Ram: fifteen years of documentary and editorial work across weddings, brands and portraits.",
-      },
-      { property: "og:title", content: "About Ram — Photographer | Shutter Ram" },
-      { property: "og:description", content: aboutShort.slice(0, 155) },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/about" } }),
+  head: ({ loaderData }) =>
+    buildSeoHead(loaderData, {
+      path: "/about",
+      title: "About Ram — The Photographer | Shutter Ram",
+      description:
+        "Meet Ram, the photographer behind Shutter Ram: documentary and editorial work across weddings, brands and portraits.",
+      type: "profile",
+    }),
   component: About,
 });
 

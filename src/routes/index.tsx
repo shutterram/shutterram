@@ -28,26 +28,42 @@ import {
   t,
 } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      {
-        name: "description",
-        content:
-          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
-      },
-      { property: "og:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      {
-        property: "og:description",
-        content:
-          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
-      },
-      { property: "og:image", content: categories[0]!.hero },
-      { name: "twitter:image", content: categories[0]!.hero },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/" } }),
+  head: ({ loaderData }) => {
+    const head = buildSeoHead(loaderData, {
+      path: "/",
+      title: "Shutter Ram — Wedding, Portrait & Corporate Photography",
+      description:
+        "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Clicking today, for a memory that lives forever.",
+      image: categories[0]!.hero,
+    });
+    return {
+      ...head,
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "@id": `${SITE_URL}/#studio`,
+            name: site.name,
+            description: head.meta[1]!["content"],
+            url: SITE_URL,
+            image: categories[0]!.hero,
+            email: site.email,
+            telephone: site.phone,
+            address: { "@type": "PostalAddress", addressLocality: site.location },
+            priceRange: "$$",
+            sameAs: [],
+          }),
+        },
+      ],
+    };
+  },
   component: Home,
 });
 

@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { budgetRanges, hourOptions, services, site, t } from "@/data/portfolio";
 import { submitForm } from "@/lib/submit-form";
 import { cn } from "@/lib/utils";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 type FormKind = "message" | "quote";
 type ContactSearch = { service?: string; form?: FormKind };
@@ -21,21 +23,14 @@ export const Route = createFileRoute("/contact")({
     if (search["form"] === "quote" || search["form"] === "message") out.form = search["form"];
     return out;
   },
-  head: () => ({
-    meta: [
-      { title: "Contact & Book Your Date | Shutter Ram" },
-      {
-        name: "description",
-        content:
-          "Send Shutter Ram a message or request a tailored photography quote for your wedding, brand shoot, portrait session or event.",
-      },
-      { property: "og:title", content: "Contact & Book Your Date | Shutter Ram" },
-      {
-        property: "og:description",
-        content: "Message Shutter Ram or request a tailored photography quote.",
-      },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/contact" } }),
+  head: ({ loaderData }) =>
+    buildSeoHead(loaderData, {
+      path: "/contact",
+      title: "Contact & Book Your Date | Shutter Ram",
+      description:
+        "Send Shutter Ram a message or request a tailored photography quote for your wedding, brand shoot, portrait session or event.",
+    }),
   component: Contact,
 });
 

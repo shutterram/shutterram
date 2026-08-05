@@ -88,6 +88,33 @@ const SECTIONS = [
     fields: [] satisfies FieldSpec[],
   },
   {
+    id: "seo",
+    label: "SEO",
+    kind: "list" as const,
+    table: "seo_pages",
+    itemLabel: "page",
+    titleKey: "path",
+    fields: [
+      { key: "path", label: "Page path (e.g. /about)" },
+      { key: "title", label: "Title tag (under 60 characters)" },
+      { key: "description", label: "Meta description (under 160 characters)", type: "textarea" },
+      { key: "keywords", label: "Keywords (comma separated)" },
+      { key: "og_title", label: "Social share title" },
+      { key: "og_description", label: "Social share description", type: "textarea" },
+      { key: "og_image", label: "Social share image", type: "image" },
+      { key: "canonical", label: "Canonical URL" },
+      {
+        key: "robots",
+        label: "Search engines",
+        type: "select",
+        options: [
+          { value: "index, follow", label: "Index this page" },
+          { value: "noindex, nofollow", label: "Hide from search engines" },
+        ],
+      },
+    ] satisfies FieldSpec[],
+  },
+  {
     id: "reviews",
     label: "Client reviews",
     kind: "reviews" as const,

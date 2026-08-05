@@ -156,6 +156,47 @@ If the database is unreachable, the site renders the typed defaults in
 
 ---
 
+### Light & dark mode
+Visitors switch themes with the sun/moon button in the header (and at the bottom of the mobile
+menu). The choice is stored in `localStorage` under `shutterram-theme` and applied before the first
+paint by a small inline script in `src/routes/__root.tsx`, so there is no flash of the wrong theme.
+
+- Dark is the default for first-time visitors.
+- Palettes live in `src/styles.css`: `:root`/`.dark` for dark, `.light` for light. Both use the same
+  semantic tokens (`--background`, `--foreground`, `--hairline`, `--glow`…), so components never
+  hardcode colours.
+- Logos flagged **Invert logo** in the studio are inverted only in dark mode, so a black source logo
+  stays black on the light theme.
+- The hero overlay uses the `.hero-scrim` utility, which has separate strengths per theme.
+
+### SEO tab
+Every page's search and social metadata is editable under **SEO** in the studio (`seo_pages` table).
+Each row is one page path:
+
+| Field | Used for |
+| --- | --- |
+| Page path | which route the record applies to (`/`, `/about`, `/gallery/wedding`, …) |
+| Title tag | `<title>` — keep under 60 characters |
+| Meta description | `<meta name="description">` — keep under 160 characters |
+| Keywords | `<meta name="keywords">` (optional) |
+| Social share title / description / image | `og:*` and `twitter:*` tags |
+| Canonical URL | `<link rel="canonical">` and `og:url` |
+| Search engines | `index, follow` or `noindex, nofollow` |
+
+Blank fields fall back to the per-route defaults baked into each route file, so a half-filled record
+never produces empty tags. Add a row for a new gallery category simply by entering its path.
+
+Also shipped:
+
+- `/sitemap.xml` is generated at request time from the SEO records plus every gallery category, and
+  skips anything marked `noindex` (`src/routes/sitemap[.]xml.tsx`).
+- `public/robots.txt` allows crawlers, disallows `/admin`, `/auth`, `/review`, `/reset-password`, and
+  points at the sitemap.
+- JSON-LD: `LocalBusiness` on the home page and `CollectionPage` on category galleries.
+- `/review` is `noindex, nofollow` so the client review link never appears in search.
+
+---
+
 ## 3. Environment variables
 
 Client-visible (safe to expose, must be present at build time):
@@ -326,8 +367,12 @@ Work top to bottom. Everything here is a one-time setup except the final smoke t
 - [ ] `npm run preview` sanity-checked against the production build.
 
 ### SEO & polish
-- [ ] Every route's `head()` title/description/OG tags reflect the final brand.
+- [ ] Every page reviewed in the studio **SEO** tab (title, description, social image, canonical).
+- [ ] Canonical URLs use your real domain — the defaults point at `https://shutterram.lovable.app`
+      (`SITE_URL` in `src/lib/seo.ts`); change it there and in `public/robots.txt` when you move.
+- [ ] `/sitemap.xml` loads and lists every public page.
 - [ ] `public/robots.txt` allows the public pages and disallows `/admin`, `/auth`, `/review`.
+- [ ] Light and dark mode both checked on every page (header, hero, forms, footer, lightbox).
 - [ ] Favicon and OG image resolve at absolute `https://` URLs.
 - [ ] Images exported at ~2000px long edge, under ~400 KB each.
 

@@ -7,6 +7,7 @@ import {
   useRouterState,
   HeadContent,
   Scripts,
+  ScriptOnce,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -104,16 +105,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
       },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png",
-      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -135,11 +126,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
+        <ScriptOnce>
+          {`try{var t=localStorage.getItem('shutterram-theme')==='light'?'light':'dark';var r=document.documentElement;r.classList.toggle('light',t==='light');r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;}catch(e){}`}
+        </ScriptOnce>
         {children}
         <Scripts />
       </body>

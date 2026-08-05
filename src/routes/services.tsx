@@ -4,26 +4,19 @@ import { sectionFor, services, t } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/services")({
-  head: () => ({
-    meta: [
-      { title: "Services & Rates | Shutter Ram Photography" },
-      {
-        name: "description",
-        content:
-          "Wedding, corporate, portrait, headshot, event and product photography services from Shutter Ram, with what's included and starting rates.",
-      },
-      { property: "og:title", content: "Services & Rates | Shutter Ram" },
-      {
-        property: "og:description",
-        content:
-          "Photography services from Shutter Ram — coverage, deliverables and starting rates.",
-      },
-      { property: "og:image", content: services[0]!.image },
-      { name: "twitter:image", content: services[0]!.image },
-    ],
-  }),
+  loader: () => getSeo({ data: { path: "/services" } }),
+  head: ({ loaderData }) =>
+    buildSeoHead(loaderData, {
+      path: "/services",
+      title: "Photography Services & Rates | Shutter Ram",
+      description:
+        "Wedding, corporate, portrait, headshot, event and product photography services with what is included and starting rates.",
+      image: services[0]!.image,
+    }),
   component: ServicesPage,
 });
 

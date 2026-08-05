@@ -139,7 +139,9 @@ export const defaultCopy: Record<string, string> = {
   "contact.tab_message": "Send a Message",
   "contact.submit_quote": "Send Quote Request",
   "contact.submit_message": "Send Message",
-  "review.eyebrow": "Private link \u2014 clients only",
+  "theme.to_light": "Switch to light mode",
+  "theme.to_dark": "Switch to dark mode",
+  "review.eyebrow": "Review link — clients only",
   "review.title": "How was your shoot?",
   "review.intro":
     "If you have two minutes, a few honest words go further than anything I could write about my own work. Thank you.",

@@ -3,12 +3,15 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/$category")({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const category = categoryBySlug(params.category);
     if (!category) throw notFound();
-    return { category };
+    const seo = await getSeo({ data: { path: `/gallery/${category.slug}` } });
+    return { category, seo };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -19,15 +22,26 @@ export const Route = createFileRoute("/gallery/$category")({
         ],
       };
     }
-    const { category } = loaderData;
+    const { category, seo } = loaderData;
+    const head = buildSeoHead(seo, {
+      path: `/gallery/${category.slug}`,
+      title: `${category.title} | Shutter Ram`,
+      description: category.tagline,
+      image: category.hero,
+    });
     return {
-      meta: [
-        { title: `${category.title} | Shutter Ram` },
-        { name: "description", content: category.tagline },
-        { property: "og:title", content: `${category.title} | Shutter Ram` },
-        { property: "og:description", content: category.tagline },
-        { property: "og:image", content: category.hero },
-        { name: "twitter:image", content: category.hero },
+      ...head,
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: category.title,
+            description: category.tagline,
+            url: head.links[0]!.href,
+          }),
+        },
       ],
     };
   },
