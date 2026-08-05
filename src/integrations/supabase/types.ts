@@ -271,6 +271,12 @@ export type Database = {
           loader_shape: string
           loader_size: number
           location: string
+          logo_favicon: string
+          logo_footer: string
+          logo_header: string
+          logo_invert: boolean
+          logo_loader: string
+          logo_mobile: string
           name: string
           phone: string
           tagline: string
@@ -289,6 +295,12 @@ export type Database = {
           loader_shape?: string
           loader_size?: number
           location?: string
+          logo_favicon?: string
+          logo_footer?: string
+          logo_header?: string
+          logo_invert?: boolean
+          logo_loader?: string
+          logo_mobile?: string
           name?: string
           phone?: string
           tagline?: string
@@ -307,6 +319,12 @@ export type Database = {
           loader_shape?: string
           loader_size?: number
           location?: string
+          logo_favicon?: string
+          logo_footer?: string
+          logo_header?: string
+          logo_invert?: boolean
+          logo_loader?: string
+          logo_mobile?: string
           name?: string
           phone?: string
           tagline?: string

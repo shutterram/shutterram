@@ -17,7 +17,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { ScrollToTop } from "@/components/site/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
-import { applyContent } from "@/data/portfolio";
+import { applyContent, logos } from "@/data/portfolio";
 
 function NotFoundComponent() {
   return (
@@ -137,6 +137,14 @@ function RootComponent() {
   const content = Route.useLoaderData();
   applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Swap the browser tab icon when a custom favicon is set in the studio.
+  const favicon = logos.favicon;
+  useEffect(() => {
+    if (!favicon) return;
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (link) link.href = favicon;
+  }, [favicon]);
 
   // The private studio pages render without the public site chrome.
   const isStudio =

@@ -311,7 +311,15 @@ function FieldInput({
 }
 
 /** Editor for a single-row settings table. */
-export function SingletonEditor({ table, fields }: { table: string; fields: FieldSpec[] }) {
+export function SingletonEditor({
+  table,
+  fields,
+  note,
+}: {
+  table: string;
+  fields: FieldSpec[];
+  note?: string | undefined;
+}) {
   const [row, setRow] = useState<Row | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -340,6 +348,7 @@ export function SingletonEditor({ table, fields }: { table: string; fields: Fiel
 
   return (
     <div className="space-y-8">
+      {note ? <p className="text-xs leading-relaxed text-muted-foreground">{note}</p> : null}
       <div className="grid gap-8 md:grid-cols-2">
         {fields.map((f) => (
           <FieldInput

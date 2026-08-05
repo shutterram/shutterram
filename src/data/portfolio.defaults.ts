@@ -58,6 +58,30 @@ export const defaultLoader: LoaderConfig = {
   fade: "out",
 };
 
+export interface LogoSet {
+  /** Logo used in the desktop/mobile site header. */
+  header: string;
+  /** Logo used in the footer lockup. */
+  footer: string;
+  /** Logo used at the top of the mobile navigation drawer. */
+  mobile: string;
+  /** Logo shown inside the loading screen. */
+  loader: string;
+  /** Browser tab icon. */
+  favicon: string;
+  /** Invert logo colours (on for dark artwork on this dark theme). */
+  invert: boolean;
+}
+
+export const defaultLogos: LogoSet = {
+  header: "",
+  footer: "",
+  mobile: "",
+  loader: "",
+  favicon: "",
+  invert: true,
+};
+
 export type CategorySlug = string;
 
 export interface Category {

@@ -19,7 +19,7 @@ export function SiteFooter() {
         <div className="grid gap-14 text-center md:grid-cols-12 md:text-left">
           <div className="md:col-span-12 lg:col-span-5">
             <Link to="/" className="inline-flex flex-col items-center md:items-start">
-              <LogoLockup size="md" showTagline={false} />
+              <LogoLockup size="md" variant="footer" showTagline={false} />
               <span className="-mt-1 font-display text-3xl leading-none tracking-[0.02em]">
                 Shutter<span className="italic text-muted-foreground">Ram</span>
               </span>

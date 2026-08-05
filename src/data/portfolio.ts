@@ -24,6 +24,7 @@ import {
   defaultHourOptions,
   defaultPageSections,
   defaultLoader,
+  defaultLogos,
 } from "./portfolio.defaults";
 
 export { unedited } from "./portfolio.defaults";
@@ -40,6 +41,7 @@ export type {
   ProcessStep,
   SectionConfig,
   LoaderConfig,
+  LogoSet,
 } from "./portfolio.defaults";
 
 import type {
@@ -55,6 +57,7 @@ import type {
   CategorySlug,
   SectionConfig,
   LoaderConfig,
+  LogoSet,
 } from "./portfolio.defaults";
 
 // Live bindings — reassigned by applyContent().
@@ -75,6 +78,7 @@ export let aboutLong: string[] = [...defaultAboutLong];
 export let budgetRanges: string[] = [...defaultBudgetRanges];
 export let hourOptions: string[] = [...defaultHourOptions];
 export let loader: LoaderConfig = defaultLoader;
+export let logos: LogoSet = defaultLogos;
 
 const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
 const num = (v: unknown, fallback = 0) => (typeof v === "number" ? v : fallback);
@@ -108,6 +112,14 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       size: num(s["loader_size"], defaultLoader.size) || defaultLoader.size,
       pulseScale: num(s["loader_pulse_scale"], defaultLoader.pulseScale) || defaultLoader.pulseScale,
       fade: str(s["loader_fade"], defaultLoader.fade) === "in" ? "in" : "out",
+    };
+    logos = {
+      header: str(s["logo_header"]),
+      footer: str(s["logo_footer"]),
+      mobile: str(s["logo_mobile"]),
+      loader: str(s["logo_loader"]),
+      favicon: str(s["logo_favicon"]),
+      invert: s["logo_invert"] !== false,
     };
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
@@ -143,7 +155,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       id: str(r["photo_key"]),
       category: str(r["category_slug"]) as CategorySlug,
       caption: str(r["caption"]),
-      src: str(r["src"]),
+      src: str(r["src"]) || "/placeholders/photo.svg",
     }));
     featuredIds = payload.photos
       .filter((r: Row) => r["featured"] === true)
