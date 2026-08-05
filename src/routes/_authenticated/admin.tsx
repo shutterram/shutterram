@@ -189,7 +189,8 @@ const SECTIONS = [
       { key: "label", label: "Short label (filters)" },
       { key: "slug", label: "URL slug" },
       { key: "tagline", label: "Tagline", type: "textarea" },
-      { key: "hero", label: "Hero image", type: "image" },
+      { key: "hero", label: "Hero image (home slider)", type: "image" },
+      { key: "cover", label: "Category page cover (falls back to hero image)", type: "image" },
     ] satisfies FieldSpec[],
   },
   {
