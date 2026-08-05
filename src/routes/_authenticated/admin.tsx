@@ -70,6 +70,20 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "form-delivery",
+    label: "Form delivery",
+    kind: "single" as const,
+    table: "admin_settings",
+    note: "Private: this endpoint is only visible to signed-in admins and is never sent to site visitors.",
+    fields: [
+      {
+        key: "form_endpoint",
+        label: "Form endpoint URL",
+        placeholder: "Formspree / Basin / Getform URL",
+      },
+    ] satisfies FieldSpec[],
+  },
+  {
     id: "logos",
     label: "Logos",
     kind: "logos" as const,
