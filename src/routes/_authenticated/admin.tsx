@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/ContentEditor";
+import { CopyEditor } from "@/components/admin/CopyEditor";
+import { LogoStudio } from "@/components/admin/LogoStudio";
+import { ReviewModeration } from "@/components/admin/ReviewModeration";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -63,17 +66,23 @@ const SECTIONS = [
   {
     id: "logos",
     label: "Logos",
-    kind: "single" as const,
+    kind: "logos" as const,
     table: "settings",
-    note: "Upload a different logo for each place it appears. Leave a slot empty to keep the built-in logo.",
-    fields: [
-      { key: "logo_header", label: "Header logo", type: "image" },
-      { key: "logo_mobile", label: "Mobile menu logo", type: "image" },
-      { key: "logo_footer", label: "Footer logo", type: "image" },
-      { key: "logo_loader", label: "Loading screen logo", type: "image" },
-      { key: "logo_favicon", label: "Browser tab icon (favicon)", type: "image" },
-      { key: "logo_invert", label: "Invert logo colours (for dark artwork)", type: "bool" },
-    ] satisfies FieldSpec[],
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "copy",
+    label: "Wording",
+    kind: "copy" as const,
+    table: "site_copy",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "reviews",
+    label: "Client reviews",
+    kind: "reviews" as const,
+    table: "testimonials",
+    fields: [] satisfies FieldSpec[],
   },
   {
     id: "hero",
@@ -319,7 +328,13 @@ function AdminPage() {
       </nav>
 
       <div className="mt-12">
-        {section.kind === "single" ? (
+        {section.kind === "logos" ? (
+          <LogoStudio />
+        ) : section.kind === "copy" ? (
+          <CopyEditor />
+        ) : section.kind === "reviews" ? (
+          <ReviewModeration />
+        ) : section.kind === "single" ? (
           <SingletonEditor table={section.table} fields={section.fields} note={"note" in section ? section.note : undefined} />
         ) : (
           <ListEditor
