@@ -16,6 +16,7 @@ export interface SiteContentPayload {
   experience: Row[];
   testimonials: Row[];
   process_steps: Row[];
+  page_sections: Row[];
 }
 
 const EMPTY: SiteContentPayload = {
@@ -29,6 +30,7 @@ const EMPTY: SiteContentPayload = {
   experience: [],
   testimonials: [],
   process_steps: [],
+  page_sections: [],
 };
 
 /**
@@ -79,6 +81,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         experience,
         testimonials,
         process_steps,
+        page_sections,
       ] = await Promise.all([
         supabase
           .from("settings" as never)
@@ -97,6 +100,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("experience"),
         table("testimonials"),
         table("process_steps"),
+        table("page_sections"),
       ]);
 
       return {
@@ -110,6 +114,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         experience,
         testimonials,
         process_steps,
+        page_sections,
       };
     } catch (error) {
       console.error("[content] unexpected failure", error);
