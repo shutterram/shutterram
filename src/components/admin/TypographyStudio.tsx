@@ -42,6 +42,28 @@ const VIEWS = [
 const field =
   "w-full border-b border-hairline bg-transparent py-1.5 text-xs outline-none focus:border-foreground";
 
+/** Inline styles that mirror how this text style will look on the site. */
+function previewStyle(r: Row, sizeKey: string, site: Site): CSSProperties {
+  const fam = (r.font_family ?? "").trim();
+  const family = !fam
+    ? undefined
+    : fam === "display"
+      ? `"${site.font_heading || "Literata"}", serif`
+      : fam === "sans"
+        ? `"${site.font_body || "Manrope"}", sans-serif`
+        : `"${fam}", sans-serif`;
+  return {
+    fontFamily: family,
+    fontWeight: r.weight || undefined,
+    letterSpacing: r.letter_spacing || undefined,
+    lineHeight: r.line_height || undefined,
+    textTransform: (r.text_transform || undefined) as CSSProperties["textTransform"],
+    fontSize: String((r as unknown as Record<string, string>)[sizeKey] ?? "") || undefined,
+  };
+}
+
+
+
 /** Fonts, weights and per-device sizes for every kind of text on the site. */
 export function TypographyStudio() {
   const [rows, setRows] = useState<Row[] | null>(null);
