@@ -371,7 +371,7 @@ export function ListEditor({
 
   /** Write sort_order for every row so the new visual order sticks. */
   async function persistOrder(next: Row[]) {
-    const ordered = next.map((r, i) => ({ ...r, sort_order: i }));
+    const ordered: Row[] = next.map((r, i) => ({ ...r, sort_order: i }));
     setRows(ordered);
     await Promise.all(
       ordered.map((r, i) =>
