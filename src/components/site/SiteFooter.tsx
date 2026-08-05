@@ -5,11 +5,11 @@ import { LogoLockup } from "./LogoLockup";
 import { SocialLinks } from "./SocialLinks";
 
 const navLinks = [
-  { label: "Home", to: "/" as const },
-  { label: "Gallery", to: "/gallery" as const },
-  { label: "Services", to: "/services" as const },
-  { label: "About Me", to: "/about" as const },
-  { label: "Contact", to: "/contact" as const },
+  { key: "nav.home", to: "/" as const },
+  { key: "nav.gallery", to: "/gallery" as const },
+  { key: "nav.services", to: "/services" as const },
+  { key: "nav.about", to: "/about" as const },
+  { key: "nav.contact", to: "/contact" as const },
 ];
 
 export function SiteFooter() {
@@ -41,7 +41,7 @@ export function SiteFooter() {
                     to={l.to}
                     className="text-muted-foreground transition-colors duration-500 hover:text-foreground"
                   >
-                    {l.label}
+                    {t(l.key)}
                   </Link>
                 </li>
               ))}
@@ -105,8 +105,8 @@ export function SiteFooter() {
 
       <div className="border-t border-hairline">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} Shutter Ram. All rights reserved.</p>
-          <p className="eyebrow">Every frame edited by hand</p>
+          <p>© {new Date().getFullYear()} {site.name}. {t("footer.rights")}</p>
+          <p className="eyebrow">{t("footer.note")}</p>
         </div>
       </div>
     </footer>
