@@ -266,6 +266,10 @@ export type Database = {
           form_endpoint: string
           hour_options: string[]
           id: boolean
+          loader_fade: string
+          loader_pulse_scale: number
+          loader_shape: string
+          loader_size: number
           location: string
           name: string
           phone: string
@@ -280,6 +284,10 @@ export type Database = {
           form_endpoint?: string
           hour_options?: string[]
           id?: boolean
+          loader_fade?: string
+          loader_pulse_scale?: number
+          loader_shape?: string
+          loader_size?: number
           location?: string
           name?: string
           phone?: string
@@ -294,6 +302,10 @@ export type Database = {
           form_endpoint?: string
           hour_options?: string[]
           id?: boolean
+          loader_fade?: string
+          loader_pulse_scale?: number
+          loader_shape?: string
+          loader_size?: number
           location?: string
           name?: string
           phone?: string
