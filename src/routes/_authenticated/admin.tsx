@@ -78,7 +78,7 @@ const SECTIONS = [
       { key: "title", label: "Title" },
       { key: "subtitle", label: "Subtitle" },
       { key: "slug", label: "URL slug" },
-      { key: "category_slug", label: "Gallery category slug" },
+      { key: "category_slug", label: "Gallery category", type: "category" },
       { key: "description", label: "Description", type: "textarea" },
       { key: "image", label: "Image", type: "image" },
       { key: "includes", label: "What's included (one per line)", type: "list" },
@@ -95,7 +95,8 @@ const SECTIONS = [
     fields: [
       { key: "title", label: "Title" },
       { key: "note", label: "Note", type: "textarea" },
-      { key: "src", label: "Image", type: "image" },
+      { key: "src_before", label: "Before photo (original)", type: "image" },
+      { key: "src", label: "After photo (edited)", type: "image" },
     ] satisfies FieldSpec[],
   },
   {
