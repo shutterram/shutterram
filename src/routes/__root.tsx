@@ -18,7 +18,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { ScrollToTop } from "@/components/site/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
-import { applyContent, logos } from "@/data/portfolio";
+import { applyContent, logos, themeTokens } from "@/data/portfolio";
+import { themeCss } from "@/lib/theme-css";
 
 function NotFoundComponent() {
   return (
@@ -146,6 +147,7 @@ function RootComponent() {
   const content = Route.useLoaderData();
   applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const paletteCss = themeCss(themeTokens);
 
   // Swap the browser tab icon when a custom favicon is set in the studio.
   const favicon = logos.favicon;
@@ -163,6 +165,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {paletteCss ? <style dangerouslySetInnerHTML={{ __html: paletteCss }} /> : null}
       {isStudio ? null : <SiteHeader />}
       <main key={pathname} className="page-in min-h-screen">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

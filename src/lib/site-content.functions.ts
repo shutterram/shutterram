@@ -18,6 +18,7 @@ export interface SiteContentPayload {
   process_steps: Row[];
   page_sections: Row[];
   site_copy: Row[];
+  theme_tokens: Row[];
 }
 
 const EMPTY: SiteContentPayload = {
@@ -33,6 +34,7 @@ const EMPTY: SiteContentPayload = {
   process_steps: [],
   page_sections: [],
   site_copy: [],
+  theme_tokens: [],
 };
 
 /**
@@ -85,6 +87,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         process_steps,
         page_sections,
         site_copy,
+        theme_tokens,
       ] = await Promise.all([
         supabase
           .from("settings" as never)
@@ -110,6 +113,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("process_steps"),
         table("page_sections"),
         table("site_copy"),
+        table("theme_tokens"),
       ]);
 
       return {
@@ -125,6 +129,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         process_steps,
         page_sections,
         site_copy,
+        theme_tokens,
       };
     } catch (error) {
       console.error("[content] unexpected failure", error);
