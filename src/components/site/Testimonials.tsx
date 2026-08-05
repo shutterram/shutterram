@@ -12,25 +12,30 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      // While the photo lightbox is open it owns Escape.
+      if (e.key === "Escape" && lightboxIndex === null) onClose();
+    };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, lightboxIndex]);
 
   if (typeof document === "undefined") return null;
   const images = review.images ?? [];
 
   return createPortal(
+    <>
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background/92 px-4 py-10 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
+
       <div
         className="relative max-h-full w-full max-w-2xl overflow-y-auto border border-hairline bg-surface/80 p-8 md:p-12"
         onClick={(e) => e.stopPropagation()}
@@ -82,6 +87,7 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
           </div>
         ) : null}
       </div>
+    </div>
 
       <Lightbox
         photos={images.map((src, i) => ({
@@ -94,9 +100,10 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
         onClose={() => setLightboxIndex(null)}
         onIndexChange={setLightboxIndex}
       />
-    </div>,
+    </>,
     document.body,
   );
+
 }
 
 /**
