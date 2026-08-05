@@ -299,6 +299,17 @@ export function TypographyStudio() {
                         <option value="capitalize">Capitalised</option>
                       </select>
                     </label>
+                    <label className="block">
+                      <span className="text-xs text-muted-foreground">
+                        Example text (preview only)
+                      </span>
+                      <input
+                        value={r.sample_text ?? ""}
+                        onChange={(e) => set(r.id, { sample_text: e.target.value })}
+                        placeholder="Sample from the site"
+                        className={field}
+                      />
+                    </label>
                   </div>
                 </div>
               ))}
