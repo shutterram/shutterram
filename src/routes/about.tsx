@@ -59,8 +59,12 @@ function About() {
       <div className="mx-auto max-w-5xl px-6 pb-24 pt-56">
         <p className="eyebrow">About Me</p>
         <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
-          I'd rather wait for the real moment.
+          About Shutter Ram
         </h1>
+        <p className="mt-4 max-w-2xl font-display text-[clamp(1.25rem,2.5vw,1.75rem)] leading-snug text-muted-foreground">
+          I'd rather wait for the real moment.
+        </p>
+
 
         <Reveal className="mt-14 grid items-start gap-12 md:grid-cols-[0.8fr_1.2fr]">
           <img
