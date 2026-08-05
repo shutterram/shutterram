@@ -193,32 +193,42 @@ export function Testimonials({ className }: { className?: string }) {
           />
         </Reveal>
 
-        <div className="mt-14 flex items-center justify-end gap-6">
-          <button
-            type="button"
-            aria-label="Previous testimonials"
-            onClick={() => step(-1)}
-            className="text-foreground/50 transition-all duration-500 hover:-translate-x-1 hover:text-foreground"
-          >
-            <ChevronLeft className="size-7" strokeWidth={1} />
-          </button>
-          <button
-            type="button"
-            aria-label="Next testimonials"
-            onClick={() => step(1)}
-            className="text-foreground/50 transition-all duration-500 hover:translate-x-1 hover:text-foreground"
-          >
-            <ChevronRight className="size-7" strokeWidth={1} />
-          </button>
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-4">
+          <p className="eyebrow">Swipe or use the arrows to see more reviews</p>
+          <div className="flex items-center gap-6">
+            <button
+              type="button"
+              aria-label="Previous testimonials"
+              onClick={() => step(-1)}
+              className="text-foreground/50 transition-all duration-500 hover:-translate-x-1 hover:text-foreground"
+            >
+              <ChevronLeft className="size-7" strokeWidth={1} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next testimonials"
+              onClick={() => step(1)}
+              className="text-foreground/50 transition-all duration-500 hover:translate-x-1 hover:text-foreground"
+            >
+              <ChevronRight className="size-7" strokeWidth={1} />
+            </button>
+          </div>
         </div>
       </div>
 
       <div
-        className="mt-6 overflow-hidden pl-6"
+        className="mt-6 touch-pan-y overflow-hidden pl-6"
         onMouseEnter={() => (pausedRef.current = true)}
-        onMouseLeave={() => (pausedRef.current = openReview !== null)}
+        onMouseLeave={() => {
+          onDragEnd();
+          pausedRef.current = openReview !== null;
+        }}
         onFocusCapture={() => (pausedRef.current = true)}
         onBlurCapture={() => (pausedRef.current = openReview !== null)}
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
       >
         <div ref={trackRef} className="flex w-max will-change-transform">
           {[0, 1, 2, 3].map((group) => (
@@ -226,7 +236,11 @@ export function Testimonials({ className }: { className?: string }) {
               {testimonials.map((review) => (
                 <figure
                   key={`${group}-${review.id}`}
-                  onClick={() => setOpenReview(review)}
+                  onClick={() => {
+                    // Ignore the click that ends a drag.
+                    if (dragMoved.current < 6) setOpenReview(review);
+                  }}
+
                   className="glow-hover mr-6 flex w-[80vw] shrink-0 cursor-pointer flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
                 >
                   <div className="flex gap-1" aria-label={`${review.rating} out of 5`}>
