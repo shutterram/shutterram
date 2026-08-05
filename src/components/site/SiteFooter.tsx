@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { categories, site } from "@/data/portfolio";
+import { categories, site , t } from "@/data/portfolio";
 import { LogoLockup } from "./LogoLockup";
 import { SocialLinks } from "./SocialLinks";
 
@@ -26,15 +26,14 @@ export function SiteFooter() {
               <span className="eyebrow mt-3">{site.tagline}</span>
             </Link>
             <p className="mx-auto mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground md:mx-0">
-              A one-person studio photographing weddings, brands and people who would
-              rather be remembered honestly than perfectly.
+{t("footer.blurb")}
             </p>
             <SocialLinks className="mt-9 justify-center md:justify-start" />
           </div>
 
           <div className="md:col-span-6 lg:col-span-2">
 
-            <p className="eyebrow">Navigate</p>
+            <p className="eyebrow">{t("footer.nav_heading")}</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {navLinks.map((l) => (
                 <li key={l.to}>
@@ -50,7 +49,7 @@ export function SiteFooter() {
           </div>
 
           <div className="md:col-span-6 lg:col-span-2">
-            <p className="eyebrow">Categories</p>
+            <p className="eyebrow">{t("footer.categories_heading")}</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {categories.slice(0, 6).map((c) => (
                 <li key={c.slug}>
@@ -67,7 +66,7 @@ export function SiteFooter() {
           </div>
 
           <div className="md:col-span-12 lg:col-span-3">
-            <p className="eyebrow">Get in touch</p>
+            <p className="eyebrow">{t("footer.contact_heading")}</p>
             <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
               <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Phone className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
@@ -98,7 +97,7 @@ export function SiteFooter() {
               search={{ form: "quote" as const }}
               className="glow-hover mt-7 inline-flex items-center border border-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
             >
-              Book Your Date
+              {t("btn.book_date")}
             </Link>
           </div>
         </div>

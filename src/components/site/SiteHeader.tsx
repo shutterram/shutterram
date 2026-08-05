@@ -2,16 +2,16 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { site, logos } from "@/data/portfolio";
+import { site, logos, t, logoStyle } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
 
-const nav = [
-  { label: "Home", to: "/" },
-  { label: "Gallery", to: "/gallery" },
-  { label: "Services", to: "/services" },
-  { label: "About Me", to: "/about" },
-  { label: "Contact", to: "/contact" },
+const navItems = [
+  { key: "nav.home", to: "/" },
+  { key: "nav.gallery", to: "/gallery" },
+  { key: "nav.services", to: "/services" },
+  { key: "nav.about", to: "/about" },
+  { key: "nav.contact", to: "/contact" },
 ] as const;
 
 export function SiteHeader() {
@@ -54,6 +54,7 @@ export function SiteHeader() {
                   logos.invert && "invert",
                   scrolled ? "h-12" : "h-16 md:h-24",
                 )}
+                style={logoStyle("header")}
               />
               <span
                 className={cn(
@@ -67,7 +68,7 @@ export function SiteHeader() {
 
             <button
               type="button"
-              aria-label="Open menu"
+              aria-label={t("nav.menu_open")}
               aria-expanded={open}
               onClick={() => setOpen(true)}
               className="justify-self-end text-foreground md:hidden"
@@ -78,7 +79,7 @@ export function SiteHeader() {
 
 
           <nav className="hidden items-center gap-9 md:flex">
-            {nav.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -86,7 +87,7 @@ export function SiteHeader() {
                 className="eyebrow relative py-1 transition-colors hover:text-foreground data-[status=active]:text-foreground"
               >
                 <span className="relative after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-foreground after:transition-all after:duration-500 after:ease-[cubic-bezier(0.16,1,0.3,1)] hover:after:w-full">
-                  {item.label}
+                  {t(item.key)}
                 </span>
               </Link>
             ))}
@@ -95,7 +96,7 @@ export function SiteHeader() {
               search={{ form: "quote" as const }}
               className="glow-hover inline-flex items-center border border-foreground bg-foreground px-5 py-2.5 text-[0.6875rem] tracking-[0.24em] uppercase text-background hover:bg-transparent hover:text-foreground"
             >
-              Book Your Date
+              {t("nav.book")}
             </Link>
           </nav>
         </div>
@@ -114,7 +115,7 @@ export function SiteHeader() {
             <LogoLockup size="md" variant="mobile" />
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("nav.menu_close")}
               onClick={() => setOpen(false)}
               className="absolute right-6 top-8 text-foreground"
             >
@@ -123,7 +124,7 @@ export function SiteHeader() {
           </div>
 
           <nav className="flex flex-1 flex-col items-center gap-5 pt-6">
-            {nav.map((item, i) => (
+            {navItems.map((item, i) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -134,7 +135,7 @@ export function SiteHeader() {
                 )}
                 style={{ transitionDelay: open ? `${120 + i * 60}ms` : "0ms" }}
               >
-                {item.label}
+                {t(item.key)}
               </Link>
             ))}
             <Link
@@ -143,7 +144,7 @@ export function SiteHeader() {
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex items-center border border-foreground bg-foreground px-8 py-3.5 text-[0.6875rem] tracking-[0.24em] uppercase text-background"
             >
-              Book Your Date
+              {t("nav.book")}
             </Link>
           </nav>
         </div>
