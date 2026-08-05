@@ -150,6 +150,16 @@ links open in a new tab (`target="_blank" rel="noreferrer noopener"`).
 Uploads go to the **private** `site-images` Supabase Storage bucket and are served through
 `/api/public/img/<key>`, so the bucket never has to be public.
 
+### Client reviews
+Share the `/review` link from the studio's **Client reviews** tab. Submissions land as `pending` and
+only appear on the site once approved. Reviewer photographs open in the site lightbox inside the
+review pop-up (arrows, keyboard, swipe) — they never open in a new tab.
+
+Reviewer email addresses are **not** part of the public API: column-level privileges on
+`testimonials.email` are revoked from both `anon` and `authenticated`, and the studio reads them
+through the admin-verified server function in `src/lib/review-emails.functions.ts`. If you add a new
+query against `testimonials`, select explicit columns — `select("*")` will fail.
+
 ### Content fallback
 If the database is unreachable, the site renders the typed defaults in
 `src/data/portfolio.defaults.ts`, so it never shows an empty page.
@@ -167,7 +177,10 @@ paint by a small inline script in `src/routes/__root.tsx`, so there is no flash 
   hardcode colours.
 - Logos flagged **Invert logo** in the studio are inverted only in dark mode, so a black source logo
   stays black on the light theme.
-- The hero overlay uses the `.hero-scrim` utility, which has separate strengths per theme.
+- The hero overlay uses the `.hero-scrim` utility (bottom of `src/styles.css`), which has separate
+  strengths per theme — light mode uses a deliberately lighter gradient so photographs stay visible,
+  while keeping enough contrast at the very top and bottom for the header and slide copy. Both the
+  home hero and the gallery category hero share this one utility, so tuning it changes both.
 
 ### SEO tab
 Every page's search and social metadata is editable under **SEO** in the studio (`seo_pages` table).
@@ -395,6 +408,9 @@ Verified in the last pass on this build — repeat after any content or code cha
       change on the public pages.
 - [ ] Logos: change each logo slot in the studio and confirm header, mobile drawer, footer, loader
       and favicon all update.
+- [ ] Review photos open in the in-page lightbox (not a new tab) and navigate between images.
+- [ ] Security scan clean: no public read of reviewer emails, no `settings.form_endpoint` exposure,
+      `/admin` unreachable when signed out.
 
 ### Go live
 - [ ] Custom domain connected and HTTPS certificate active.

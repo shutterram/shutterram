@@ -1,13 +1,16 @@
 import { ChevronLeft, ChevronRight, Images, Star, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { t, testimonials, type Testimonial } from "@/data/portfolio";
+import { t, testimonials, type Photo, type Testimonial } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
+import { Lightbox } from "./Lightbox";
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
 
 /** Pop-up with the full review and any photographs the client attached. */
 function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () => void }) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -60,20 +63,37 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
           <div className="mt-10">
             <p className="eyebrow">{t("testimonial.modal_photos")}</p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {images.map((src) => (
-                <a key={src} href={src} target="_blank" rel="noreferrer">
+              {images.map((src, i) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setLightboxIndex(i)}
+                  className="block"
+                >
                   <img
                     src={src}
-                    alt=""
+                    alt={`${review.name} — photo ${i + 1}`}
                     loading="lazy"
                     className="aspect-square w-full border border-hairline object-cover transition-opacity duration-500 hover:opacity-80"
                   />
-                </a>
+                </button>
               ))}
             </div>
           </div>
         ) : null}
       </div>
+
+      <Lightbox
+        photos={images.map((src, i) => ({
+          id: `${review.id}-${i}`,
+          src,
+          caption: review.name,
+          category: (review.occasion || review.role || "Review") as Photo["category"],
+        }))}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onIndexChange={setLightboxIndex}
+      />
     </div>,
     document.body,
   );

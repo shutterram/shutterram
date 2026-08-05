@@ -390,6 +390,11 @@ function AdminPage() {
             titleKey={section.titleKey}
             allowAdd={(section as { allowAdd?: boolean }).allowAdd ?? true}
             note={(section as { note?: string }).note}
+            columns={
+              section.table === "testimonials"
+                ? "id,name,role,occasion,quote,rating,images,status,sort_order"
+                : undefined
+            }
           />
         )}
       </div>
