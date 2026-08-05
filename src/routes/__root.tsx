@@ -84,29 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      {
-        name: "description",
-        content:
-          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
-      },
       { name: "author", content: "Shutter Ram" },
       { property: "og:site_name", content: "Shutter Ram" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      { name: "twitter:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      {
-        property: "og:description",
-        content:
-          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
-      },
-      {
-        name: "twitter:description",
-        content:
-          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
-      },
+      // Titles, descriptions and social preview copy are owned by each leaf
+      // route's buildSeoHead() so every page emits unique metadata.
     ],
+
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
