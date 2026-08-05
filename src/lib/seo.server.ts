@@ -63,25 +63,11 @@ export async function fetchSeo(path: string): Promise<SeoRow | null> {
   return { ...row, og_image: row.og_image?.trim() ? row.og_image : defaultImage };
 }
 
-
 /** Reads every SEO record (used by the sitemap). */
 export async function fetchAllSeo(): Promise<SeoRow[]> {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) return [];
-  const supabase = createClient(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-          headers.delete("Authorization");
-        }
-        headers.set("apikey", key);
-        return fetch(input, { ...init, headers });
-      },
-    },
-  });
+  const supabase = client();
+  if (!supabase) return [];
+
   const { data } = await supabase
     .from("seo_pages")
     .select("path,title,description,keywords,og_title,og_description,og_image,canonical,robots")
