@@ -1,0 +1,1 @@
+GRANT SELECT (logo_header, logo_footer, logo_mobile, logo_loader, logo_favicon, logo_invert) ON public.settings TO anon, authenticated;

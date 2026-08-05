@@ -1,5 +1,5 @@
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { loader } from "@/data/portfolio";
+import { loader, logos } from "@/data/portfolio";
 
 /** Full-screen loading state shown while a page's content is being fetched. */
 export function PageLoader() {
@@ -27,9 +27,9 @@ export function PageLoader() {
         <span className={`absolute inset-0 border border-foreground/60 ${round}`} />
         {/* Logo in the centre */}
         <img
-          src={logo.url}
+          src={logos.loader || logo.url}
           alt="Shutter Ram"
-          className="w-auto brightness-0 invert"
+          className={`w-auto ${logos.invert ? "brightness-0 invert" : ""}`}
           style={{ height: size * 0.5 }}
         />
       </div>

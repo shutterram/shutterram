@@ -61,6 +61,21 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "logos",
+    label: "Logos",
+    kind: "single" as const,
+    table: "settings",
+    note: "Upload a different logo for each place it appears. Leave a slot empty to keep the built-in logo.",
+    fields: [
+      { key: "logo_header", label: "Header logo", type: "image" },
+      { key: "logo_mobile", label: "Mobile menu logo", type: "image" },
+      { key: "logo_footer", label: "Footer logo", type: "image" },
+      { key: "logo_loader", label: "Loading screen logo", type: "image" },
+      { key: "logo_favicon", label: "Browser tab icon (favicon)", type: "image" },
+      { key: "logo_invert", label: "Invert logo colours (for dark artwork)", type: "bool" },
+    ] satisfies FieldSpec[],
+  },
+  {
     id: "hero",
     label: "Hero categories",
     kind: "list" as const,
@@ -305,7 +320,7 @@ function AdminPage() {
 
       <div className="mt-12">
         {section.kind === "single" ? (
-          <SingletonEditor table={section.table} fields={section.fields} />
+          <SingletonEditor table={section.table} fields={section.fields} note={"note" in section ? section.note : undefined} />
         ) : (
           <ListEditor
             key={section.id}

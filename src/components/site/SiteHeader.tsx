@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { site } from "@/data/portfolio";
+import { site, logos } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
 
@@ -47,10 +47,11 @@ export function SiteHeader() {
             <span className="md:hidden" aria-hidden="true" />
             <Link to="/" className="group flex flex-col items-center" onClick={() => setOpen(false)}>
               <img
-                src={logo.url}
+                src={logos.header || logo.url}
                 alt="Shutter Ram"
                 className={cn(
-                  "w-auto shrink-0 invert transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  "w-auto shrink-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  logos.invert && "invert",
                   scrolled ? "h-12" : "h-16 md:h-24",
                 )}
               />
@@ -110,7 +111,7 @@ export function SiteHeader() {
       >
         <div className="flex h-full flex-col">
           <div className="relative flex items-start justify-center px-6 pt-8 pb-6">
-            <LogoLockup size="md" />
+            <LogoLockup size="md" variant="mobile" />
             <button
               type="button"
               aria-label="Close menu"

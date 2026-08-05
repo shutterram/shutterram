@@ -87,7 +87,7 @@ The studio ships with a self-service reset flow:
 
 ### What's editable
 `Site & About` (studio name, tagline, email, phone, location, form endpoint, about copy, quote-form
-dropdown options), `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
+dropdown options, loading-screen shape/size/pulse/fade), `Logos`, `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
 `Experience`, `Testimonials`, `Process steps`, `Page sections`, `Social links`. Every list supports add, edit,
 reorder (↑ ↓) and delete. **New entries (single or bulk) are inserted at the top of the list**, right
 under the Add / Bulk upload controls, so you never have to scroll to fill them in; use ↑ ↓ to move
@@ -111,6 +111,21 @@ Photos and Services use a **Category** dropdown with inline *Add* / *Remove*, so
 can be created and deleted from the studio. Editing samples take two images — a **Before**
 (original) and an **After** (edited) frame — which power the comparison slider on the home page.
 
+
+**Logos** lets you use a different logo in each place one appears:
+
+| Slot | Where it shows |
+| --- | --- |
+| Header logo | Site header (desktop and mobile, both scrolled and top states) |
+| Mobile menu logo | Top of the full-screen mobile navigation drawer |
+| Footer logo | Footer brand lockup |
+| Loading screen logo | Centre of the animated loader |
+| Browser tab icon (favicon) | Browser tab / bookmark icon |
+
+Upload an SVG or PNG per slot, or paste a URL. Any slot left empty falls back to the built-in
+`SRLogo.svg`. **Invert logo colours** flips dark artwork to white for the dark theme — turn it off
+if you upload logos that are already light. Transparent SVG/PNG works best; favicons should be
+square.
 
 ### Uploading images
 Two ways, both in the studio:
@@ -315,6 +330,26 @@ Work top to bottom. Everything here is a one-time setup except the final smoke t
 - [ ] `public/robots.txt` allows the public pages and disallows `/admin`, `/auth`, `/review`.
 - [ ] Favicon and OG image resolve at absolute `https://` URLs.
 - [ ] Images exported at ~2000px long edge, under ~400 KB each.
+
+### QA test pass (run before every deploy)
+
+Verified in the last pass on this build — repeat after any content or code change:
+
+- [ ] All routes return 200 and each has its own title: `/`, `/gallery`, `/services`, `/about`,
+      `/contact`, `/review`; unknown URLs render the 404 page.
+- [ ] Browser console is clean on every route at 1280px and 390px widths (no errors, no failed
+      requests other than the intentional 404).
+- [ ] No image renders with an empty `src` — rows saved without an image fall back to
+      `/placeholders/photo.svg`, which means content is missing in the studio.
+- [ ] Lightbox: opens centred, arrows sit beside the frame, CLOSE works, Esc works, swipe works on
+      mobile, first and last images stay in frame.
+- [ ] Contact page defaults to **Request a Quote**; the message toggle and the "Start a conversation"
+      / "Work with me" links open the message form.
+- [ ] Home services rail and testimonials loop endlessly and pause on hover/tap.
+- [ ] `/admin` loads for an admin account, each studio tab saves, and **Refresh site** shows the
+      change on the public pages.
+- [ ] Logos: change each logo slot in the studio and confirm header, mobile drawer, footer, loader
+      and favicon all update.
 
 ### Go live
 - [ ] Custom domain connected and HTTPS certificate active.
