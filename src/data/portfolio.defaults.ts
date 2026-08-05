@@ -154,6 +154,9 @@ export const defaultCopy: Record<string, string> = {
   "footer.categories_heading": "Categories",
   "footer.contact_heading": "Get in touch",
   "footer.rights": "All rights reserved.",
+  "footer.blurb":
+    "A one-person studio photographing weddings, brands and people who would rather be remembered honestly than perfectly.",
+  "footer.note": "Every frame edited by hand",
   "loader.label": "Loading",
   "error.eyebrow": "Something went wrong",
   "error.title": "This page didn't load",
