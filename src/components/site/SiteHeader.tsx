@@ -5,6 +5,8 @@ import logo from "@/assets/SRLogo.svg.asset.json";
 import { site, logos, t, logoStyle } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
+import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "@/hooks/use-theme";
 
 const navItems = [
   { key: "nav.home", to: "/" },
@@ -17,6 +19,7 @@ const navItems = [
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -55,7 +58,7 @@ export function SiteHeader() {
                 alt="Shutter Ram"
                 className={cn(
                   "w-auto shrink-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  logos.invert && "invert",
+                  logos.invert && theme === "dark" && "invert",
                   scrolled ? "h-12" : "h-16 md:h-24",
                 )}
                 style={logoStyle("header")}
@@ -70,15 +73,18 @@ export function SiteHeader() {
               </span>
             </Link>
 
-            <button
+            <div className="flex items-center justify-end gap-3 justify-self-end md:hidden">
+              <ThemeToggle />
+              <button
               type="button"
               aria-label={t("nav.menu_open")}
               aria-expanded={open}
               onClick={() => setOpen(true)}
-              className="justify-self-end text-foreground md:hidden"
+              className="text-foreground"
             >
               <Menu className="size-6" strokeWidth={1.4} />
             </button>
+            </div>
           </div>
 
           <nav className="hidden items-center gap-9 md:flex">
@@ -101,6 +107,7 @@ export function SiteHeader() {
             >
               {t("nav.book")}
             </Link>
+            <ThemeToggle />
           </nav>
         </div>
       </header>
@@ -149,6 +156,7 @@ export function SiteHeader() {
             >
               {t("nav.book")}
             </Link>
+            <ThemeToggle className="mt-4" />
           </nav>
         </div>
       </div>
