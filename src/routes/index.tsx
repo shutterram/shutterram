@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
@@ -21,6 +21,8 @@ import {
   featuredIds,
   photoById,
   services,
+  sectionFor,
+  sectionsFor,
   site,
   type CategorySlug,
 } from "@/data/portfolio";
@@ -131,16 +133,25 @@ function Home() {
   }, []);
 
 
-  return (
-    <>
-      <HeroSlider />
+  // Section copy, order and visibility all come from the content studio.
+  const ordered = sectionsFor("home");
+  const copy = (key: string, fallback: { eyebrow: string; heading: string; intro?: string }) => {
+    const s = ordered.find((x) => x.key === key);
+    return {
+      eyebrow: s?.eyebrow || fallback.eyebrow,
+      title: s?.heading || fallback.heading,
+      intro: s?.intro || fallback.intro || "",
+    };
+  };
 
-      {/* ---------------------------------------------------------------- About */}
-      <section className="mx-auto max-w-5xl px-6 py-24 md:py-32">
+  const sample = editSamples[Math.min(edit, editSamples.length - 1)];
+
+  const blocks: Record<string, ReactElement> = {
+    about: (
+      <section key="about" className="mx-auto max-w-5xl px-6 py-24 md:py-32">
         <Reveal className="flex flex-col items-center text-center">
           <SectionHeading
-            eyebrow="About Me"
-            title="A quiet eye, fifteen years in."
+            {...copy("about", { eyebrow: "About Me", heading: "A quiet eye, fifteen years in." })}
             align="center"
           />
           <p className="mt-6 max-w-2xl text-sm leading-loose text-muted-foreground md:text-base">
@@ -157,28 +168,32 @@ function Home() {
 
         <StatsStrip className="mt-16" />
       </section>
+    ),
 
-      {/* --------------------------------------------------------- Featured work */}
-      <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
+    featured: (
+      <section key="featured" className="border-t border-hairline bg-surface/30 py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal as="div">
-          <SectionHeading
-            eyebrow="Featured Work"
-            title="A handful of favourites."
-            intro="A rotating selection from recent commissions. Click any frame to open it full screen."
-            align="center"
-          />
+            <SectionHeading
+              {...copy("featured", {
+                eyebrow: "Featured Work",
+                heading: "A handful of favourites.",
+                intro:
+                  "A rotating selection from recent commissions. Click any frame to open it full screen.",
+              })}
+              align="center"
+            />
 
-          <FilterPills
-            variant="tabs"
-            className="mt-10 justify-center"
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "all" as Filter, label: "All" },
-              ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
-            ]}
-          />
+            <FilterPills
+              variant="tabs"
+              className="mt-10 justify-center"
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: "all" as Filter, label: "All" },
+                ...categories.map((c) => ({ value: c.slug as Filter, label: c.label })),
+              ]}
+            />
           </Reveal>
 
           <div
@@ -237,65 +252,68 @@ function Home() {
               See the full gallery
             </Link>
           </div>
-
         </div>
       </section>
+    ),
 
-
-      <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
-
-      {/* ------------------------------------------------------ Power of editing */}
-      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+    editing: editSamples.length ? (
+      <section key="editing" className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <Reveal>
-        <SectionHeading
-          eyebrow="The Power of Editing"
-          title="Same frame. Two different photographs."
-          intro="Drag the handle across the image to reveal the unedited capture on one side and the finished, hand-graded frame on the other."
-          align="center"
-        />
+          <SectionHeading
+            {...copy("editing", {
+              eyebrow: "The Power of Editing",
+              heading: "Same frame. Two different photographs.",
+              intro:
+                "Drag the handle across the image to reveal the unedited capture on one side and the finished, hand-graded frame on the other.",
+            })}
+            align="center"
+          />
 
-        <div className="mt-12 flex flex-wrap justify-center gap-3">
-          {editSamples.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setEdit(i)}
-              className={cn(
-                "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
-                i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
-              )}
-              aria-label={s.title}
-              aria-pressed={i === edit}
-            >
-              <img src={s.src} alt={s.title} loading="lazy" className="size-full object-cover" />
-            </button>
-          ))}
-        </div>
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
+            {editSamples.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setEdit(i)}
+                className={cn(
+                  "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
+                  i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
+                )}
+                aria-label={s.title}
+                aria-pressed={i === edit}
+              >
+                <img src={s.src} alt={s.title} loading="lazy" className="size-full object-cover" />
+              </button>
+            ))}
+          </div>
         </Reveal>
 
         <div className="mt-10">
           <BeforeAfterSlider
-            key={editSamples[edit]!.id}
-            before={editSamples[edit]!.srcBefore}
-            after={editSamples[edit]!.src}
-            alt={editSamples[edit]!.title}
+            key={sample?.id}
+            before={sample?.srcBefore ?? ""}
+            after={sample?.src ?? ""}
+            alt={sample?.title ?? ""}
           />
           <div className="mt-5 flex flex-col items-center gap-1 text-center">
-            <p className="font-display text-2xl">{editSamples[edit]!.title}</p>
-            <p className="text-sm text-muted-foreground">{editSamples[edit]!.note}</p>
+            <p className="font-display text-2xl">{sample?.title}</p>
+            <p className="text-sm text-muted-foreground">{sample?.note}</p>
           </div>
         </div>
       </section>
+    ) : <></>,
 
-      {/* ------------------------------------------------------------- Services */}
-      <section className="border-t border-hairline bg-surface/30 py-24 md:py-32">
+    services: (
+      <section key="services" className="border-t border-hairline bg-surface/30 py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
           <Reveal>
-          <SectionHeading
-            eyebrow="Services"
-            title="What I can photograph for you."
-            intro="Every engagement is quoted individually — these are the starting points."
-          />
+            <SectionHeading
+              {...copy("services", {
+                eyebrow: "Services",
+                heading: "What I can photograph for you.",
+                intro: "Every engagement is quoted individually — these are the starting points.",
+              })}
+            />
           </Reveal>
           {/* mobile: two-card snap slider */}
           <div className="relative mt-10 md:hidden">
@@ -349,42 +367,55 @@ function Home() {
               </Reveal>
             ))}
           </div>
-
         </div>
       </section>
+    ),
 
-      <ExperienceSection />
+    experience: (
+      <ExperienceSection key="experience" section={sectionFor("home", "experience")} />
+    ),
 
-      <Testimonials />
+    testimonials: <Testimonials key="testimonials" />,
 
-
-      {/* --------------------------------------------------------------- Connect */}
-      <section className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+    connect: (
+      <section key="connect" className="mx-auto max-w-7xl px-6 py-24 md:py-32">
         <div className="flex flex-col items-center text-center">
           <Reveal className="flex flex-col items-center">
-          <SectionHeading
-            eyebrow="Connect With Me"
-            title="Follow the work in progress."
-            intro="New frames, behind-the-scenes and the occasional 4am street photograph."
-            align="center"
-          />
-          <SocialLinks className="mt-10 justify-center" size="lg" />
-          <p className="mt-10 text-sm text-muted-foreground">
-            Prefer email?{" "}
-            <a href={`mailto:${site.email}`} className="text-foreground underline underline-offset-4">
-              {site.email}
-            </a>
-          </p>
-          <Link
-            to="/contact"
-            search={{ form: "message" }}
-            className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
-          >
-            Start a conversation
-          </Link>
+            <SectionHeading
+              {...copy("connect", {
+                eyebrow: "Connect With Me",
+                heading: "Follow the work in progress.",
+                intro: "New frames, behind-the-scenes and the occasional 4am street photograph.",
+              })}
+              align="center"
+            />
+            <SocialLinks className="mt-10 justify-center" size="lg" />
+            <p className="mt-10 text-sm text-muted-foreground">
+              Prefer email?{" "}
+              <a href={`mailto:${site.email}`} className="text-foreground underline underline-offset-4">
+                {site.email}
+              </a>
+            </p>
+            <Link
+              to="/contact"
+              search={{ form: "message" }}
+              className="mt-10 inline-flex items-center border border-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
+            >
+              Start a conversation
+            </Link>
           </Reveal>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      <HeroSlider />
+
+      {ordered.map((s) => blocks[s.key] ?? null)}
+
+      <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
     </>
   );
 }

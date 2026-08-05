@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { aboutLong, aboutShort, site, stats } from "@/data/portfolio";
+import { aboutLong, aboutProcessSteps, aboutShort, sectionFor, site, stats } from "@/data/portfolio";
 import { SocialLinks } from "@/components/site/SocialLinks";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
@@ -91,7 +91,7 @@ function About() {
         </Reveal>
       </div>
 
-      <ExperienceSection />
+      <ExperienceSection section={sectionFor("about", "experience")} steps={aboutProcessSteps} />
     </>
   );
 }

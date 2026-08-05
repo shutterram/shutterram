@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
-import { services } from "@/data/portfolio";
+import { sectionFor, services } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
@@ -101,7 +101,7 @@ function ServicesPage() {
       </div>
 
 
-      <ExperienceSection className="mt-28" />
+      <ExperienceSection className="mt-28" section={sectionFor("services", "experience")} />
     </div>
   );
 }
