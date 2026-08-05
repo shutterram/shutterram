@@ -39,11 +39,6 @@ const SECTIONS = [
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone" },
       { key: "location", label: "Location line" },
-      {
-        key: "form_endpoint",
-        label: "Form endpoint URL",
-        placeholder: "Formspree / Basin / Getform URL",
-      },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
