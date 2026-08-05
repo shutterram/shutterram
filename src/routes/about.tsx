@@ -97,7 +97,7 @@ function About() {
           className="mt-14 space-y-10 text-sm leading-loose text-muted-foreground md:text-base"
         >
           <div className="border-t border-hairline pt-8">
-            <p className="eyebrow">{t("about.kit_heading")}</p>
+            <h2 className="eyebrow">{t("about.kit_heading")}</h2>
             <p className="mt-3">
               Two mirrorless bodies, three primes, one very tired 24–70, and a pair of lights that
               only come out when the room refuses to cooperate.
