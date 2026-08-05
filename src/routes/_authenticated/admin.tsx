@@ -6,6 +6,7 @@ import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/
 import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
+import { ThemeStudio } from "@/components/admin/ThemeStudio";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -78,6 +79,13 @@ const SECTIONS = [
     label: "Logos",
     kind: "logos" as const,
     table: "settings",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "colours",
+    label: "Colours",
+    kind: "theme" as const,
+    table: "theme_tokens",
     fields: [] satisfies FieldSpec[],
   },
   {
@@ -369,7 +377,9 @@ function AdminPage() {
       </nav>
 
       <div className="mt-12">
-        {section.kind === "logos" ? (
+        {section.kind === "theme" ? (
+          <ThemeStudio />
+        ) : section.kind === "logos" ? (
           <LogoStudio />
         ) : section.kind === "copy" ? (
           <CopyEditor />
