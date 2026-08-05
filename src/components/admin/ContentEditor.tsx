@@ -231,6 +231,16 @@ function FieldInput({
     );
   }
 
+  if (type === "category") {
+    return (
+      <CategoryField
+        label={spec.label}
+        value={typeof value === "string" ? value : ""}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (type === "bool") {
     return (
       <label className="flex items-center gap-3 pt-4">

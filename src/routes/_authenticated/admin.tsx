@@ -60,7 +60,7 @@ const SECTIONS = [
     titleKey: "caption",
     fields: [
       { key: "caption", label: "Caption" },
-      { key: "category_slug", label: "Category slug" },
+      { key: "category_slug", label: "Category", type: "category" },
       { key: "src", label: "Photo", type: "image" },
       { key: "featured", label: "Show in Featured Work", type: "bool" },
       { key: "featured_order", label: "Featured position", type: "number" },
