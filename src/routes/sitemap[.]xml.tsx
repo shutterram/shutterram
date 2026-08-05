@@ -4,7 +4,7 @@ import { SITE_URL } from "@/lib/seo";
 const STATIC_PATHS = ["/", "/gallery", "/services", "/about", "/contact"];
 
 /** Dynamic sitemap: static pages plus every gallery category. */
-export const Route = createFileRoute("/sitemap[.]xml")({
+export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {

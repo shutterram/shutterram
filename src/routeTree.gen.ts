@@ -17,6 +17,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReviewRouteImport } from './routes/review'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as GalleryIndexRouteImport } from './routes/gallery.index'
 import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
@@ -61,6 +62,11 @@ const ServicesRoute = ServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery/': typeof GalleryIndexRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery': typeof GalleryIndexRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/review': typeof ReviewRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/gallery/$category': typeof GalleryCategoryRoute
   '/gallery/': typeof GalleryIndexRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/review'
     | '/services'
+    | '/sitemap.xml'
     | '/admin'
     | '/gallery/$category'
     | '/gallery/'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/review'
     | '/services'
+    | '/sitemap.xml'
     | '/admin'
     | '/gallery/$category'
     | '/gallery'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/review'
     | '/services'
+    | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/gallery/$category'
     | '/gallery/'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ReviewRoute: typeof ReviewRoute
   ServicesRoute: typeof ServicesRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   GalleryCategoryRoute: typeof GalleryCategoryRoute
   GalleryIndexRoute: typeof GalleryIndexRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -289,6 +309,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ReviewRoute: ReviewRoute,
   ServicesRoute: ServicesRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   GalleryCategoryRoute: GalleryCategoryRoute,
   GalleryIndexRoute: GalleryIndexRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
