@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ScrollToTop } from "@/components/site/ScrollToTop";
+import { CursorGlow } from "@/components/site/CursorGlow";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
 import { applyContent, logos, themeTokens } from "@/data/portfolio";
@@ -158,6 +159,7 @@ function RootComponent() {
       </main>
       {isStudio ? null : <SiteFooter />}
       {isStudio ? null : <ScrollToTop />}
+      {isStudio ? null : <CursorGlow />}
       <Toaster position="bottom-right" />
     </QueryClientProvider>
   );
