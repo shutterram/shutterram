@@ -332,6 +332,11 @@ export type Database = {
           about_short: string
           budget_ranges: string[]
           email: string
+          font_body: string
+          font_heading: string
+          font_scale_desktop: number
+          font_scale_mobile: number
+          font_scale_tablet: number
           glow_blend: string
           glow_size: number
           glow_softness: number
@@ -371,6 +376,11 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
+          font_body?: string
+          font_heading?: string
+          font_scale_desktop?: number
+          font_scale_mobile?: number
+          font_scale_tablet?: number
           glow_blend?: string
           glow_size?: number
           glow_softness?: number
@@ -410,6 +420,11 @@ export type Database = {
           about_short?: string
           budget_ranges?: string[]
           email?: string
+          font_body?: string
+          font_heading?: string
+          font_scale_desktop?: number
+          font_scale_mobile?: number
+          font_scale_tablet?: number
           glow_blend?: string
           glow_size?: number
           glow_softness?: number
@@ -614,6 +629,63 @@ export type Database = {
           sort_order?: number
           token?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      type_tokens: {
+        Row: {
+          font_family: string
+          group_label: string
+          hint: string
+          id: string
+          label: string
+          letter_spacing: string
+          line_height: string
+          role: string
+          selector: string
+          size_desktop: string
+          size_mobile: string
+          size_tablet: string
+          sort_order: number
+          text_transform: string
+          updated_at: string
+          weight: string
+        }
+        Insert: {
+          font_family?: string
+          group_label?: string
+          hint?: string
+          id?: string
+          label: string
+          letter_spacing?: string
+          line_height?: string
+          role: string
+          selector: string
+          size_desktop?: string
+          size_mobile?: string
+          size_tablet?: string
+          sort_order?: number
+          text_transform?: string
+          updated_at?: string
+          weight?: string
+        }
+        Update: {
+          font_family?: string
+          group_label?: string
+          hint?: string
+          id?: string
+          label?: string
+          letter_spacing?: string
+          line_height?: string
+          role?: string
+          selector?: string
+          size_desktop?: string
+          size_mobile?: string
+          size_tablet?: string
+          sort_order?: number
+          text_transform?: string
+          updated_at?: string
+          weight?: string
         }
         Relationships: []
       }
