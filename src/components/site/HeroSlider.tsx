@@ -41,7 +41,7 @@ export function HeroSlider() {
             fetchPriority={i === 0 ? "high" : "low"}
             className={cn("size-full object-cover", i === active && "slow-zoom")}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-background/70" />
+          <div className="hero-scrim absolute inset-0" />
         </div>
       ))}
 

@@ -310,3 +310,22 @@ html {
   0% { transform: scale(var(--loader-scale, 1.8)); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* Hero scrim — keeps slide copy readable in both themes without flattening the photo. */
+.hero-scrim {
+  background-image: linear-gradient(
+    to top,
+    var(--background),
+    color-mix(in oklab, var(--background) 45%, transparent),
+    color-mix(in oklab, var(--background) 70%, transparent)
+  );
+}
+
+.light .hero-scrim {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--background) 92%, transparent),
+    color-mix(in oklab, var(--background) 30%, transparent),
+    color-mix(in oklab, var(--background) 55%, transparent)
+  );
+}
