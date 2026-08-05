@@ -61,7 +61,14 @@ supabase/                 project config; migrations are applied via the platfor
 `Site & About` (studio name, tagline, email, phone, location, form endpoint, about copy, quote-form
 dropdown options), `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
 `Experience`, `Testimonials`, `Process steps`, `Social links`. Every list supports add, edit,
-reorder (↑ ↓) and delete.
+reorder (↑ ↓) and delete. **New entries (single or bulk) are inserted at the top of the list**, right
+under the Add / Bulk upload controls, so you never have to scroll to fill them in; use ↑ ↓ to move
+them wherever you want afterwards.
+
+Photos and Services use a **Category** dropdown with inline *Add* / *Remove*, so gallery categories
+can be created and deleted from the studio. Editing samples take two images — a **Before**
+(original) and an **After** (edited) frame — which power the comparison slider on the home page.
+
 
 ### Uploading images
 Two ways, both in the studio:
