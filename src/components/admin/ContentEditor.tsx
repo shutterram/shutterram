@@ -121,7 +121,10 @@ export function CategoryField({
       hero: "",
       sort_order: cats.length,
     } as never);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await load();
     onChange(slug);
     toast.success("Category added — add its hero image under “Hero categories”.");
@@ -129,10 +132,16 @@ export function CategoryField({
 
   async function removeCategory() {
     const current = cats.find((c) => c.slug === value);
-    if (!current) return toast.error("Pick a category first");
+    if (!current) {
+      toast.error("Pick a category first");
+      return;
+    }
     if (!confirm(`Remove the “${current.label}” category? Photos keep their slug until you change it.`)) return;
     const { error } = await supabase.from("categories" as never).delete().eq("id", current.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await load();
     onChange("");
     toast.success("Category removed");
