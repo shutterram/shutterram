@@ -215,6 +215,54 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_pages: {
+        Row: {
+          canonical: string
+          description: string
+          id: string
+          keywords: string
+          label: string
+          og_description: string
+          og_image: string
+          og_title: string
+          path: string
+          robots: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          canonical?: string
+          description?: string
+          id?: string
+          keywords?: string
+          label?: string
+          og_description?: string
+          og_image?: string
+          og_title?: string
+          path: string
+          robots?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical?: string
+          description?: string
+          id?: string
+          keywords?: string
+          label?: string
+          og_description?: string
+          og_image?: string
+          og_title?: string
+          path?: string
+          robots?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           category_slug: string
