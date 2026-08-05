@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import type { Service } from "@/data/portfolio";
+import { t, type Service } from "@/data/portfolio";
 
 export function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
   return (
