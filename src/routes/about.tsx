@@ -16,16 +16,42 @@ import { buildSeoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   loader: () => getSeo({ data: { path: "/about" } }),
-  head: ({ loaderData }) =>
-    buildSeoHead(loaderData, {
+  head: ({ loaderData }) => ({
+    ...buildSeoHead(loaderData, {
       path: "/about",
       title: "About Ram — The Photographer | Shutter Ram",
       description:
         "Meet Ram, the photographer behind Shutter Ram: documentary and editorial work across weddings, brands and portraits.",
       type: "profile",
     }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: "Ram",
+          jobTitle: "Photographer",
+          url: "https://shutterram.lovable.app/about",
+          worksFor: {
+            "@type": "LocalBusiness",
+            name: "Shutter Ram",
+            url: "https://shutterram.lovable.app",
+          },
+          knowsAbout: [
+            "Wedding photography",
+            "Corporate photography",
+            "Portrait photography",
+            "Headshot photography",
+            "Photo editing and retouching",
+          ],
+        }),
+      },
+    ],
+  }),
   component: About,
 });
+
 
 function About() {
   return (
