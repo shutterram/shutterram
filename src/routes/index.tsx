@@ -28,6 +28,8 @@ import {
   t,
 } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
+import { getSeo } from "@/lib/seo.functions";
+import { buildSeoHead, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   loader: () => getSeo({ data: { path: "/" } }),
