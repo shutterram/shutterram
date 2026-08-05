@@ -17,7 +17,7 @@ export const forwardFormSubmission = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: settings } = await supabaseAdmin
-      .from("settings")
+      .from("admin_settings")
       .select("form_endpoint")
       .limit(1)
       .maybeSingle();

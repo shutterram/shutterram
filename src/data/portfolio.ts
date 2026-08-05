@@ -122,7 +122,8 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       email: str(s["email"], defaultSite.email),
       phone: str(s["phone"], defaultSite.phone),
       location: str(s["location"], defaultSite.location),
-      formEndpoint: str(s["form_endpoint"]),
+      // The form endpoint is admin-only and never sent to the browser.
+      formEndpoint: "",
       socials: payload.socials.length
         ? payload.socials.map((r: Row) => ({
             name: str(r["name"]),

@@ -91,7 +91,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
       ] = await Promise.all([
         supabase
           .from("settings" as never)
-          // form_endpoint is intentionally omitted: it is not readable by anon
+          // The form endpoint now lives in the admin-only admin_settings table.
           .select(
             "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,updated_at",
           )
