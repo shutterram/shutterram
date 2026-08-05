@@ -89,6 +89,7 @@ export let aboutLong: string[] = [...defaultAboutLong];
 export let budgetRanges: string[] = [...defaultBudgetRanges];
 export let hourOptions: string[] = [...defaultHourOptions];
 export let loader: LoaderConfig = defaultLoader;
+export let glow: GlowConfig = defaultGlow;
 export let logos: LogoSet = defaultLogos;
 export let copyMap: Record<string, string> = { ...defaultCopy };
 export let themeTokens: ThemeToken[] = [];
@@ -141,6 +142,11 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       size: num(s["loader_size"], defaultLoader.size) || defaultLoader.size,
       pulseScale: num(s["loader_pulse_scale"], defaultLoader.pulseScale) || defaultLoader.pulseScale,
       fade: str(s["loader_fade"], defaultLoader.fade) === "in" ? "in" : "out",
+    };
+    glow = {
+      size: num(s["glow_size"], defaultGlow.size) || defaultGlow.size,
+      blend: str(s["glow_blend"], defaultGlow.blend) || defaultGlow.blend,
+      softness: Math.max(10, Math.min(100, num(s["glow_softness"], defaultGlow.softness))),
     };
     logos = {
       header: str(s["logo_header"]),
