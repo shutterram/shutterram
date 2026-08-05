@@ -107,6 +107,48 @@ export type Database = {
         }
         Relationships: []
       }
+      page_sections: {
+        Row: {
+          enabled: boolean
+          eyebrow: string
+          heading: string
+          heading_accent: string
+          id: string
+          intro: string
+          label: string
+          page: string
+          section_key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          eyebrow?: string
+          heading?: string
+          heading_accent?: string
+          id?: string
+          intro?: string
+          label: string
+          page: string
+          section_key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          eyebrow?: string
+          heading?: string
+          heading_accent?: string
+          id?: string
+          intro?: string
+          label?: string
+          page?: string
+          section_key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           caption: string
@@ -147,6 +189,7 @@ export type Database = {
         Row: {
           detail: string
           id: string
+          section_key: string
           sort_order: number
           step: string
           title: string
@@ -155,6 +198,7 @@ export type Database = {
         Insert: {
           detail?: string
           id?: string
+          section_key?: string
           sort_order?: number
           step: string
           title: string
@@ -163,6 +207,7 @@ export type Database = {
         Update: {
           detail?: string
           id?: string
+          section_key?: string
           sort_order?: number
           step?: string
           title?: string
@@ -261,6 +306,7 @@ export type Database = {
         Row: {
           href: string
           icon: string
+          icon_url: string
           id: string
           name: string
           sort_order: number
@@ -269,6 +315,7 @@ export type Database = {
         Insert: {
           href: string
           icon?: string
+          icon_url?: string
           id?: string
           name: string
           sort_order?: number
@@ -277,6 +324,7 @@ export type Database = {
         Update: {
           href?: string
           icon?: string
+          icon_url?: string
           id?: string
           name?: string
           sort_order?: number
