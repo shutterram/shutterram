@@ -87,7 +87,7 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
           .from("settings" as never)
           // form_endpoint is intentionally omitted: it is not readable by anon
           .select(
-            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,updated_at",
+            "id,name,tagline,email,phone,location,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,updated_at",
           )
           .limit(1)
           .then((r) => (r.data ?? []) as unknown as Row[]),

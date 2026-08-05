@@ -23,6 +23,7 @@ import {
   defaultBudgetRanges,
   defaultHourOptions,
   defaultPageSections,
+  defaultLoader,
 } from "./portfolio.defaults";
 
 export { unedited } from "./portfolio.defaults";
@@ -38,6 +39,7 @@ export type {
   Testimonial,
   ProcessStep,
   SectionConfig,
+  LoaderConfig,
 } from "./portfolio.defaults";
 
 import type {
@@ -52,6 +54,7 @@ import type {
   ProcessStep,
   CategorySlug,
   SectionConfig,
+  LoaderConfig,
 } from "./portfolio.defaults";
 
 // Live bindings — reassigned by applyContent().
@@ -71,6 +74,7 @@ export let aboutShort: string = defaultAboutShort;
 export let aboutLong: string[] = [...defaultAboutLong];
 export let budgetRanges: string[] = [...defaultBudgetRanges];
 export let hourOptions: string[] = [...defaultHourOptions];
+export let loader: LoaderConfig = defaultLoader;
 
 const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
 const num = (v: unknown, fallback = 0) => (typeof v === "number" ? v : fallback);
@@ -98,6 +102,12 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
             iconUrl: str(r["icon_url"]),
           }))
         : defaultSite.socials,
+    };
+    loader = {
+      shape: str(s["loader_shape"], defaultLoader.shape) === "circle" ? "circle" : "square",
+      size: num(s["loader_size"], defaultLoader.size) || defaultLoader.size,
+      pulseScale: num(s["loader_pulse_scale"], defaultLoader.pulseScale) || defaultLoader.pulseScale,
+      fade: str(s["loader_fade"], defaultLoader.fade) === "in" ? "in" : "out",
     };
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
