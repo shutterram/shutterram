@@ -40,6 +40,24 @@ export const defaultSite: SiteInfo = {
   ],
 };
 
+export interface LoaderConfig {
+  /** "square" or "circle" */
+  shape: string;
+  /** Size in px of the inner box that holds the logo. */
+  size: number;
+  /** How much larger the pulsing outline grows (1 = no growth). */
+  pulseScale: number;
+  /** "out" = fades 100 -> 0 while growing, "in" = fades 0 -> 100. */
+  fade: string;
+}
+
+export const defaultLoader: LoaderConfig = {
+  shape: "square",
+  size: 72,
+  pulseScale: 1.8,
+  fade: "out",
+};
+
 export type CategorySlug = string;
 
 export interface Category {
