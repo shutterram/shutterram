@@ -274,3 +274,53 @@ npm run dev             # http://localhost:8080
 ```
 
 Useful scripts: `npm run lint`, `npm run format`, `npm run build`, `npm run preview`.
+
+---
+
+## 7. Deployment checklist
+
+Work top to bottom. Everything here is a one-time setup except the final smoke test.
+
+### Content
+- [ ] Site name, tagline, contact email/phone and about copy filled in under **Site & About**.
+- [ ] Hero slides: image, title, tagline and category set for each; no placeholder text left.
+- [ ] Gallery photos uploaded and assigned to the right categories; unused categories removed.
+- [ ] Featured/editing samples use **real before and after** images (the shipped BEFORE/AFTER SVGs
+      are placeholders).
+- [ ] Services have image, title, subtitle and description.
+- [ ] Stats, experience steps, testimonials and page-section headings reviewed and reordered.
+- [ ] Social links point at live profiles; custom icons uploaded where needed.
+
+### Backend
+- [ ] Supabase project created, schema + RLS + `GRANT`s applied (section 4.1).
+- [ ] `site-images` storage bucket exists with admin write policies.
+- [ ] Admin account created (first sign-up claims the role), then anonymous sign-ups disabled.
+- [ ] Auth **Site URL** and **Redirect URLs** include the production domain plus
+      `https://yourdomain.com/reset-password`.
+- [ ] SMTP configured in Supabase Auth (needed for password-reset emails).
+- [ ] Database backups scheduled.
+
+### Forms
+- [ ] `settings.form_endpoint` set to a live provider endpoint (section 5).
+- [ ] Test submission sent from `/contact` for **both** the quote and message forms; emails received.
+
+### Environment & build
+- [ ] All variables from section 3 set on the host (`VITE_*` at build time, secrets server-side only).
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` never exposed to the client bundle.
+- [ ] `npm run lint` and `npm run build` pass locally.
+- [ ] `npm run preview` sanity-checked against the production build.
+
+### SEO & polish
+- [ ] Every route's `head()` title/description/OG tags reflect the final brand.
+- [ ] `public/robots.txt` allows the public pages and disallows `/admin`, `/auth`, `/review`.
+- [ ] Favicon and OG image resolve at absolute `https://` URLs.
+- [ ] Images exported at ~2000px long edge, under ~400 KB each.
+
+### Go live
+- [ ] Custom domain connected and HTTPS certificate active.
+- [ ] Smoke test on desktop and mobile: hero slider, gallery lightbox (swipe + arrows), before/after
+      sliders, services rail, testimonials loop, scroll-to-top, both contact forms.
+- [ ] `/admin` login works on the production domain and a content edit shows up on the live site.
+- [ ] Password-reset email received and the new password works.
+- [ ] 404 page renders for an unknown URL and deep links survive a hard refresh.
+
