@@ -161,6 +161,26 @@ export function Testimonials({ className }: { className?: string }) {
     boostRef.current += dir * width;
   }, []);
 
+  // Drag / swipe the reviews rail horizontally.
+  const dragX = useRef<number | null>(null);
+  const dragMoved = useRef(0);
+  const onDragStart = (e: React.PointerEvent) => {
+    dragX.current = e.clientX;
+    dragMoved.current = 0;
+    pausedRef.current = true;
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (dragX.current === null) return;
+    const dx = e.clientX - dragX.current;
+    dragX.current = e.clientX;
+    dragMoved.current += Math.abs(dx);
+    posRef.current -= dx;
+  };
+  const onDragEnd = () => {
+    dragX.current = null;
+  };
+
+
   return (
     <section className={cn("border-t border-hairline bg-surface/30 py-24 md:py-32", className)}>
       <div className="mx-auto max-w-7xl px-6">
