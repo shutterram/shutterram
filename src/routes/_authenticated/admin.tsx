@@ -6,6 +6,7 @@ import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/
 import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
+import { SeoPageSync } from "@/components/admin/SeoPageSync";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 
@@ -189,7 +190,8 @@ const SECTIONS = [
       { key: "label", label: "Short label (filters)" },
       { key: "slug", label: "URL slug" },
       { key: "tagline", label: "Tagline", type: "textarea" },
-      { key: "hero", label: "Hero image", type: "image" },
+      { key: "hero", label: "Hero image (home slider)", type: "image" },
+      { key: "cover", label: "Category page cover (falls back to hero image)", type: "image" },
     ] satisfies FieldSpec[],
   },
   {
@@ -442,7 +444,9 @@ function AdminPage() {
             note={"note" in section ? section.note : undefined}
           />
         ) : (
-          <ListEditor
+          <>
+            {section.id === "seo" ? <SeoPageSync /> : null}
+            <ListEditor
             key={section.id}
             table={section.table}
             fields={section.fields}
@@ -455,7 +459,8 @@ function AdminPage() {
                 ? "id,name,role,occasion,quote,rating,images,status,sort_order"
                 : undefined
             }
-          />
+            />
+          </>
         )}
       </div>
 

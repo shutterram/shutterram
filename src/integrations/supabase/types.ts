@@ -37,6 +37,7 @@ export type Database = {
       }
       categories: {
         Row: {
+          cover: string
           hero: string
           id: string
           label: string
@@ -47,6 +48,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cover?: string
           hero?: string
           id?: string
           label: string
@@ -57,6 +59,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cover?: string
           hero?: string
           id?: string
           label?: string
@@ -642,6 +645,7 @@ export type Database = {
           letter_spacing: string
           line_height: string
           role: string
+          sample_text: string
           selector: string
           size_desktop: string
           size_mobile: string
@@ -660,6 +664,7 @@ export type Database = {
           letter_spacing?: string
           line_height?: string
           role: string
+          sample_text?: string
           selector: string
           size_desktop?: string
           size_mobile?: string
@@ -678,6 +683,7 @@ export type Database = {
           letter_spacing?: string
           line_height?: string
           role?: string
+          sample_text?: string
           selector?: string
           size_desktop?: string
           size_mobile?: string

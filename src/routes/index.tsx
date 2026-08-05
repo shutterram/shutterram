@@ -149,6 +149,28 @@ function Home() {
     servicesBoostRef.current += dir * (card ? card.offsetWidth + 12 : 180);
   }, []);
 
+  // Drag / swipe the services rail horizontally.
+  const dragX = useRef<number | null>(null);
+  const onDragStart = useCallback(
+    (e: React.PointerEvent) => {
+      dragX.current = e.clientX;
+      pauseServices();
+    },
+    [pauseServices],
+  );
+  const onDragMove = useCallback((e: React.PointerEvent) => {
+    if (dragX.current === null) return;
+    const dx = e.clientX - dragX.current;
+    dragX.current = e.clientX;
+    servicesPosRef.current -= dx;
+  }, []);
+  const onDragEnd = useCallback(() => {
+    if (dragX.current === null) return;
+    dragX.current = null;
+    resumeServices(2500);
+  }, [resumeServices]);
+
+
   // Section copy, order and visibility all come from the content studio.
   const ordered = sectionsFor("home");
   const copy = (key: string, fallback: { eyebrow: string; heading: string; intro?: string }) => {
@@ -337,7 +359,9 @@ function Home() {
           </Reveal>
           {/* mobile: two-card snap slider */}
           <div className="relative mt-10 md:hidden">
-            <p className="eyebrow text-center">Use the arrows to see more services</p>
+            <p className="eyebrow text-center">
+              Swipe or use the arrows to see more services
+            </p>
             <div className="relative mt-5">
               <button
                 type="button"
@@ -348,15 +372,23 @@ function Home() {
                 <ChevronLeft className="size-7" strokeWidth={1} />
               </button>
               <div
-                className="min-w-0 overflow-hidden px-4"
+                className="min-w-0 touch-pan-y overflow-hidden px-4"
                 onMouseEnter={pauseServices}
-                onMouseLeave={() => resumeServices()}
+                onMouseLeave={() => {
+                  onDragEnd();
+                  resumeServices();
+                }}
                 onTouchStart={pauseServices}
                 onTouchEnd={() => resumeServices(2500)}
                 onTouchCancel={() => resumeServices(2500)}
                 onFocusCapture={pauseServices}
                 onBlurCapture={() => resumeServices()}
+                onPointerDown={onDragStart}
+                onPointerMove={onDragMove}
+                onPointerUp={onDragEnd}
+                onPointerCancel={onDragEnd}
               >
+
                 <div ref={servicesRef} className="flex w-max will-change-transform">
                   {[0, 1, 2].map((group) => (
                     <div key={group} className="flex shrink-0 gap-3 pr-3" aria-hidden={group > 0}>
@@ -437,7 +469,14 @@ function Home() {
     <>
       <HeroSlider />
 
-      {ordered.map((s) => blocks[s.key] ?? null)}
+      {ordered.map((s) =>
+        blocks[s.key] ? (
+          // The id lets the studio target this section's fonts individually.
+          <div key={s.key} id={`sec-${s.key}`}>
+            {blocks[s.key]}
+          </div>
+        ) : null,
+      )}
 
       <Lightbox
         photos={visible}

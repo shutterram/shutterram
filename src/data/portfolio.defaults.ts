@@ -190,6 +190,8 @@ export interface Category {
   label: string;
   tagline: string;
   hero: string;
+  /** Optional cover photo for the category page header (falls back to `hero`). */
+  cover?: string;
 }
 
 export const defaultCategories: Category[] = [

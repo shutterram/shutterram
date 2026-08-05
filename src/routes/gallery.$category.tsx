@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
 import { getSeo } from "@/lib/seo.functions";
@@ -48,15 +49,26 @@ export const Route = createFileRoute("/gallery/$category")({
   component: CategoryGallery,
 });
 
+const COLUMN_CLASS: Record<string, string> = {
+  "1": "columns-1",
+  "2": "columns-2",
+  "3": "columns-1 sm:columns-2 lg:columns-3",
+};
+
 function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [cols, setCols] = useState<"1" | "2" | "3">("1");
 
   return (
     <div>
-      <div className="relative h-[60vh] w-full overflow-hidden">
-        <img src={category.hero} alt={category.title} className="size-full object-cover" />
+      <div id="category-hero" className="relative h-[60vh] w-full overflow-hidden">
+        <img
+          src={category.cover || category.hero}
+          alt={category.title}
+          className="size-full object-cover"
+        />
         <div className="hero-scrim absolute inset-0" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <p className="eyebrow">{t("gallery.eyebrow")}</p>
@@ -70,14 +82,29 @@ function CategoryGallery() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-16">
-        <Link
-          to="/gallery"
-          className="eyebrow inline-flex items-center gap-2 transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-3.5" /> All work
-        </Link>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
+          <Link
+            to="/gallery"
+            className="eyebrow inline-flex min-w-0 items-center gap-2 transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5 shrink-0" /> All work
+          </Link>
 
-        <div className="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="eyebrow hidden sm:inline">View</span>
+            <FilterPills
+              options={[
+                { value: "1" as const, label: "1 line" },
+                { value: "2" as const, label: "2 lines" },
+                { value: "3" as const, label: "3 lines" },
+              ]}
+              value={cols}
+              onChange={setCols}
+            />
+          </div>
+        </div>
+
+        <div className={`mt-10 gap-5 [&>*]:mb-5 ${COLUMN_CLASS[cols]}`}>
           {items.map((p, i) => (
             <button
               key={p.id}
@@ -97,6 +124,7 @@ function CategoryGallery() {
             </button>
           ))}
         </div>
+
 
         <div className="mt-16 flex flex-col items-center gap-6 border-t border-hairline pt-14 text-center">
           <h2 className="font-display text-3xl">Planning something like this?</h2>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +19,10 @@ type Row = {
   size_desktop: string;
   size_tablet: string;
   size_mobile: string;
+  sample_text: string;
   sort_order: number;
 };
+
 
 type Site = {
   id: boolean;
@@ -39,6 +41,28 @@ const VIEWS = [
 
 const field =
   "w-full border-b border-hairline bg-transparent py-1.5 text-xs outline-none focus:border-foreground";
+
+/** Inline styles that mirror how this text style will look on the site. */
+function previewStyle(r: Row, sizeKey: string, site: Site): CSSProperties {
+  const fam = (r.font_family ?? "").trim();
+  const family = !fam
+    ? undefined
+    : fam === "display"
+      ? `"${site.font_heading || "Literata"}", serif`
+      : fam === "sans"
+        ? `"${site.font_body || "Manrope"}", sans-serif`
+        : `"${fam}", sans-serif`;
+  return {
+    fontFamily: family,
+    fontWeight: r.weight || undefined,
+    letterSpacing: r.letter_spacing || undefined,
+    lineHeight: r.line_height || undefined,
+    textTransform: (r.text_transform || undefined) as CSSProperties["textTransform"],
+    fontSize: String((r as unknown as Record<string, string>)[sizeKey] ?? "") || undefined,
+  };
+}
+
+
 
 /** Fonts, weights and per-device sizes for every kind of text on the site. */
 export function TypographyStudio() {
@@ -183,7 +207,17 @@ export function TypographyStudio() {
                   <div className="min-w-0">
                     <p className="text-sm">{r.label}</p>
                     {r.hint ? <p className="text-xs text-muted-foreground">{r.hint}</p> : null}
+                    <div className="mt-3 min-w-0 border-l-2 border-hairline pl-3">
+                      <p
+                        className="overflow-hidden text-ellipsis"
+                        style={previewStyle(r, view.sizeKey, site)}
+                      >
+                        {r.sample_text || r.label}
+                      </p>
+                    </div>
                   </div>
+
+
 
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <label className="block">
@@ -264,6 +298,17 @@ export function TypographyStudio() {
                         <option value="lowercase">lowercase</option>
                         <option value="capitalize">Capitalised</option>
                       </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-muted-foreground">
+                        Example text (preview only)
+                      </span>
+                      <input
+                        value={r.sample_text ?? ""}
+                        onChange={(e) => set(r.id, { sample_text: e.target.value })}
+                        placeholder="Sample from the site"
+                        className={field}
+                      />
                     </label>
                   </div>
                 </div>

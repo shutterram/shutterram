@@ -19,6 +19,7 @@ export interface TypeToken {
   sizeDesktop: string;
   sizeTablet: string;
   sizeMobile: string;
+  sampleText?: string;
 }
 
 export interface Typography {
