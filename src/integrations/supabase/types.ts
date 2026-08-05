@@ -545,6 +545,48 @@ export type Database = {
         }
         Relationships: []
       }
+      theme_tokens: {
+        Row: {
+          dark_opacity: number
+          dark_value: string
+          group_label: string
+          hint: string
+          id: string
+          label: string
+          light_opacity: number
+          light_value: string
+          sort_order: number
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          dark_opacity?: number
+          dark_value?: string
+          group_label?: string
+          hint?: string
+          id?: string
+          label: string
+          light_opacity?: number
+          light_value?: string
+          sort_order?: number
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          dark_opacity?: number
+          dark_value?: string
+          group_label?: string
+          hint?: string
+          id?: string
+          label?: string
+          light_opacity?: number
+          light_value?: string
+          sort_order?: number
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
