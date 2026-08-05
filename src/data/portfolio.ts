@@ -214,6 +214,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       label: str(r["label"]),
       tagline: str(r["tagline"]),
       hero: str(r["hero"]),
+      cover: str(r["cover"]),
     }));
   }
 
@@ -340,6 +341,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
     sizeDesktop: str(r["size_desktop"]),
     sizeTablet: str(r["size_tablet"]),
     sizeMobile: str(r["size_mobile"]),
+    sampleText: str(r["sample_text"]),
   }));
 }
 
