@@ -448,6 +448,42 @@ Verified in the last pass on this build — repeat after any content or code cha
 - [ ] Security scan clean: no public read of reviewer emails, no `settings.form_endpoint` exposure,
       `/admin` unreachable when signed out.
 
+#### How to run the checks (tooling)
+
+Everything below runs against a **production build**, not the dev server — dev is more forgiving:
+
+```bash
+npm run build && npm run start        # serve the production build locally
+```
+
+- **Status codes and titles**
+  ```bash
+  for p in / /gallery /services /about /contact /review /does-not-exist; do
+    printf "%s -> %s\n" "$p" "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000$p)"
+  done
+  curl -s http://localhost:3000/ | grep -o '<title>[^<]*</title>'
+  ```
+- **Meta / social tags** — view source on each page and confirm one `<title>`, one
+  `description`, one `canonical`, and `og:image`. Then paste the live URL into
+  [opengraph.xyz](https://www.opengraph.xyz) and the
+  [Facebook sharing debugger](https://developers.facebook.com/tools/debug/) (use *Scrape Again*
+  after changing an image — crawlers cache previews).
+- **Structured data** — [search.google.com/test/rich-results](https://search.google.com/test/rich-results)
+  for `/`, `/services` and one gallery category.
+- **Performance / accessibility / SEO scores** — Chrome DevTools → Lighthouse, mobile preset, on `/`,
+  `/gallery/wedding` and `/contact`. Aim for 90+ on Accessibility, Best Practices and SEO; the image
+  heavy pages will score lower on Performance, which is expected for a photography site.
+  CLI alternative: `npx lighthouse http://localhost:3000 --view`.
+- **Responsive pass** — DevTools device toolbar at 390px, 768px, 1280px and 1920px on every page.
+- **Broken links** — `npx linkinator http://localhost:3000 --recurse --skip "mailto:|tel:"`.
+- **Type and lint gates** — `npm run lint` and `npx tsc --noEmit` must both be clean.
+- **Email deliverability** — submit both contact forms and the review form with a real address and
+  confirm delivery (check spam); then approve the review in the studio and confirm it appears.
+- **Backend** — run the security scan in Lovable (or `supabase db lint` on a self-hosted project) and
+  confirm no table exposes data it shouldn't.
+
+
+
 ### Go live
 - [ ] Custom domain connected and HTTPS certificate active.
 - [ ] Smoke test on desktop and mobile: hero slider, gallery lightbox (swipe + arrows), before/after
