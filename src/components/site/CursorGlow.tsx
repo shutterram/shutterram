@@ -2,22 +2,19 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * A soft light that follows the cursor across the site.
- * Desktop / fine-pointer only, and disabled for reduced-motion users.
+ * Only appears once a real mouse moves, and stays off for reduced-motion users.
  */
 export function CursorGlow() {
   const ref = useRef<HTMLDivElement>(null);
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const fine = window.matchMedia("(pointer: fine)").matches;
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!fine || calm) return;
-    setEnabled(true);
+    if (typeof window === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
-    let x = window.innerWidth / 2;
-    let y = window.innerHeight / 2;
+    let x = 0;
+    let y = 0;
 
     const paint = () => {
       raf = 0;
@@ -28,8 +25,10 @@ export function CursorGlow() {
     };
 
     const onMove = (e: PointerEvent) => {
+      if (e.pointerType === "touch") return;
       x = e.clientX;
       y = e.clientY;
+      setEnabled(true);
       if (!raf) raf = requestAnimationFrame(paint);
     };
     const onLeave = () => {
