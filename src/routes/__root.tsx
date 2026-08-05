@@ -159,6 +159,7 @@ function RootComponent() {
       </main>
       {isStudio ? null : <SiteFooter />}
       {isStudio ? null : <ScrollToTop />}
+      {isStudio ? null : <CursorGlow />}
       <Toaster position="bottom-right" />
     </QueryClientProvider>
   );
