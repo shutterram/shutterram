@@ -39,11 +39,6 @@ const SECTIONS = [
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone" },
       { key: "location", label: "Location line" },
-      {
-        key: "form_endpoint",
-        label: "Form endpoint URL",
-        placeholder: "Formspree / Basin / Getform URL",
-      },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
@@ -71,6 +66,20 @@ const SECTIONS = [
           { value: "out", label: "100% → 0% (fade out while growing)" },
           { value: "in", label: "0% → 100% (fade in while shrinking)" },
         ],
+      },
+    ] satisfies FieldSpec[],
+  },
+  {
+    id: "form-delivery",
+    label: "Form delivery",
+    kind: "single" as const,
+    table: "admin_settings",
+    note: "Private: this endpoint is only visible to signed-in admins and is never sent to site visitors.",
+    fields: [
+      {
+        key: "form_endpoint",
+        label: "Form endpoint URL",
+        placeholder: "Formspree / Basin / Getform URL",
       },
     ] satisfies FieldSpec[],
   },
