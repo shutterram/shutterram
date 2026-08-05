@@ -19,8 +19,9 @@ import { ScrollToTop } from "@/components/site/ScrollToTop";
 import { CursorGlow } from "@/components/site/CursorGlow";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
-import { applyContent, logos, themeTokens } from "@/data/portfolio";
+import { applyContent, logos, themeTokens, typeTokens, typography } from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
+import { googleFontsHref, typographyCss } from "@/lib/type-css";
 
 function NotFoundComponent() {
   return (
@@ -134,6 +135,8 @@ function RootComponent() {
   applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const paletteCss = themeCss(themeTokens);
+  const typeCss = typographyCss(typeTokens, typography);
+  const fontsHref = googleFontsHref(typography);
 
   // Swap the browser tab icon when a custom favicon is set in the studio.
   const favicon = logos.favicon;
@@ -151,7 +154,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {fontsHref ? <link rel="stylesheet" href={fontsHref} precedence="high" /> : null}
       {paletteCss ? <style dangerouslySetInnerHTML={{ __html: paletteCss }} /> : null}
+      {typeCss ? <style dangerouslySetInnerHTML={{ __html: typeCss }} /> : null}
       {isStudio ? null : <SiteHeader />}
       <main key={pathname} className="page-in min-h-screen">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
