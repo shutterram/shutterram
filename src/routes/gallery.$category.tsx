@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { FilterPills } from "@/components/site/FilterPills";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
 import { getSeo } from "@/lib/seo.functions";
