@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { ScrollToTop } from "@/components/site/ScrollToTop";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
 import { applyContent } from "@/data/portfolio";
@@ -138,7 +139,10 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // The private studio pages render without the public site chrome.
-  const isStudio = pathname.startsWith("/admin") || pathname.startsWith("/auth");
+  const isStudio =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/reset-password");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -148,6 +152,7 @@ function RootComponent() {
         <Outlet />
       </main>
       {isStudio ? null : <SiteFooter />}
+      {isStudio ? null : <ScrollToTop />}
       <Toaster position="bottom-right" />
     </QueryClientProvider>
   );
