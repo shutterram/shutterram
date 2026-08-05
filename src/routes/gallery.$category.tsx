@@ -57,7 +57,7 @@ function CategoryGallery() {
     <div>
       <div className="relative h-[60vh] w-full overflow-hidden">
         <img src={category.hero} alt={category.title} className="size-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/70" />
+        <div className="hero-scrim absolute inset-0" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <p className="eyebrow">{t("gallery.eyebrow")}</p>
           <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
