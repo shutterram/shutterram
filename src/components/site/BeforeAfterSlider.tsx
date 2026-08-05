@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { unedited } from "@/data/portfolio";
 
-export function BeforeAfterSlider({ src, alt }: { src: string; alt: string }) {
+export function BeforeAfterSlider({
+  before,
+  after,
+  alt,
+}: {
+  before: string;
+  after: string;
+  alt: string;
+}) {
   const [pos, setPos] = useState(50);
   const [dragging, setDragging] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
