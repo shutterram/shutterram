@@ -1,12 +1,44 @@
 # Shutter Ram — Photography Portfolio & Content Studio
 
-A single-photographer portfolio site with a private, database-backed content studio, so every
-headline, paragraph, photo, service and testimonial can be edited without touching code.
+A single-photographer portfolio site with a private, database-backed **Content Studio**, so every
+headline, paragraph, photo, colour, logo, service, review and SEO tag can be edited without touching
+code.
 
-- Public site: `/`, `/about`, `/services`, `/gallery`, `/gallery/:category`, `/contact`
-- Hidden review-collection page: `/review`
-- Sign in: `/auth`
-- Content Studio (admin only): `/admin`
+| URL | What it is | Access |
+| --- | --- | --- |
+| `/` | Home — hero slider, about, stats, featured work, editing power, services, experience, testimonials, connect | Public |
+| `/gallery` | Full gallery with category filters | Public |
+| `/gallery/:category` | One category (wedding, corporate, portrait, headshots, …) | Public |
+| `/services` | All services, alternating editorial layout | Public |
+| `/about` | About Me, stats, kit, experience | Public |
+| `/contact` | Request a Quote / Send a Message toggle | Public |
+| `/review` | Client review submission form (unlisted, `noindex`) | Share by link |
+| `/auth` | Sign in + forgot password | Public |
+| `/reset-password` | Password recovery landing page | Public (must stay unguarded) |
+| `/admin` | Content Studio | Admin only |
+| `/sitemap.xml` | Generated at request time | Crawlers |
+| `/api/public/img/<key>` | Image proxy that streams files out of private storage | Public |
+
+---
+
+## Table of contents
+
+1. [Technology stack](#1-technology-stack)
+2. [Project layout](#2-project-layout)
+3. [How the site gets its content](#3-how-the-site-gets-its-content)
+4. [The Content Studio](#4-the-content-studio)
+5. [Database schema & security model](#5-database-schema--security-model)
+6. [Environment variables](#6-environment-variables)
+7. [Local development](#7-local-development)
+8. [Hosting it yourself](#8-hosting-it-yourself)
+9. [Contact forms → email](#9-contact-forms--email)
+10. [Auth & password reset setup](#10-auth--password-reset-setup)
+11. [SEO, sitemap & Search Console](#11-seo-sitemap--search-console)
+12. [Design system, theming & animation](#12-design-system-theming--animation)
+13. [Deployment checklist](#13-deployment-checklist)
+14. [QA test pass](#14-qa-test-pass)
+15. [Troubleshooting](#15-troubleshooting)
+16. [Extending the site](#16-extending-the-site)
 
 ---
 
@@ -15,244 +47,236 @@ headline, paragraph, photo, service and testimonial can be edited without touchi
 | Layer | Technology |
 | --- | --- |
 | Framework | [TanStack Start](https://tanstack.com/start) v1 (React 19, SSR + server functions) |
-| Routing | TanStack Router (file-based, `src/routes`), generated `routeTree.gen.ts` |
-| Data fetching | TanStack Query + route loaders |
-| Build tool | Vite 7/8 |
+| Routing | TanStack Router, file-based in `src/routes` (`routeTree.gen.ts` is generated — never edit) |
+| Data fetching | Route loaders + TanStack Query |
+| Build tool | Vite |
 | Language | TypeScript (strict) |
-| Styling | Tailwind CSS v4 (config-less, tokens in `src/styles.css`) + shadcn/ui primitives (Radix) |
+| Styling | Tailwind CSS v4 (config-less; tokens in `src/styles.css`) + shadcn/ui primitives (Radix) |
 | Icons | lucide-react |
-| Notifications | sonner |
-| Validation | zod |
-| Database / Auth / Storage | Supabase (Postgres + Row Level Security, Supabase Auth, Supabase Storage) |
-| Auth flows | Email + password sign-in, email-link password recovery (`/reset-password`), role check via `user_roles` table |
-| Section management | `page_sections` table drives per-page section order, visibility and wording |
-| Global UX states | Route-level pending loader (`PageLoader`), error boundary screen (`SiteErrorScreen`), scroll-to-top control |
+| Toasts | sonner |
+| Validation | zod (client **and** server) |
+| Database / Auth / Storage | Supabase — Postgres + Row Level Security, Supabase Auth, Supabase Storage |
+| Image handling | Browser-side WebP conversion + downscale (`src/lib/optimise-image.ts`) |
 | Fonts | Literata (display) + Manrope (body), loaded via `<link>` in `src/routes/__root.tsx` |
-| Deployment target | Edge/Node server (Cloudflare Workers by default; Vercel/Netlify/Node also work) |
+| Runtime target | Edge or Node server (Cloudflare Workers by default; Vercel / Netlify / VPS all work) |
 
-### Project layout
+**Key constraint:** the server runtime is a Worker-style sandbox. No `child_process`, no `sharp` /
+`canvas`, no persistent local filesystem. Anything image-related happens in the browser before
+upload.
+
+---
+
+## 2. Project layout
 
 ```
 src/
-  routes/                 file-based routes (each file = one URL)
-    __root.tsx            document shell, fonts, header/footer, site content loader
-    index.tsx             home page
-    _authenticated/       auth-gated subtree (route.tsx is the gate)
-      admin.tsx           Content Studio
-    api/public/img.$.ts   image proxy that streams files out of private storage
+  routes/                          file-based routes — one file per URL
+    __root.tsx                     document shell: fonts, theme script, header/footer,
+                                   favicon, cursor glow, site-content loader
+    index.tsx  about.tsx  services.tsx  contact.tsx  review.tsx  auth.tsx
+    gallery.index.tsx  gallery.$category.tsx
+    reset-password.tsx
+    sitemap[.]xml.tsx              dynamic sitemap
+    _authenticated/route.tsx       auth gate for the subtree
+    _authenticated/admin.tsx       Content Studio (tab definitions live here)
+    api/public/img.$.ts            signed-URL image proxy for the private bucket
   components/
-    site/                 public site components (hero, lightbox, testimonials, …)
-    admin/ContentEditor.tsx  studio editors (singleton, list, bulk upload)
-    ui/                   shadcn primitives
-  data/portfolio.ts       typed fallback content used if the database is unreachable
+    site/                          public components — HeroSlider, Lightbox, Testimonials,
+                                   BeforeAfterSlider, SiteHeader, SiteFooter, PageLoader,
+                                   SiteErrorScreen, ScrollToTop, CursorGlow, Reveal, …
+    admin/                         ContentEditor, CopyEditor, LogoStudio, ThemeStudio,
+                                   ReviewModeration
+    ui/                            shadcn primitives
+  data/
+    portfolio.defaults.ts          typed built-in content (fallback if the DB is unreachable)
+    portfolio.ts                   live bindings + applyContent() that swaps in DB rows
   lib/
-    site-content.functions.ts  server function that loads all site content
-    submit-form.functions.ts   server function that forwards form submissions
-  integrations/supabase/  generated clients, types, auth middleware
-supabase/                 project config; migrations are applied via the platform
+    site-content.functions.ts      server fn: loads every content table in one round trip
+    submit-form.functions.ts       server fn: forwards contact submissions to your form provider
+    submit-review.functions.ts     server fn: accepts client reviews (pending)
+    review-emails.functions.ts     server fn: admin-only reveal of reviewer emails
+    seo.ts / seo.server.ts / seo.functions.ts   metadata resolution + SITE_URL
+    sitemap.server.ts              category paths for the sitemap
+    optimise-image.ts              WebP conversion + downscale before upload
+    theme-css.ts                   turns theme_tokens rows into CSS variables
+  integrations/supabase/           generated clients, types, auth middleware (do not edit)
+  styles.css                       design tokens, dark/light palettes, utilities
+public/                            favicon.svg, robots.txt, placeholders/
+supabase/config.toml               project config
 ```
 
 ---
 
-## 2. The Content Studio
+## 3. How the site gets its content
 
-### Accessing it
-1. Go to `/auth` and create an account (the **first** account created is the administrator).
-2. You are redirected to `/admin`.
+1. `src/routes/__root.tsx` calls the `loadSiteContent` server function
+   (`src/lib/site-content.functions.ts`) during SSR.
+2. That function selects **explicit columns** from every content table in parallel and returns one
+   payload.
+3. `applyContent()` in `src/data/portfolio.ts` swaps the payload into the exported live bindings
+   (`site`, `categories`, `photos`, `services`, `copyMap`, `themeTokens`, …).
+4. Components read those bindings, plus `t("key", "fallback")` for individual strings and
+   `sectionFor(page, key)` for section headings/visibility.
+5. If the database is unreachable, the values in `src/data/portfolio.defaults.ts` are rendered
+   instead, so the site never shows an empty page.
 
-### Password reset (admin accounts)
-The studio ships with a self-service reset flow:
+**Consequence:** to add a new editable string, add a row in the studio's **Wording** tab and call
+`t("your.key", "fallback")` in the component. No migration needed.
 
-1. On `/auth`, click **Forgot password?** and enter the account email.
-2. Supabase Auth emails a recovery link pointing at `<your-site>/reset-password`
-   (the app passes `redirectTo: ${window.location.origin}/reset-password`).
-3. That page (`src/routes/reset-password.tsx`) is public, reads the recovery session from the URL
-   and calls `supabase.auth.updateUser({ password })` to set the new password.
+---
 
-**Setup required on your own Supabase project:**
+## 4. The Content Studio
 
-- **Redirect URLs** — Authentication → URL Configuration: set *Site URL* to your production origin
-  and add `https://your-domain.com/reset-password` (plus `http://localhost:8080/reset-password` for
-  local dev) to *Redirect URLs*. Links to URLs not on this list are rejected.
-- **SMTP** — Authentication → Emails → SMTP Settings: Supabase's built-in sender is rate-limited and
-  meant for testing only. Point it at a real sender (Resend, Postmark, SendGrid, Amazon SES, your own
-  SMTP) so reset emails actually arrive.
-- **Email template** — Authentication → Emails → Templates → *Reset password*: the template must keep
-  the `{{ .ConfirmationURL }}` variable; restyle the copy around it freely.
-- **Expiry / rate limits** — recovery links default to 1 hour (`Email OTP expiration`) and auth emails
-  are hourly-rate-limited under Authentication → Rate Limits; raise it if you have many admins.
-- Keep `/reset-password` **outside** any auth guard — it must be reachable while signed out.
+### Getting in
+1. Go to `/auth` and create an account — the **first** account created becomes the administrator.
+2. You are redirected to `/admin`. Disable anonymous sign-ups in Supabase Auth afterwards.
+3. `/admin` and `/auth` are unlinked from the public navigation and marked `noindex`.
 
+Press **Refresh site** after saving to reload public pages with the new content.
 
+### Tabs
 
-### What's editable
-`Site & About` (studio name, tagline, email, phone, location, form endpoint, about copy, quote-form
-dropdown options, loading-screen shape/size/pulse/fade), `Logos`, `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
-`Experience`, `Testimonials`, `Process steps`, `Page sections`, `Social links`. Every list supports add, edit,
-reorder (↑ ↓) and delete. **New entries (single or bulk) are inserted at the top of the list**, right
-under the Add / Bulk upload controls, so you never have to scroll to fill them in; use ↑ ↓ to move
-them wherever you want afterwards.
-
-**Page sections** controls the sections themselves rather than their contents. Each row is one
-section of one page (`Home — Featured work`, `About page — The Experience`, …) and lets you:
-
-- rename it (studio-only label), edit its small eyebrow label, heading, italic second line and intro
-  paragraph;
-- reorder it with ↑ ↓ — the order in this list is the order the sections appear on the page;
-- hide it with the **Show on site** switch, or delete it entirely (deleting removes the section from
-  the page; re-add it by re-inserting the row with the same `page` + `section_key`).
-
-The **Experience** section is configured per page, so the About page can use its own wording (for
-example *"How you can work with me"*). Its milestones live in **Process steps**, where each step is
-assigned to either *Home & Services pages* or *About Me page* via the “Which Experience section”
-dropdown.
-
-Photos and Services use a **Category** dropdown with inline *Add* / *Remove*, so gallery categories
-can be created and deleted from the studio. Editing samples take two images — a **Before**
-(original) and an **After** (edited) frame — which power the comparison slider on the home page.
-
-
-**Logos** lets you use a different logo in each place one appears:
-
-| Slot | Where it shows |
+| Tab | What it controls |
 | --- | --- |
-| Header logo | Site header (desktop and mobile, both scrolled and top states) |
-| Mobile menu logo | Top of the full-screen mobile navigation drawer |
-| Footer logo | Footer brand lockup |
-| Loading screen logo | Centre of the animated loader |
-| Browser tab icon (favicon) | Browser tab / bookmark icon |
+| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Form delivery** | The private form endpoint URL (never sent to the browser) |
+| **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
+| **Colours** | Every colour token, separately for dark and light mode, with opacity sliders |
+| **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
+| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots |
+| **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
+| **Hero categories** | Slug, title, label, tagline, hero image per category |
+| **Photos** | Caption, category, image, featured flag + position, internal key |
+| **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
+| **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
+| **Stats** | Value + label pairs |
+| **Experience** | Period, role, place, detail |
+| **Testimonials** | Name, role, quote, rating (placeholder/manual entries) |
+| **Page sections** | Order, visibility, eyebrow, heading, italic second line and intro of every section on every page |
+| **Process steps** | The Experience milestones, assigned to *Home & Services* or *About Me* |
+| **Social links** | Name, URL, built-in icon name, or a custom uploaded icon |
 
-Upload an SVG or PNG per slot, or paste a URL. Any slot left empty falls back to the built-in
-`SRLogo.svg`. **Invert logo colours** flips dark artwork to white for the dark theme — turn it off
-if you upload logos that are already light. Transparent SVG/PNG works best; favicons should be
-square.
+Every list supports add, edit, reorder (↑ ↓) and delete. **New entries — single or bulk — are
+inserted at the top of the list**, right under the Add controls, so you never scroll to fill them in.
+
+### Page sections
+Each row is one section of one page (`Home — Featured work`, `About page — The Experience`, …):
+
+- rename it (studio-only label), edit eyebrow / heading / italic line / intro;
+- reorder with ↑ ↓ — this list's order is the on-page order;
+- hide with **Show on site**, or delete it entirely. Re-add by re-inserting a row with the same
+  `page` + `section_key` pair — keep a note of the pair if you might want it back.
+
+The **Experience** section is configured per page, so About can use its own wording
+(e.g. *"How you can work with me"*). Its milestones live in **Process steps**, assigned via the
+*Which Experience section* dropdown.
+
+### Categories
+Photos and Services use a **Category** dropdown with inline *Add* / *Remove*, so gallery categories
+are created and deleted from the studio. Category pages (`/gallery/:category`) and the sitemap pick
+them up automatically.
 
 ### Uploading images
-Two ways, both in the studio:
+- **Single** — the *Upload* button on any image field, or paste an external image URL.
+- **Bulk** — at the top of any list with an image field:
+  1. **Choose files** — select as many as you like.
+  2. Each staged file gets its own attribute form (caption, category, featured, order, …); the
+     filename pre-fills the title.
+  3. **Apply first to all** copies the first file's attributes onto the rest (titles stay per-file).
+  4. **Upload N** uploads each file and creates its row. Failures are reported per file and stay in
+     the staging list for retry.
 
-- **Single image** — open a row, use the *Upload* button on any image field, or paste an external
-  image URL.
-- **Bulk upload** — at the top of any list that has an image field:
-  1. **Choose files** and select as many images as you like.
-  2. Each staged file gets its own attribute form (caption, category, featured flag, order, …).
-     The filename is pre-filled as the title/caption.
-  3. **Apply first to all** copies the first file's attributes onto every other file (titles stay
-     per-file) — handy when uploading a whole wedding set into one category.
-  4. **Upload N** uploads every file and creates its row. Failures are reported per file and stay
-     in the list so you can retry; successful ones disappear and appear in the list below.
+**Automatic optimisation** (`src/lib/optimise-image.ts`): every upload is decoded in the browser,
+downscaled to a **2400px** longest edge and re-encoded as **WebP q0.82** before storage — a toast
+reports the saving. SVG and GIF pass through untouched; formats the browser can't decode (e.g. HEIC)
+upload as-is. Client review photos get the same treatment before the 6 MB per-file check. Tune
+`MAX_EDGE` / `QUALITY` in that file for larger originals.
 
-**Automatic image optimisation** (`src/lib/optimise-image.ts`) — every image you upload through the
-studio (single, bulk, logos, social icons) is decoded in the browser, downscaled so its longest edge
-is at most **2400px**, and re-encoded to **WebP at quality 0.82** before it is stored. You can drop
-straight-out-of-camera JPEG/PNG/TIFF-style exports of any size; a toast reports the saving. SVG and
-GIF pass through untouched (vectors/animation), and any format the browser cannot decode (e.g. HEIC)
-is uploaded as-is rather than failing. Client review photos go through the same step before the 6MB
-per-file limit is checked. Tune `MAX_EDGE` / `QUALITY` in that file if you want larger originals.
+Uploads land in the **private** `site-images` Supabase Storage bucket and are served through
+`/api/public/img/<key>`, so the bucket is never public.
 
+### Logos
+| Slot | Where it shows |
+| --- | --- |
+| Header logo | Site header, desktop and mobile, top and scrolled states |
+| Mobile menu logo | Top of the full-screen mobile drawer |
+| Footer logo | Footer brand lockup |
+| Loading screen logo | Centre of the animated loader |
+| Browser tab icon | Favicon (applied at runtime) |
 
+Upload SVG/PNG or paste a URL; empty slots fall back to the built-in `SRLogo.svg`. The **preview
+panel** shows the slot in context and the height / offset-X / offset-Y sliders write to the
+`logo_*_height` / `_offset_x` / `_offset_y` settings columns. **Invert logo colours** flips dark
+artwork to white in dark mode only — turn it off for artwork that is already light. Favicons should
+be square.
 
-**Social links** accept either a built-in icon name (`instagram`, `facebook`, `twitter`, `flickr`)
-or a **custom icon** you upload (SVG or PNG). Uploaded icons are rendered through a CSS mask, so they
-are automatically resized to the standard icon box and recoloured to match the site's text colour on
-hover — upload a single-colour silhouette with a transparent background for best results. All social
-links open in a new tab (`target="_blank" rel="noreferrer noopener"`).
-
-Uploads go to the **private** `site-images` Supabase Storage bucket and are served through
-`/api/public/img/<key>`, so the bucket never has to be public.
+### Social links
+Use a built-in icon name (`instagram`, `facebook`, `twitter`, `flickr`) **or** upload a custom icon.
+Uploaded icons render through a CSS mask, so they are auto-sized to the icon box and recoloured on
+hover — upload a single-colour silhouette with a transparent background. Every social link opens in
+a new tab (`target="_blank" rel="noreferrer noopener"`).
 
 ### Client reviews
-Share the `/review` link from the studio's **Client reviews** tab. Submissions land as `pending` and
-only appear on the site once approved. Reviewer photographs open in the site lightbox inside the
-review pop-up (arrows, keyboard, swipe) — they never open in a new tab.
+Share the `/review` link from the **Client reviews** tab. Submissions arrive as `pending` and only
+appear on the site once approved. Reviewers can attach photos; those open in the site lightbox
+*inside* the review pop-up (arrows, keyboard, swipe) — never a new tab.
 
-Reviewer email addresses are **not** part of the public API: column-level privileges on
-`testimonials.email` are revoked from both `anon` and `authenticated`, and the studio reads them
-through the admin-verified server function in `src/lib/review-emails.functions.ts`. If you add a new
-query against `testimonials`, select explicit columns — `select("*")` will fail.
-
-### Content fallback
-If the database is unreachable, the site renders the typed defaults in
-`src/data/portfolio.defaults.ts`, so it never shows an empty page.
+Reviewer emails are **not** part of the public API: column privileges on `testimonials.email` are
+revoked from `anon` and `authenticated`, and the studio reads them through the admin-verified server
+function in `src/lib/review-emails.functions.ts`. **If you add a query against `testimonials`, select
+explicit columns — `select("*")` will fail with a permission error.**
 
 ---
 
-### Light & dark mode
-Visitors switch themes with the sun/moon button in the header (and at the bottom of the mobile
-menu). The choice is stored in `localStorage` under `shutterram-theme` and applied before the first
-paint by a small inline script in `src/routes/__root.tsx`, so there is no flash of the wrong theme.
+## 5. Database schema & security model
 
-- Dark is the default for first-time visitors.
-- Palettes live in `src/styles.css`: `:root`/`.dark` for dark, `.light` for light. Both use the same
-  semantic tokens (`--background`, `--foreground`, `--hairline`, `--glow`…), so components never
-  hardcode colours.
-- Logos flagged **Invert logo** in the studio are inverted only in dark mode, so a black source logo
-  stays black on the light theme.
-- The hero overlay uses the `.hero-scrim` utility (bottom of `src/styles.css`), which has separate
-  strengths per theme — light mode uses a deliberately lighter gradient so photographs stay visible,
-  while keeping enough contrast at the very top and bottom for the header and slide copy. Both the
-  home hero and the gallery category hero share this one utility, so tuning it changes both.
+### Tables (all in `public`)
 
-### SEO tab
-Every page's search and social metadata is editable under **SEO** in the studio (`seo_pages` table).
-Each row is one page path:
-
-| Field | Used for |
+| Table | Purpose |
 | --- | --- |
-| Page path | which route the record applies to (`/`, `/about`, `/gallery/wedding`, …) |
-| Title tag | `<title>` — keep under 60 characters |
-| Meta description | `<meta name="description">` — keep under 160 characters |
-| Keywords | `<meta name="keywords">` (optional) |
-| Social share title / description / image | `og:*` and `twitter:*` tags |
-| Canonical URL | `<link rel="canonical">` and `og:url` |
-| Search engines | `index, follow` or `noindex, nofollow` |
+| `settings` | Singleton row: name, tagline, contact, about copy, loader, glow, logos, default OG image |
+| `admin_settings` | Singleton row: the private `form_endpoint` (admin-only, never public) |
+| `categories` | Gallery categories + hero image and tagline |
+| `photos` | Gallery photos, category, featured flag/order |
+| `services` | Service cards |
+| `edit_samples` | Before/after comparison pairs |
+| `stats` | Number + label strip |
+| `experience` | Experience/CV entries |
+| `process_steps` | Experience milestones (`section_key` = `default` or `about`) |
+| `testimonials` | Reviews (`status` = `pending` / `approved`), optional images + email |
+| `page_sections` | Per-page section order, visibility and wording |
+| `site_copy` | Every standalone string (`key` → `value`) behind `t()` |
+| `socials` | Social links + custom icon URLs |
+| `theme_tokens` | Colour tokens with dark/light values and opacity |
+| `seo_pages` | Per-path SEO metadata |
+| `user_roles` | `user_id` + `app_role` — the **only** place roles are stored |
 
-Blank fields fall back to the per-route defaults baked into each route file, so a half-filled record
-never produces empty tags. Add a row for a new gallery category simply by entering its path.
+Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function, `touch_updated_at()`
+trigger on every content table.
 
-**Default social share image.** When a page's *Social share image* is blank, the site falls back to
-the site-wide image set under **Site & About → Default social share image**. It ships with the
-placeholder `public/placeholders/og-cover.jpg` (1200×630) — replace it in the studio with your own
-1200×630 artwork whenever you like. Relative paths are turned into absolute URLs using `SITE_URL`
-(`src/lib/seo.ts`).
+### RLS rules that must be preserved
+- Public `SELECT` on content tables for `anon` + `authenticated`.
+- All writes gated by `has_role(auth.uid(), 'admin')`.
+- Explicit `GRANT`s for `anon` / `authenticated` / `service_role` on every table — RLS alone is not
+  enough with PostgREST.
+- `admin_settings` (form endpoint): **no** `anon` access at all.
+- `testimonials`: `anon` reads only `status = 'approved'`; the `email` column is revoked from both
+  `anon` and `authenticated` at the column level.
+- `user_roles`: users may read their own row only; no client-side inserts/updates/deletes.
+- Storage: `site-images` bucket is **private**; admin-only write policies on `storage.objects`.
 
-**Favicon.** `public/favicon.svg` is the Shutter Ram icon logo. You can override it per-site from
-**Logos → Browser tab icon** without touching the code.
-
-Also shipped:
-
-- `/sitemap.xml` is generated at request time from the SEO records plus every gallery category, and
-  skips anything marked `noindex` (`src/routes/sitemap[.]xml.tsx`).
-- `public/robots.txt` allows crawlers, disallows `/admin`, `/auth`, `/review`, `/reset-password`, and
-  points at the sitemap.
-- JSON-LD: `LocalBusiness` on the home page and `CollectionPage` on category galleries.
-- `/review` is `noindex, nofollow` so the client review link never appears in search.
-
-### Google Search Console (do this on your own host)
-
-Search Console is **not** something you need to connect inside Lovable — the integration there only
-covers the `*.lovable.app` preview domain. Once you deploy to your own domain:
-
-1. Go to [search.google.com/search-console](https://search.google.com/search-console) and add a
-   **Domain** property for your domain (DNS TXT record) or a **URL prefix** property.
-2. For URL-prefix verification, pick the *HTML tag* method and add the meta tag to the `meta` array
-   in `src/routes/__root.tsx` — for example
-   `{ name: "google-site-verification", content: "<your-token>" }`. Redeploy, then click Verify.
-   (Alternatively drop the verification HTML file into `public/` and it is served at the root.)
-3. Submit `https://your-domain.com/sitemap.xml` under **Sitemaps**.
-4. Use **URL Inspection → Request indexing** for the home page to speed up the first crawl.
-5. Repeat step 1 for Bing Webmaster Tools if you want Bing coverage (it can import from Search
-   Console).
-
+**Never store roles on a profile/user row** — that is a privilege-escalation path. Keep them in
+`user_roles` and check via `has_role()`.
 
 ---
 
-## 3. Environment variables
+## 6. Environment variables
 
-Client-visible (safe to expose, must be present at build time):
+Client-visible (safe to expose, **baked in at build time**):
 
 ```
 VITE_SUPABASE_URL=https://<project>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable / anon key>
 VITE_SUPABASE_PROJECT_ID=<project ref>
 ```
 
@@ -260,92 +284,110 @@ Server-only (never expose to the browser):
 
 ```
 SUPABASE_URL=https://<project>.supabase.co
-SUPABASE_PUBLISHABLE_KEY=<publishable/anon key>
-SUPABASE_SERVICE_ROLE_KEY=<service role key>   # used by server functions only
+SUPABASE_PUBLISHABLE_KEY=<publishable / anon key>
+SUPABASE_SERVICE_ROLE_KEY=<service role key>   # server functions only — bypasses RLS
 ```
 
-Rules of thumb: `import.meta.env.VITE_*` in browser code, `process.env.*` **inside** server
-function handlers only (never at module scope).
+Rules of thumb:
+- `import.meta.env.VITE_*` in browser code.
+- `process.env.*` **inside** a server-function `.handler()` only — never at module scope, because
+  env injection happens at call time.
+- Changing a `VITE_*` value requires a **rebuild**, not just a restart.
 
 ---
 
-## 4. Hosting it yourself
-
-The app is ordinary TanStack Start code — nothing is tied to the platform it was built on.
-
-### 4.1 Prepare a Supabase project
-1. Create a project at supabase.com (or self-host Supabase).
-2. Recreate the schema: tables `settings`, `categories`, `photos`, `services`, `edit_samples`,
-   `stats`, `experience`, `testimonials`, `process_steps`, `page_sections`, `socials`, `user_roles`, plus the
-   `app_role` enum, the `has_role()` function and the `touch_updated_at()` trigger. Export from the
-   current database with `pg_dump --schema-only` (plus `--data-only` for your content) and import
-   into the new one, or copy the SQL from `supabase/migrations/` if present.
-3. Keep the RLS model: public `SELECT` for site content, writes restricted to
-   `has_role(auth.uid(), 'admin')`, and `GRANT`s for `anon` / `authenticated` / `service_role`.
-   `settings.form_endpoint` is deliberately **not** readable by `anon`.
-4. Create a **private** storage bucket named `site-images` and an `INSERT`/`UPDATE`/`DELETE` policy
-   on `storage.objects` for admins.
-5. Copy your photos across (Storage → download/upload, or the `storage.objects` API).
-6. In Auth settings, disable anonymous sign-ups once your admin account exists.
-
-### 4.2 Build and run
+## 7. Local development
 
 ```sh
 npm install
-npm run build     # production build
-npm run preview   # serve the build locally
+cp .env.example .env     # or create .env with the variables from section 6
+npm run dev              # http://localhost:8080
 ```
 
-`npm run dev` starts the dev server on port 8080.
+| Script | Does |
+| --- | --- |
+| `npm run dev` | Dev server on port 8080 |
+| `npm run build` | Production build |
+| `npm run build:dev` | Production build in development mode (useful for debugging prerender) |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
+| `npx tsc --noEmit` | Type check |
 
-### 4.3 Deploy
-
-- **Cloudflare Workers** (default target): `npm run build`, then deploy the generated output with
-  Wrangler. Set all environment variables as Worker secrets/vars.
-- **Vercel / Netlify**: import the repo, build command `npm run build`, and add the environment
-  variables in the dashboard. Both auto-detect Nitro output.
-- **Your own VPS / Docker**: `npm ci && npm run build`, then run the produced server entry with
-  Node 20+ behind nginx/Caddy. Provide the env vars through the process environment.
-
-### 4.4 Things to keep in mind
-
-- **`VITE_*` variables are baked in at build time** — changing them requires a rebuild, not just a
-  restart.
-- **`SUPABASE_SERVICE_ROLE_KEY` bypasses RLS.** Keep it server-side only; never put it in a `VITE_`
-  variable or client bundle.
-- **Serverless/edge runtime limits**: no `child_process`, no `sharp`/`canvas`, no persistent local
-  filesystem. Resize images before uploading rather than on the server.
-- **Image weight** drives page speed more than anything else here — export JPEG/WebP at roughly
-  2000px on the long edge and under ~400 KB.
-- **The first account created becomes the admin.** Create yours before sharing the URL, and keep
-  `/admin` and `/auth` unlinked (both are `noindex`).
-- **Backups**: schedule Supabase database backups; storage objects are not covered by SQL dumps.
-- **Deleting a page section** removes it from the live site immediately; keep a note of the
-  `page` / `section_key` pair if you might want it back.
-- **External links** (socials and anything you add) must open in a new tab — the shared components
-  already set `target="_blank" rel="noreferrer noopener"`.
-- **Route metadata**: each route defines its own `head()` with title/description/OG tags — update
-  these if you rename the studio.
+Conventions worth knowing:
+- One file per URL in `src/routes`; create the route before linking to it.
+- Never edit `src/routeTree.gen.ts` or anything in `src/integrations/supabase/`.
+- No hardcoded colours in components — use the semantic tokens from `src/styles.css`.
+- Server functions: `createServerFn` from `@tanstack/react-start`; keep each `*.functions.ts` file a
+  thin wrapper (imports + exported server functions only) and put helpers in a separate module.
 
 ---
 
-## 5. Wiring the contact forms to an email service
+## 8. Hosting it yourself
 
-The contact page has two forms (Request a Quote, Send a Message). Submissions are posted to a
-server function (`src/lib/submit-form.functions.ts`), which reads the endpoint URL from
-`settings.form_endpoint` in the database and forwards the payload as JSON. **The endpoint URL is
-never sent to the browser.**
+Nothing is tied to the platform this was built on — it is ordinary TanStack Start code.
+
+### 8.1 Prepare a Supabase project
+1. Create a project at supabase.com (or self-host Supabase).
+2. Recreate the schema from section 5: all tables, the `app_role` enum, `has_role()`,
+   `touch_updated_at()` and its triggers. Easiest path:
+   `pg_dump --schema-only` from the current database (plus `--data-only` for your content) and
+   import into the new one.
+3. Re-apply the RLS policies **and** the `GRANT`s exactly as described in section 5. A missing
+   `GRANT` produces "permission denied" even when RLS would allow the row.
+4. Create a **private** bucket named `site-images` with admin `INSERT` / `UPDATE` / `DELETE`
+   policies on `storage.objects`.
+5. Copy your storage objects across (Storage UI download/upload, or the `storage.objects` API) —
+   SQL dumps do **not** include files.
+6. Create your admin account at `/auth`, insert the matching `user_roles` row if it isn't automatic,
+   then disable anonymous sign-ups.
+
+### 8.2 Build
+
+```sh
+npm ci
+npm run build
+npm run preview   # sanity check the production build
+```
+
+### 8.3 Deploy
+
+- **Cloudflare Workers** (default target) — `npm run build`, deploy the generated output with
+  Wrangler, and set every variable from section 6 as Worker vars/secrets.
+- **Vercel / Netlify** — import the repo, build command `npm run build`; both auto-detect the Nitro
+  output. Add the env vars in the dashboard, then redeploy so `VITE_*` values are baked in.
+- **VPS / Docker** — `npm ci && npm run build`, run the produced server entry on Node 20+ behind
+  nginx or Caddy, passing env vars through the process environment.
+
+### 8.4 Things to keep in mind
+- `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS. Server-side only; never in a `VITE_` variable.
+- Edge/serverless runtime limits: no `child_process`, no `sharp` / `canvas`, no persistent local FS.
+- Image weight dominates page speed here — the studio already converts to WebP at ≤2400px, which is
+  the right target for a photography site.
+- The first account created becomes the admin. Create yours before sharing the URL.
+- Schedule Supabase database backups; storage objects are separate.
+- Update `SITE_URL` in `src/lib/seo.ts` and the sitemap line in `public/robots.txt` when you move to
+  your own domain — canonical URLs, OG URLs and the sitemap all derive from it.
+
+---
+
+## 9. Contact forms → email
+
+`/contact` has two forms (Request a Quote, Send a Message). Submissions post to the server function
+`src/lib/submit-form.functions.ts`, which reads the endpoint URL from **`admin_settings.form_endpoint`**
+using the service-role client and forwards the payload as JSON. **The endpoint URL is never sent to
+the browser.**
 
 ### Setup
 1. Create a form endpoint with any provider that accepts a JSON `POST`:
-   - [Formspree](https://formspree.io) — endpoint looks like `https://formspree.io/f/xxxxxxx`
+   - [Formspree](https://formspree.io) — `https://formspree.io/f/xxxxxxx`
    - [Basin](https://usebasin.com) — `https://usebasin.com/f/xxxxxxxx`
    - [Getform](https://getform.io) — `https://getform.io/f/xxxxxxxx`
    - [Web3Forms](https://web3forms.com), [FormSubmit](https://formsubmit.co), or your own webhook
-     (a Zapier/Make catch hook, a Supabase Edge Function, an n8n workflow, …)
-2. Open `/admin` → **Site & About** → **Form endpoint URL**, paste the URL, and save.
-3. Send a test submission from `/contact` and confirm the email arrives. Verify your sender/reply-to
-   address inside the provider if it asks.
+     (Zapier/Make catch hook, n8n, a serverless function…)
+2. Open `/admin` → **Form delivery** → **Form endpoint URL**, paste it, save.
+3. Send a test submission from `/contact` and confirm the email arrives. Verify the sender/reply-to
+   address in the provider if it asks.
 
 ### Payload shape
 ```json
@@ -356,139 +398,259 @@ never sent to the browser.**
   "Hours": "…", "Budget": "…", "Details": "…"
 }
 ```
-Field names match the form labels, so provider email templates and spreadsheet exports stay
-readable. Add a provider-side autoresponder if you want clients to get a confirmation email.
+Field names match the form labels, so provider templates and spreadsheet exports stay readable.
 
 ### Notes
-- If the endpoint is empty or not `https://`, submissions are accepted by the UI but not delivered —
-  set the URL before going live.
-- All input is validated with zod both client- and server-side (length caps, email format).
-- To store submissions in your own database instead, point the endpoint at your own webhook, or
-  extend the server function with an `insert` into a new `submissions` table (remember RLS + grants).
+- If the endpoint is blank or not `https://`, the UI accepts the submission but nothing is delivered.
+  Set it before going live.
+- All input is validated with zod on both sides (length caps, email format).
+- To store submissions yourself instead, point the endpoint at your own webhook, or extend the
+  server function with an insert into a new table (remember RLS + `GRANT`s).
 
 ---
 
-## 6. Local development
+## 10. Auth & password reset setup
 
-```sh
-git clone <your-repo-url>
-cd <repo>
-npm install
-cp .env.example .env    # or create .env with the variables from section 3
-npm run dev             # http://localhost:8080
-```
+Sign-in is email + password at `/auth`. Recovery flow:
 
-Useful scripts: `npm run lint`, `npm run format`, `npm run build`, `npm run preview`.
+1. On `/auth`, click **Forgot password?** and enter the account email.
+2. Supabase Auth emails a recovery link pointing at `<your-site>/reset-password`
+   (the app passes `redirectTo: ${window.location.origin}/reset-password`).
+3. `src/routes/reset-password.tsx` is public, reads the recovery session from the URL and calls
+   `supabase.auth.updateUser({ password })`.
+
+**Required configuration on your Supabase project:**
+
+- **URL Configuration** — set *Site URL* to your production origin and add
+  `https://your-domain.com/reset-password` (plus `http://localhost:8080/reset-password` for dev) to
+  *Redirect URLs*. Links to URLs not on this list are rejected.
+- **SMTP** — Authentication → Emails → SMTP Settings. The built-in sender is rate-limited and for
+  testing only; point it at Resend / Postmark / SendGrid / SES / your own SMTP.
+- **Template** — Authentication → Emails → Templates → *Reset password*. Keep the
+  `{{ .ConfirmationURL }}` variable; restyle everything around it.
+- **Expiry / rate limits** — recovery links default to 1 hour; auth emails are hourly-rate-limited.
+- Keep `/reset-password` **outside** any auth guard — it must work while signed out.
+
+**Testing it:** request a reset with a real address, confirm the email arrives (check spam), open the
+link, set a new password, and sign in with it. If the link errors with "invalid or expired", the
+redirect URL is almost always missing from the allow-list.
 
 ---
 
-## 7. Deployment checklist
+## 11. SEO, sitemap & Search Console
 
-Work top to bottom. Everything here is a one-time setup except the final smoke test.
+### The SEO tab
+Each row in `seo_pages` is one page path:
+
+| Field | Used for |
+| --- | --- |
+| Page path | which route the record applies to (`/`, `/about`, `/gallery/wedding`, …) |
+| Title tag | `<title>` — keep under 60 characters |
+| Meta description | `<meta name="description">` — keep under 160 characters |
+| Keywords | `<meta name="keywords">` (optional) |
+| Social share title / description / image | `og:*` and `twitter:*` |
+| Canonical URL | `<link rel="canonical">` and `og:url` |
+| Search engines | `index, follow` or `noindex, nofollow` |
+
+Blank fields fall back to the per-route defaults in each route file, so a half-filled record never
+produces empty tags. Add a row for a new gallery category simply by entering its path.
+
+**Default social image** — when a page's *Social share image* is blank the site falls back to
+**Site & About → Default social share image** (ships as `public/placeholders/og-cover.jpg`,
+1200×630). Relative paths are made absolute with `SITE_URL` from `src/lib/seo.ts`.
+
+**Favicon** — `public/favicon.svg` is the icon logo; override per-site from **Logos → Browser tab
+icon** without touching code.
+
+Also shipped:
+- `/sitemap.xml` generated at request time from the SEO records plus every gallery category, skipping
+  anything marked `noindex` (`src/routes/sitemap[.]xml.tsx`).
+- `public/robots.txt` allows crawlers, disallows `/admin`, `/auth`, `/review`, `/reset-password`, and
+  points at the sitemap.
+- JSON-LD: `LocalBusiness` on home, `CollectionPage` on category galleries, plus `Service` /
+  `OfferCatalog` / `Person` schema where relevant.
+- `/review` is `noindex, nofollow`.
+
+### Google Search Console (on your own host)
+1. Add a **Domain** property (DNS TXT) or **URL prefix** property at
+   [search.google.com/search-console](https://search.google.com/search-console).
+2. For URL-prefix verification, use the *HTML tag* method and add
+   `{ name: "google-site-verification", content: "<your-token>" }` to the `meta` array in
+   `src/routes/__root.tsx`, redeploy, then click Verify. (Or drop the verification HTML file into
+   `public/` — it is served from the root.)
+3. Submit `https://your-domain.com/sitemap.xml` under **Sitemaps**.
+4. **URL Inspection → Request indexing** on the home page to speed up the first crawl.
+5. Repeat for Bing Webmaster Tools if you want Bing coverage (it can import from Search Console).
+
+You do **not** need to connect Search Console inside Lovable — that integration only covers the
+`*.lovable.app` preview domain.
+
+### Still on you before launch
+Real phone, email and service area under **Site & About** — they feed the visible contact block *and*
+the `LocalBusiness` JSON-LD, so placeholder values are the one thing that will fail an SEO audit.
+
+---
+
+## 12. Design system, theming & animation
+
+- **Tokens, not colours.** Every colour, gradient and shadow is a semantic token in `src/styles.css`
+  (`--background`, `--foreground`, `--hairline`, `--glow`, …). Components never hardcode
+  `text-white` / `bg-black` / hex values.
+- **Palettes.** `:root` / `.dark` for dark mode, `.light` for light mode. Both use the same token
+  names. The **Colours** studio tab writes `theme_tokens` rows, which `src/lib/theme-css.ts` turns
+  into CSS variables injected into the document head — no flash of the wrong palette.
+- **Theme switching.** Sun/moon button in the header and at the bottom of the mobile drawer. Stored
+  in `localStorage` under `shutterram-theme` and applied before first paint by an inline script in
+  `__root.tsx`. **Dark is the default** for first-time visitors.
+- **Hero scrim.** The `.hero-scrim` utility has separate strengths per theme; light mode uses a
+  deliberately lighter gradient so photographs stay visible. Home hero and category hero share it.
+- **Cursor glow.** `src/components/site/CursorGlow.tsx`, mounted in `__root.tsx`. Size, edge softness
+  and Photoshop-style blend mode are studio-controlled (`glow_size`, `glow_softness`, `glow_blend`),
+  and its colour/opacity per theme live in the Colours tab.
+- **Loader.** `PageLoader.tsx` — a small shape holding your logo with a second shape pulsing out of
+  it. Shape (square/circle), inner size, pulse growth and fade direction are all studio-controlled.
+- **Motion.** `Reveal.tsx` handles scroll-in fades; the testimonials rail and the mobile services
+  rail loop endlessly by duplicating items and pause on hover/tap. Keep animation subtle — the
+  photographs carry the page.
+- **Typography.** Literata for display, Manrope for body. Sharp corners throughout; form fields are
+  underlines, not boxes.
+
+---
+
+## 13. Deployment checklist
 
 ### Content
-- [ ] Site name, tagline, contact email/phone and about copy filled in under **Site & About**.
-- [ ] Hero slides: image, title, tagline and category set for each; no placeholder text left.
-- [ ] Gallery photos uploaded and assigned to the right categories; unused categories removed.
-- [ ] Featured/editing samples use **real before and after** images (the shipped BEFORE/AFTER SVGs
-      are placeholders).
+- [ ] Real name, tagline, email, phone, location and about copy under **Site & About**.
+- [ ] Hero slides: image, title, tagline and category for each; no placeholder text.
+- [ ] Gallery photos uploaded and categorised; unused categories removed.
+- [ ] Editing samples use **real before and after** images (the shipped BEFORE/AFTER SVGs are
+      placeholders).
 - [ ] Services have image, title, subtitle and description.
-- [ ] Stats, experience steps, testimonials and page-section headings reviewed and reordered.
+- [ ] Stats, experience, process steps and page-section headings reviewed and ordered.
+- [ ] Real testimonials collected via `/review` and approved, or the section hidden.
 - [ ] Social links point at live profiles; custom icons uploaded where needed.
 
 ### Backend
-- [ ] Supabase project created, schema + RLS + `GRANT`s applied (section 4.1).
-- [ ] `site-images` storage bucket exists with admin write policies.
-- [ ] Admin account created (first sign-up claims the role), then anonymous sign-ups disabled.
-- [ ] Auth **Site URL** and **Redirect URLs** include the production domain plus
-      `https://yourdomain.com/reset-password`.
-- [ ] SMTP configured in Supabase Auth (needed for password-reset emails).
+- [ ] Supabase project created; schema + RLS + `GRANT`s applied (section 5).
+- [ ] Private `site-images` bucket with admin write policies.
+- [ ] Admin account created, then anonymous sign-ups disabled.
+- [ ] Auth *Site URL* and *Redirect URLs* include production + `/reset-password`.
+- [ ] SMTP configured for auth emails.
 - [ ] Database backups scheduled.
 
 ### Forms
-- [ ] `settings.form_endpoint` set to a live provider endpoint (section 5).
-- [ ] Test submission sent from `/contact` for **both** the quote and message forms; emails received.
+- [ ] `admin_settings.form_endpoint` set to a live provider endpoint (section 9).
+- [ ] Test submission sent from **both** the quote and message forms; emails received.
 
 ### Environment & build
-- [ ] All variables from section 3 set on the host (`VITE_*` at build time, secrets server-side only).
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` never exposed to the client bundle.
-- [ ] `npm run lint` and `npm run build` pass locally.
-- [ ] `npm run preview` sanity-checked against the production build.
+- [ ] All section 6 variables set on the host (`VITE_*` at build time, secrets server-side only).
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` absent from the client bundle.
+- [ ] `npm run lint` and `npx tsc --noEmit` clean; `npm run build` passes.
+- [ ] `npm run preview` sanity-checked.
 
 ### SEO & polish
-- [ ] Every page reviewed in the studio **SEO** tab (title, description, social image, canonical).
-- [ ] Canonical URLs use your real domain — the defaults point at `https://shutterram.lovable.app`
-      (`SITE_URL` in `src/lib/seo.ts`); change it there and in `public/robots.txt` when you move.
+- [ ] Every page reviewed in the **SEO** tab.
+- [ ] `SITE_URL` in `src/lib/seo.ts` and the sitemap line in `public/robots.txt` use your domain.
 - [ ] `/sitemap.xml` loads and lists every public page.
-- [ ] `public/robots.txt` allows the public pages and disallows `/admin`, `/auth`, `/review`.
-- [ ] Light and dark mode both checked on every page (header, hero, forms, footer, lightbox).
 - [ ] Favicon and OG image resolve at absolute `https://` URLs.
-- [ ] Images exported at ~2000px long edge, under ~400 KB each.
-
-### QA test pass (run before every deploy)
-
-Verified in the last pass on this build — repeat after any content or code change:
-
-- [ ] All routes return 200 and each has its own title: `/`, `/gallery`, `/services`, `/about`,
-      `/contact`, `/review`; unknown URLs render the 404 page.
-- [ ] Browser console is clean on every route at 1280px and 390px widths (no errors, no failed
-      requests other than the intentional 404).
-- [ ] No image renders with an empty `src` — rows saved without an image fall back to
-      `/placeholders/photo.svg`, which means content is missing in the studio.
-- [ ] Lightbox: opens centred, arrows sit beside the frame, CLOSE works, Esc works, swipe works on
-      mobile, first and last images stay in frame.
-- [ ] Contact page defaults to **Request a Quote**; the message toggle and the "Start a conversation"
-      / "Work with me" links open the message form.
-- [ ] Home services rail and testimonials loop endlessly and pause on hover/tap.
-- [ ] `/admin` loads for an admin account, each studio tab saves, and **Refresh site** shows the
-      change on the public pages.
-- [ ] Logos: change each logo slot in the studio and confirm header, mobile drawer, footer, loader
-      and favicon all update.
-- [ ] Review photos open in the in-page lightbox (not a new tab) and navigate between images.
-- [ ] Security scan clean: no public read of reviewer emails, no `settings.form_endpoint` exposure,
-      `/admin` unreachable when signed out.
-
-#### How to run the checks (tooling)
-
-Everything below runs against a **production build**, not the dev server — dev is more forgiving:
-
-```bash
-npm run build && npm run start        # serve the production build locally
-```
-
-- **Status codes and titles**
-  ```bash
-  for p in / /gallery /services /about /contact /review /does-not-exist; do
-    printf "%s -> %s\n" "$p" "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000$p)"
-  done
-  curl -s http://localhost:3000/ | grep -o '<title>[^<]*</title>'
-  ```
-- **Meta / social tags** — view source on each page and confirm one `<title>`, one
-  `description`, one `canonical`, and `og:image`. Then paste the live URL into
-  [opengraph.xyz](https://www.opengraph.xyz) and the
-  [Facebook sharing debugger](https://developers.facebook.com/tools/debug/) (use *Scrape Again*
-  after changing an image — crawlers cache previews).
-- **Structured data** — [search.google.com/test/rich-results](https://search.google.com/test/rich-results)
-  for `/`, `/services` and one gallery category.
-- **Performance / accessibility / SEO scores** — Chrome DevTools → Lighthouse, mobile preset, on `/`,
-  `/gallery/wedding` and `/contact`. Aim for 90+ on Accessibility, Best Practices and SEO; the image
-  heavy pages will score lower on Performance, which is expected for a photography site.
-  CLI alternative: `npx lighthouse http://localhost:3000 --view`.
-- **Responsive pass** — DevTools device toolbar at 390px, 768px, 1280px and 1920px on every page.
-- **Broken links** — `npx linkinator http://localhost:3000 --recurse --skip "mailto:|tel:"`.
-- **Type and lint gates** — `npm run lint` and `npx tsc --noEmit` must both be clean.
-- **Email deliverability** — submit both contact forms and the review form with a real address and
-  confirm delivery (check spam); then approve the review in the studio and confirm it appears.
-- **Backend** — run the security scan in Lovable (or `supabase db lint` on a self-hosted project) and
-  confirm no table exposes data it shouldn't.
-
-
+- [ ] Light and dark mode checked on every page.
 
 ### Go live
-- [ ] Custom domain connected and HTTPS certificate active.
-- [ ] Smoke test on desktop and mobile: hero slider, gallery lightbox (swipe + arrows), before/after
-      sliders, services rail, testimonials loop, scroll-to-top, both contact forms.
-- [ ] `/admin` login works on the production domain and a content edit shows up on the live site.
+- [ ] Custom domain connected, HTTPS active.
+- [ ] Smoke test desktop + mobile: hero slider, lightbox (swipe + arrows), before/after sliders,
+      services rail, testimonials loop, scroll-to-top, both contact forms.
+- [ ] `/admin` login works on production and an edit shows on the live site.
 - [ ] Password-reset email received and the new password works.
-- [ ] 404 page renders for an unknown URL and deep links survive a hard refresh.
+- [ ] 404 renders for an unknown URL and deep links survive a hard refresh.
 
+---
+
+## 14. QA test pass
+
+Run against a **production build**, not the dev server:
+
+```bash
+npm run build && npm run preview
+```
+
+### Checks
+- [ ] All routes return 200 and each has its **own** title: `/`, `/gallery`, `/services`, `/about`,
+      `/contact`, `/review`; unknown URLs render the 404 page.
+- [ ] Console clean on every route at 1280px and 390px (no errors, no failed requests).
+- [ ] No image renders with an empty `src` — a `/placeholders/photo.svg` on the live site means a
+      studio row is missing its image.
+- [ ] Lightbox: opens centred, arrows sit beside the frame, CLOSE and Esc work, swipe works on
+      mobile, first and last images stay in frame, portrait shots are not cropped.
+- [ ] Contact defaults to **Request a Quote**; "Start a conversation" / "Work with me" open the
+      message form.
+- [ ] Services rail and testimonials loop endlessly and pause on hover/tap.
+- [ ] `/admin` loads for an admin, every tab saves, **Refresh site** reflects the change publicly.
+- [ ] Logos: change each slot and confirm header, drawer, footer, loader and favicon update.
+- [ ] Review photos open in the in-page lightbox (not a new tab) and navigate.
+- [ ] Signed out, `/admin` redirects to `/auth`.
+
+### Tooling
+
+```bash
+# status codes + titles
+for p in / /gallery /services /about /contact /review /does-not-exist; do
+  printf "%s -> %s\n" "$p" "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4173$p)"
+done
+curl -s http://localhost:4173/ | grep -o '<title>[^<]*</title>'
+```
+
+- **Meta / social tags** — view source: exactly one `<title>`, one `description`, one `canonical`,
+  and an `og:image`. Then check the live URL in [opengraph.xyz](https://www.opengraph.xyz) and the
+  [Facebook sharing debugger](https://developers.facebook.com/tools/debug/) (*Scrape Again* after
+  changing an image — crawlers cache previews for days).
+- **Structured data** — [Rich Results Test](https://search.google.com/test/rich-results) on `/`,
+  `/services` and one gallery category.
+- **Lighthouse** — mobile preset on `/`, `/gallery/wedding`, `/contact`. Target 90+ on Accessibility,
+  Best Practices and SEO; Performance will be lower on image-heavy pages, which is expected.
+  CLI: `npx lighthouse http://localhost:4173 --view`.
+- **Responsive** — DevTools at 390 / 768 / 1280 / 1920px on every page.
+- **Broken links** — `npx linkinator http://localhost:4173 --recurse --skip "mailto:|tel:"`.
+- **Gates** — `npm run lint` and `npx tsc --noEmit`.
+- **Email** — submit both contact forms and the review form with a real address, confirm delivery,
+  then approve the review and confirm it appears.
+- **Backend** — run a security scan (or `supabase db lint`) and confirm no table exposes data it
+  shouldn't.
+
+Adjust the port above if `npm run preview` reports a different one.
+
+---
+
+## 15. Troubleshooting
+
+| Symptom | Cause / fix |
+| --- | --- |
+| Site shows old/default text everywhere | The content load failed and defaults rendered. Check `VITE_SUPABASE_*` vars and that public `SELECT` grants exist. |
+| "permission denied for table …" | Missing `GRANT` for `anon` / `authenticated`. RLS alone is not enough with PostgREST. |
+| Testimonials query fails | Someone used `select("*")`. The `email` column is revoked — select explicit columns. |
+| Contact form succeeds but no email | `admin_settings.form_endpoint` is blank or not `https://`. Set it in **Form delivery**. |
+| Reset link says invalid/expired | The redirect URL isn't in Supabase *Redirect URLs*, or the 1-hour expiry passed. |
+| Reset emails never arrive | Built-in SMTP is rate-limited — configure real SMTP. |
+| Studio saves but the site doesn't change | Press **Refresh site**, or hard-reload; SSR caches the payload per request. |
+| Images 404 | The `site-images` bucket is private by design — they must be served via `/api/public/img/<key>`. |
+| OG preview shows the old image | Crawlers cache. Re-scrape in the platform's debugger. |
+| Wrong canonical domain in tags | Update `SITE_URL` in `src/lib/seo.ts` and rebuild. |
+| Env change had no effect | `VITE_*` values are compiled in — rebuild, don't just restart. |
+| Build fails with "Unauthorized" | A protected server function is being called from a public route loader. Move it into the component or under `_authenticated`. |
+
+---
+
+## 16. Extending the site
+
+- **A new editable string** — add a row in **Wording**, then `t("key", "fallback")` in the component.
+- **A new page** — create `src/routes/<name>.tsx` with `createFileRoute` and its own `head()`
+  (unique title, description, `og:*`, canonical), add a `seo_pages` row, and add it to the header nav
+  (the nav labels are editable in **Wording**).
+- **A new section** — build the component, add a `page_sections` row with a new `section_key`, and
+  render it via `sectionFor(page, key)` so it can be reordered/hidden from the studio.
+- **A new content type** — create the table with `GRANT`s + RLS in one migration, add it to
+  `site-content.functions.ts` (explicit columns), map it in `applyContent()`, and add a studio tab in
+  `src/routes/_authenticated/admin.tsx`.
+- **A new gallery category** — just add it from the Category dropdown; the route and sitemap pick it
+  up automatically.
+- **External integrations** — internal logic goes in `createServerFn`; webhooks and public APIs go in
+  `src/routes/api/public/*` and must verify the caller inside the handler.
