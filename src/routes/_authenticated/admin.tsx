@@ -443,7 +443,9 @@ function AdminPage() {
             note={"note" in section ? section.note : undefined}
           />
         ) : (
-          <ListEditor
+          <>
+            {section.id === "seo" ? <SeoPageSync /> : null}
+            <ListEditor
             key={section.id}
             table={section.table}
             fields={section.fields}
