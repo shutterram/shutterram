@@ -17,7 +17,8 @@ export const Route = createFileRoute("/services")({
       { property: "og:title", content: "Services & Rates | Shutter Ram" },
       {
         property: "og:description",
-        content: "Photography services from Shutter Ram — coverage, deliverables and starting rates.",
+        content:
+          "Photography services from Shutter Ram — coverage, deliverables and starting rates.",
       },
       { property: "og:image", content: services[0]!.image },
       { name: "twitter:image", content: services[0]!.image },
@@ -35,9 +36,8 @@ function ServicesPage() {
           How we can work together
         </h1>
         <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          Six ways I usually work, though nothing here is rigid. If your project sits
-          somewhere between two of these, tell me about it — most of my favourite work
-          started that way.
+          Six ways I usually work, though nothing here is rigid. If your project sits somewhere
+          between two of these, tell me about it — most of my favourite work started that way.
         </p>
       </div>
 
@@ -99,7 +99,6 @@ function ServicesPage() {
           </section>
         ))}
       </div>
-
 
       <ExperienceSection className="mt-28" section={sectionFor("services", "experience")} />
     </div>

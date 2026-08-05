@@ -79,7 +79,6 @@ const quoteSchema = z
     }
   });
 
-
 const fieldClass =
   "h-12 rounded-none border-0 border-b border-hairline bg-transparent px-0 shadow-none transition-colors duration-500 focus-visible:border-foreground focus-visible:ring-0";
 const areaClass =
@@ -112,9 +111,8 @@ function Contact() {
         Let's talk about your shoot.
       </h1>
       <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-        Pick whichever suits you — a quick message for anything general, or the booking
-        enquiry if you already have a date in mind. I reply to everything within two
-        working days.
+        Pick whichever suits you — a quick message for anything general, or the booking enquiry if
+        you already have a date in mind. I reply to everything within two working days.
       </p>
 
       <div className="mt-12 grid gap-6 border-y border-hairline py-8 sm:grid-cols-3">
@@ -142,12 +140,10 @@ function Contact() {
         role="tablist"
         aria-label="Choose a form"
       >
-        {(
-          [
-            { key: "quote" as const, label: t("contact.tab_quote") },
-            { key: "message" as const, label: t("contact.tab_message") },
-          ]
-        ).map((t) => (
+        {[
+          { key: "quote" as const, label: t("contact.tab_quote") },
+          { key: "message" as const, label: t("contact.tab_message") },
+        ].map((t) => (
           <button
             key={t.key}
             type="button"
@@ -216,12 +212,23 @@ function MessageForm() {
         </div>
         <div>
           <Label htmlFor="m-email">Email</Label>
-          <Input id="m-email" type="email" className={fieldClass} placeholder="you@example.com" {...register("email")} />
+          <Input
+            id="m-email"
+            type="email"
+            className={fieldClass}
+            placeholder="you@example.com"
+            {...register("email")}
+          />
           <ErrorText msg={errors.email?.message} />
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="m-subject">Subject</Label>
-          <Input id="m-subject" className={fieldClass} placeholder="Availability in October" {...register("subject")} />
+          <Input
+            id="m-subject"
+            className={fieldClass}
+            placeholder="Availability in October"
+            {...register("subject")}
+          />
           <ErrorText msg={errors.subject?.message} />
         </div>
         <div className="sm:col-span-2">
@@ -270,7 +277,10 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
   const budgetVal = watch("budget");
 
   return (
-    <section id="quote" className="mt-12 scroll-mt-40 border border-hairline bg-surface/30 p-8 md:p-12">
+    <section
+      id="quote"
+      className="mt-12 scroll-mt-40 border border-hairline bg-surface/30 p-8 md:p-12"
+    >
       <p className="eyebrow">{t("btn.book_date")}</p>
       <h2 className="mt-3 font-display text-3xl">Tell me about the shoot</h2>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -313,12 +323,23 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
         </div>
         <div>
           <Label htmlFor="q-email">Email</Label>
-          <Input id="q-email" type="email" className={fieldClass} placeholder="you@example.com" {...register("email")} />
+          <Input
+            id="q-email"
+            type="email"
+            className={fieldClass}
+            placeholder="you@example.com"
+            {...register("email")}
+          />
           <ErrorText msg={errors.email?.message} />
         </div>
         <div>
           <Label htmlFor="q-phone">Phone</Label>
-          <Input id="q-phone" className={fieldClass} placeholder="(555) 555-5555" {...register("phone")} />
+          <Input
+            id="q-phone"
+            className={fieldClass}
+            placeholder="(555) 555-5555"
+            {...register("phone")}
+          />
           <ErrorText msg={errors.phone?.message} />
         </div>
         <div>
@@ -413,7 +434,12 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
 
         <div className="sm:col-span-2">
           <Label htmlFor="q-location">Location</Label>
-          <Input id="q-location" className={fieldClass} placeholder="City or venue" {...register("location")} />
+          <Input
+            id="q-location"
+            className={fieldClass}
+            placeholder="City or venue"
+            {...register("location")}
+          />
           <ErrorText msg={errors.location?.message} />
         </div>
         <div className="sm:col-span-2">
@@ -428,15 +454,18 @@ function QuoteForm({ initialService }: { initialService?: string | undefined }) 
           <ErrorText msg={errors.details?.message} />
         </div>
         <div className="sm:col-span-2">
-          <label htmlFor="q-ack" className="flex items-start gap-3 text-[0.6875rem] tracking-[0.14em] uppercase text-muted-foreground">
+          <label
+            htmlFor="q-ack"
+            className="flex items-start gap-3 text-[0.6875rem] tracking-[0.14em] uppercase text-muted-foreground"
+          >
             <input
               id="q-ack"
               type="checkbox"
               className="mt-0.5 size-4 shrink-0 accent-[oklch(0.94_0_0)]"
               {...register("acknowledged")}
             />
-            I understand my booking is not confirmed until the contract is signed and the
-            deposit is received.
+            I understand my booking is not confirmed until the contract is signed and the deposit is
+            received.
           </label>
           <ErrorText msg={errors.acknowledged?.message} />
         </div>

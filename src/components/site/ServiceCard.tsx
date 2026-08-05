@@ -35,7 +35,6 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
           </div>
         </div>
 
-
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
           <Link
             to="/services"

@@ -146,21 +146,38 @@ function ReviewPage() {
             Name
           </label>
           <Input id="r-name" className={fieldClass} placeholder="Your name" {...register("name")} />
-          {errors.name ? <p className="mt-2 text-xs text-destructive">{errors.name.message}</p> : null}
+          {errors.name ? (
+            <p className="mt-2 text-xs text-destructive">{errors.name.message}</p>
+          ) : null}
         </div>
         <div>
           <label htmlFor="r-email" className="eyebrow mb-2 block">
             Email
           </label>
-          <Input id="r-email" type="email" className={fieldClass} placeholder="you@example.com" {...register("email")} />
-          {errors.email ? <p className="mt-2 text-xs text-destructive">{errors.email.message}</p> : null}
+          <Input
+            id="r-email"
+            type="email"
+            className={fieldClass}
+            placeholder="you@example.com"
+            {...register("email")}
+          />
+          {errors.email ? (
+            <p className="mt-2 text-xs text-destructive">{errors.email.message}</p>
+          ) : null}
         </div>
         <div className="sm:col-span-2">
           <label htmlFor="r-occasion" className="eyebrow mb-2 block">
             What did I photograph?
           </label>
-          <Input id="r-occasion" className={fieldClass} placeholder="Wedding — June 2026, Hudson Valley" {...register("occasion")} />
-          {errors.occasion ? <p className="mt-2 text-xs text-destructive">{errors.occasion.message}</p> : null}
+          <Input
+            id="r-occasion"
+            className={fieldClass}
+            placeholder="Wedding — June 2026, Hudson Valley"
+            {...register("occasion")}
+          />
+          {errors.occasion ? (
+            <p className="mt-2 text-xs text-destructive">{errors.occasion.message}</p>
+          ) : null}
         </div>
         <div className="sm:col-span-2">
           <label htmlFor="r-review" className="eyebrow mb-2 block">
@@ -173,7 +190,9 @@ function ReviewPage() {
             placeholder="What was the experience like, and how do you feel about the photographs?"
             {...register("review")}
           />
-          {errors.review ? <p className="mt-2 text-xs text-destructive">{errors.review.message}</p> : null}
+          {errors.review ? (
+            <p className="mt-2 text-xs text-destructive">{errors.review.message}</p>
+          ) : null}
         </div>
 
         <div className="sm:col-span-2">
@@ -181,7 +200,11 @@ function ReviewPage() {
           <div className="flex flex-wrap items-center gap-3">
             {files.map((f, i) => (
               <div key={`${f.name}-${i}`} className="relative">
-                <img src={f.preview} alt="" className="size-20 border border-hairline object-cover" />
+                <img
+                  src={f.preview}
+                  alt=""
+                  className="size-20 border border-hairline object-cover"
+                />
                 <button
                   type="button"
                   aria-label={`Remove ${f.name}`}
@@ -211,7 +234,10 @@ function ReviewPage() {
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="r-consent" className="flex items-start gap-3 text-[0.6875rem] tracking-[0.14em] uppercase text-muted-foreground">
+          <label
+            htmlFor="r-consent"
+            className="flex items-start gap-3 text-[0.6875rem] tracking-[0.14em] uppercase text-muted-foreground"
+          >
             <input
               id="r-consent"
               type="checkbox"
@@ -220,7 +246,9 @@ function ReviewPage() {
             />
             I'm happy for this review and my first name to appear on the Shutter Ram website.
           </label>
-          {errors.consent ? <p className="mt-2 text-xs text-destructive">{errors.consent.message}</p> : null}
+          {errors.consent ? (
+            <p className="mt-2 text-xs text-destructive">{errors.consent.message}</p>
+          ) : null}
         </div>
         <div className="sm:col-span-2">
           <button

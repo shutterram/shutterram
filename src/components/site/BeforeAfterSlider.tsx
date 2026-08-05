@@ -43,7 +43,12 @@ export function BeforeAfterSlider({
       }}
     >
       {/* AFTER — the edited frame */}
-      <img src={after} alt={`${alt} — edited`} className="absolute inset-0 size-full object-cover" draggable={false} />
+      <img
+        src={after}
+        alt={`${alt} — edited`}
+        className="absolute inset-0 size-full object-cover"
+        draggable={false}
+      />
 
       {/* BEFORE — the original capture, clipped by the handle */}
       <div

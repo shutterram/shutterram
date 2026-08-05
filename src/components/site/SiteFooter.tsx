@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { categories, site , t } from "@/data/portfolio";
+import { categories, site, t } from "@/data/portfolio";
 import { LogoLockup } from "./LogoLockup";
 import { SocialLinks } from "./SocialLinks";
 
@@ -26,13 +26,12 @@ export function SiteFooter() {
               <span className="eyebrow mt-3">{site.tagline}</span>
             </Link>
             <p className="mx-auto mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground md:mx-0">
-{t("footer.blurb")}
+              {t("footer.blurb")}
             </p>
             <SocialLinks className="mt-9 justify-center md:justify-start" />
           </div>
 
           <div className="md:col-span-6 lg:col-span-2">
-
             <p className="eyebrow">{t("footer.nav_heading")}</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {navLinks.map((l) => (
@@ -85,7 +84,6 @@ export function SiteFooter() {
                 >
                   {site.email}
                 </a>
-
               </li>
               <li className="flex items-start justify-center gap-3 md:justify-start">
                 <MapPin className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
@@ -105,7 +103,9 @@ export function SiteFooter() {
 
       <div className="border-t border-hairline">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} {site.name}. {t("footer.rights")}</p>
+          <p>
+            © {new Date().getFullYear()} {site.name}. {t("footer.rights")}
+          </p>
           <p className="eyebrow">{t("footer.note")}</p>
         </div>
       </div>

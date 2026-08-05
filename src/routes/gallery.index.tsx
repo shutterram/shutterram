@@ -42,14 +42,15 @@ function Gallery() {
   const shown = isMobile ? visible.slice(0, mobileCount) : visible;
   const allShown = mobileCount >= visible.length;
 
-
   return (
     <div className="mx-auto max-w-7xl px-6 pb-28 pt-56">
       <p className="eyebrow">{t("gallery.eyebrow")}</p>
-      <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">{t("gallery.title")}</h1>
+      <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
+        {t("gallery.title")}
+      </h1>
       <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-        Everything worth keeping from the last few years, in one place. Filter by
-        category, or open any frame full screen and step through with the arrow keys.
+        Everything worth keeping from the last few years, in one place. Filter by category, or open
+        any frame full screen and step through with the arrow keys.
       </p>
 
       <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
@@ -82,7 +83,6 @@ function Gallery() {
           })),
         ]}
       />
-
 
       <div className="mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 md:[&>*]:mb-5">
         {shown.map((p, i) => (
@@ -119,10 +119,12 @@ function Gallery() {
         </div>
       ) : null}
 
-
-
-
-      <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
+      <Lightbox
+        photos={visible}
+        index={lightbox}
+        onClose={() => setLightbox(null)}
+        onIndexChange={setLightbox}
+      />
     </div>
   );
 }

@@ -18,7 +18,6 @@ export function Lightbox({
   const [mounted, setMounted] = useState(false);
   const touchRef = useRef<number | null>(null);
 
-
   useEffect(() => setMounted(true), []);
 
   const step = useCallback(
@@ -137,7 +136,6 @@ export function Lightbox({
         <p className="font-display text-xl">{photo.caption}</p>
         <p className="eyebrow mt-1">{photo.category}</p>
       </div>
-
     </div>,
     document.body,
   );

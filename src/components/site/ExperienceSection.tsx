@@ -1,4 +1,8 @@
-import { processSteps as defaultSteps, type ProcessStep, type SectionConfig } from "@/data/portfolio";
+import {
+  processSteps as defaultSteps,
+  type ProcessStep,
+  type SectionConfig,
+} from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 
@@ -77,7 +81,6 @@ export function ExperienceSection({
               </Reveal>
             ))}
           </ol>
-
         </div>
 
         {/* --------------------------------------------------- mobile: vertical */}
@@ -115,7 +118,6 @@ export function ExperienceSection({
             ))}
           </ol>
         </div>
-
       </div>
     </section>
   );

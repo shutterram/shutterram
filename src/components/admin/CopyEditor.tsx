@@ -25,7 +25,7 @@ export function CopyEditor() {
       .order("sort_order", { ascending: true })
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
-        setRows(((data ?? []) as unknown) as CopyRow[]);
+        setRows((data ?? []) as unknown as CopyRow[]);
       });
   }, []);
 

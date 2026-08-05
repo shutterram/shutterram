@@ -13,7 +13,10 @@ export const Route = createFileRoute("/gallery/$category")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Category not found | Shutter Ram" }, { name: "robots", content: "noindex" }],
+        meta: [
+          { title: "Category not found | Shutter Ram" },
+          { name: "robots", content: "noindex" },
+        ],
       };
     }
     const { category } = loaderData;
@@ -46,7 +49,9 @@ function CategoryGallery() {
           <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
             {category.title}
           </h1>
-          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">{category.tagline}</p>
+          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
+            {category.tagline}
+          </p>
         </div>
       </div>
 
@@ -106,7 +111,12 @@ function CategoryGallery() {
         </div>
       </div>
 
-      <Lightbox photos={items} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
+      <Lightbox
+        photos={items}
+        index={lightbox}
+        onClose={() => setLightbox(null)}
+        onIndexChange={setLightbox}
+      />
     </div>
   );
 }

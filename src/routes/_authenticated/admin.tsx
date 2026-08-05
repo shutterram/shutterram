@@ -11,10 +11,16 @@ export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Content Studio | Shutter Ram" },
-      { name: "description", content: "Private content studio for editing the Shutter Ram website." },
+      {
+        name: "description",
+        content: "Private content studio for editing the Shutter Ram website.",
+      },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Content Studio | Shutter Ram" },
-      { property: "og:description", content: "Private content studio for the Shutter Ram website." },
+      {
+        property: "og:description",
+        content: "Private content studio for the Shutter Ram website.",
+      },
     ],
   }),
   component: AdminPage,
@@ -32,7 +38,11 @@ const SECTIONS = [
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone" },
       { key: "location", label: "Location line" },
-      { key: "form_endpoint", label: "Form endpoint URL", placeholder: "Formspree / Basin / Getform URL" },
+      {
+        key: "form_endpoint",
+        label: "Form endpoint URL",
+        placeholder: "Formspree / Basin / Getform URL",
+      },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
@@ -238,7 +248,11 @@ const SECTIONS = [
       { key: "name", label: "Name" },
       { key: "href", label: "URL" },
       { key: "icon", label: "Built-in icon (instagram, facebook, twitter, flickr)" },
-      { key: "icon_url", label: "Custom icon (SVG or PNG — recoloured and resized automatically)", type: "image" },
+      {
+        key: "icon_url",
+        label: "Custom icon (SVG or PNG — recoloured and resized automatically)",
+        type: "image",
+      },
     ] satisfies FieldSpec[],
   },
 ];
@@ -335,7 +349,11 @@ function AdminPage() {
         ) : section.kind === "reviews" ? (
           <ReviewModeration />
         ) : section.kind === "single" ? (
-          <SingletonEditor table={section.table} fields={section.fields} note={"note" in section ? section.note : undefined} />
+          <SingletonEditor
+            table={section.table}
+            fields={section.fields}
+            note={"note" in section ? section.note : undefined}
+          />
         ) : (
           <ListEditor
             key={section.id}

@@ -13,9 +13,7 @@ export function SiteErrorScreen({ error, reset }: { error: Error; reset: () => v
         <h1 className="mt-4 font-display text-[clamp(2rem,5vw,3rem)] leading-tight">
           {t("error.title")}
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {t("error.body")}
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">{t("error.body")}</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <button
             type="button"

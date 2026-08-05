@@ -45,7 +45,11 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
           <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center md:flex md:justify-center">
             <span className="md:hidden" aria-hidden="true" />
-            <Link to="/" className="group flex flex-col items-center" onClick={() => setOpen(false)}>
+            <Link
+              to="/"
+              className="group flex flex-col items-center"
+              onClick={() => setOpen(false)}
+            >
               <img
                 src={logos.header || logo.url}
                 alt="Shutter Ram"
@@ -76,7 +80,6 @@ export function SiteHeader() {
               <Menu className="size-6" strokeWidth={1.4} />
             </button>
           </div>
-
 
           <nav className="hidden items-center gap-9 md:flex">
             {navItems.map((item) => (
@@ -130,7 +133,7 @@ export function SiteHeader() {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={cn(
-                   "font-display text-lg tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  "font-display text-lg tracking-wide text-foreground transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   open ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
                 )}
                 style={{ transitionDelay: open ? `${120 + i * 60}ms` : "0ms" }}

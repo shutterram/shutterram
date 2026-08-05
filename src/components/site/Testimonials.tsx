@@ -184,7 +184,11 @@ export function Testimonials({ className }: { className?: string }) {
                 >
                   <div className="flex gap-1" aria-label={`${review.rating} out of 5`}>
                     {Array.from({ length: review.rating }).map((_, s) => (
-                      <Star key={s} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
+                      <Star
+                        key={s}
+                        className="size-3.5 fill-foreground text-foreground"
+                        strokeWidth={0}
+                      />
                     ))}
                   </div>
                   <blockquote className="mt-6 line-clamp-6 font-display text-lg leading-relaxed md:text-xl">

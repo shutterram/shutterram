@@ -102,7 +102,7 @@ export function CategoryField({
       .select("id,slug,label")
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
-    setCats(((data ?? []) as unknown) as { id: string; slug: string; label: string }[]);
+    setCats((data ?? []) as unknown as { id: string; slug: string; label: string }[]);
   }
 
   useEffect(() => {
@@ -112,7 +112,10 @@ export function CategoryField({
   async function addCategory() {
     const name = prompt("New category name (e.g. Maternity)")?.trim();
     if (!name) return;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
     const { error } = await supabase.from("categories" as never).insert({
       slug,
       title: `${name} Photography`,
@@ -136,8 +139,16 @@ export function CategoryField({
       toast.error("Pick a category first");
       return;
     }
-    if (!confirm(`Remove the “${current.label}” category? Photos keep their slug until you change it.`)) return;
-    const { error } = await supabase.from("categories" as never).delete().eq("id", current.id);
+    if (
+      !confirm(
+        `Remove the “${current.label}” category? Photos keep their slug until you change it.`,
+      )
+    )
+      return;
+    const { error } = await supabase
+      .from("categories" as never)
+      .delete()
+      .eq("id", current.id);
     if (error) {
       toast.error(error.message);
       return;
@@ -188,14 +199,7 @@ export function CategoryField({
 }
 
 export type FieldType =
-  | "text"
-  | "textarea"
-  | "image"
-  | "list"
-  | "number"
-  | "bool"
-  | "category"
-  | "select";
+  "text" | "textarea" | "image" | "list" | "number" | "bool" | "category" | "select";
 
 export interface FieldSpec {
   key: string;
@@ -215,7 +219,11 @@ function toInput(value: unknown, type: FieldType): string {
 }
 
 function fromInput(raw: string, type: FieldType): unknown {
-  if (type === "list") return raw.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (type === "list")
+    return raw
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
   if (type === "number") return Number(raw) || 0;
   return raw;
 }
@@ -330,7 +338,7 @@ export function SingletonEditor({
       .limit(1)
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
-        setRow((((data ?? [])[0] ?? {}) as unknown) as Row);
+        setRow(((data ?? [])[0] ?? {}) as unknown as Row);
       });
   }, [table]);
 
@@ -406,7 +414,10 @@ export function ListEditor({
 
   async function saveRow(row: Row) {
     setSaving(true);
-    const { error } = await supabase.from(table as never).update(row as never).eq("id", row["id"] as string);
+    const { error } = await supabase
+      .from(table as never)
+      .update(row as never)
+      .eq("id", row["id"] as string);
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Saved");
@@ -437,21 +448,26 @@ export function ListEditor({
     }
     if ("photo_key" in draft) draft["photo_key"] = `img-${Date.now()}`;
     if ("slug" in draft) draft["slug"] = `new-${Date.now()}`;
-    const { data, error } = await supabase.from(table as never).insert(draft as never).select();
+    const { data, error } = await supabase
+      .from(table as never)
+      .insert(draft as never)
+      .select();
     if (error) {
       toast.error(error.message);
       return;
     }
-    const created = (((data ?? [])[0] ?? null) as unknown) as Row | null;
+    const created = ((data ?? [])[0] ?? null) as unknown as Row | null;
     if (!created) return;
     // New entries appear at the top of the list, so there's nothing to scroll to.
     await persistOrder([created, ...(rows ?? [])]);
     setOpen(created["id"] as string);
   }
 
-
   async function removeRow(id: string) {
-    const { error } = await supabase.from(table as never).delete().eq("id", id);
+    const { error } = await supabase
+      .from(table as never)
+      .delete()
+      .eq("id", id);
     if (error) {
       toast.error(error.message);
       return;
@@ -513,7 +529,6 @@ export function ListEditor({
         ) : null}
       </div>
 
-
       <ul className="divide-y divide-hairline border-y border-hairline">
         {rows.map((row, i) => {
           const id = row["id"] as string;
@@ -524,7 +539,11 @@ export function ListEditor({
             <li key={id} className="py-4">
               <div className="flex items-center gap-4">
                 {preview ? (
-                  <img src={preview} alt="" className="size-12 shrink-0 border border-hairline object-cover" />
+                  <img
+                    src={preview}
+                    alt=""
+                    className="size-12 shrink-0 border border-hairline object-cover"
+                  />
                 ) : null}
                 <button
                   type="button"
@@ -534,10 +553,20 @@ export function ListEditor({
                   {String(row[titleKey] ?? "Untitled")}
                 </button>
                 <div className="flex shrink-0 items-center gap-1 text-muted-foreground">
-                  <button type="button" aria-label="Move up" onClick={() => void move(i, -1)} className="px-2 py-1 text-xs hover:text-foreground">
+                  <button
+                    type="button"
+                    aria-label="Move up"
+                    onClick={() => void move(i, -1)}
+                    className="px-2 py-1 text-xs hover:text-foreground"
+                  >
                     ↑
                   </button>
-                  <button type="button" aria-label="Move down" onClick={() => void move(i, 1)} className="px-2 py-1 text-xs hover:text-foreground">
+                  <button
+                    type="button"
+                    aria-label="Move down"
+                    onClick={() => void move(i, 1)}
+                    className="px-2 py-1 text-xs hover:text-foreground"
+                  >
                     ↓
                   </button>
                   <button
@@ -615,7 +644,10 @@ function BulkUploader({
 
   function blankAttrs(file: File): Row {
     const attrs: Row = {};
-    const base = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+    const base = file.name
+      .replace(/\.[^.]+$/, "")
+      .replace(/[-_]+/g, " ")
+      .trim();
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
@@ -638,7 +670,9 @@ function BulkUploader({
   }
 
   function patch(id: string, attrs: Row) {
-    setStaged((prev) => prev.map((s) => (s.id === id ? { ...s, attrs: { ...s.attrs, ...attrs } } : s)));
+    setStaged((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, attrs: { ...s.attrs, ...attrs } } : s)),
+    );
   }
 
   /** Copies the first item's attributes onto every other staged file. */
@@ -646,7 +680,11 @@ function BulkUploader({
     setStaged((prev) => {
       const first = prev[0];
       if (!first) return prev;
-      return prev.map((s, i) => (i === 0 ? s : { ...s, attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] } }));
+      return prev.map((s, i) =>
+        i === 0
+          ? s
+          : { ...s, attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] } },
+      );
     });
   }
 
@@ -667,14 +705,19 @@ function BulkUploader({
         if ("slug" in draft && !String(draft["slug"] ?? "").trim()) {
           draft["slug"] = `new-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         }
-        const { data, error } = await supabase.from(table as never).insert(draft as never).select();
+        const { data, error } = await supabase
+          .from(table as never)
+          .insert(draft as never)
+          .select();
         if (error) throw error;
-        const row = (((data ?? [])[0] ?? null) as unknown) as Row | null;
+        const row = ((data ?? [])[0] ?? null) as unknown as Row | null;
         if (row) created.push(row);
         setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "done" } : s)));
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed";
-        setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "error", error: message } : s)));
+        setStaged((prev) =>
+          prev.map((s) => (s.id === item.id ? { ...s, status: "error", error: message } : s)),
+        );
       }
     }
 
@@ -744,7 +787,11 @@ function BulkUploader({
         <ul className="mt-5 divide-y divide-hairline border-t border-hairline">
           {staged.map((s) => (
             <li key={s.id} className="flex gap-4 py-4">
-              <img src={s.preview} alt="" className="size-20 shrink-0 border border-hairline object-cover" />
+              <img
+                src={s.preview}
+                alt=""
+                className="size-20 shrink-0 border border-hairline object-cover"
+              />
               <div className="grid min-w-0 flex-1 gap-5 md:grid-cols-2">
                 {attrFields.map((f) => (
                   <FieldInput
@@ -757,7 +804,9 @@ function BulkUploader({
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
                 {s.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : null}
-                {s.status === "error" ? <span className="text-right normal-case tracking-normal">{s.error}</span> : null}
+                {s.status === "error" ? (
+                  <span className="text-right normal-case tracking-normal">{s.error}</span>
+                ) : null}
                 <button
                   type="button"
                   aria-label="Remove file"

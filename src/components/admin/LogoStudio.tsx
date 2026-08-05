@@ -28,7 +28,7 @@ export function LogoStudio() {
       .limit(1)
       .then(({ data, error }) => {
         if (error) toast.error(error.message);
-        setRow((((data ?? [])[0] ?? {}) as unknown) as Row);
+        setRow(((data ?? [])[0] ?? {}) as unknown as Row);
       });
   }, []);
 
@@ -69,7 +69,10 @@ export function LogoStudio() {
         const offsetY = num(row[`logo_${slot.key}_offset_y`]);
 
         return (
-          <section key={slot.key} className="grid gap-8 border-t border-hairline pt-10 lg:grid-cols-2">
+          <section
+            key={slot.key}
+            className="grid gap-8 border-t border-hairline pt-10 lg:grid-cols-2"
+          >
             <div className="space-y-6">
               <ImageField
                 label={slot.label}

@@ -28,7 +28,7 @@ export function ReviewModeration() {
       .select("*")
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
-    setRows(((data ?? []) as unknown) as ReviewRow[]);
+    setRows((data ?? []) as unknown as ReviewRow[]);
   }
 
   useEffect(() => {
@@ -60,7 +60,10 @@ export function ReviewModeration() {
 
   async function remove(row: ReviewRow): Promise<void> {
     if (!confirm(`Delete the review from ${row.name}?`)) return;
-    const { error } = await supabase.from("testimonials" as never).delete().eq("id", row.id);
+    const { error } = await supabase
+      .from("testimonials" as never)
+      .delete()
+      .eq("id", row.id);
     if (error) {
       toast.error(error.message);
       return;
@@ -69,9 +72,10 @@ export function ReviewModeration() {
     toast.success("Review deleted");
   }
 
-  const link =
-    typeof window !== "undefined" ? `${window.location.origin}/review` : "/review";
-  const visible = rows.filter((r) => (filter === "all" ? true : (r.status || "approved") === filter));
+  const link = typeof window !== "undefined" ? `${window.location.origin}/review` : "/review";
+  const visible = rows.filter((r) =>
+    filter === "all" ? true : (r.status || "approved") === filter,
+  );
 
   return (
     <div className="space-y-10">
@@ -130,7 +134,11 @@ export function ReviewModeration() {
               </div>
               <div className="flex gap-1">
                 {Array.from({ length: Math.max(1, row.rating) }).map((_, i) => (
-                  <Star key={i} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
+                  <Star
+                    key={i}
+                    className="size-3.5 fill-foreground text-foreground"
+                    strokeWidth={0}
+                  />
                 ))}
               </div>
             </div>
@@ -153,7 +161,9 @@ export function ReviewModeration() {
                   value={row.name}
                   onChange={(e) =>
                     setRows((list) =>
-                      (list ?? []).map((r) => (r.id === row.id ? { ...r, name: e.target.value } : r)),
+                      (list ?? []).map((r) =>
+                        r.id === row.id ? { ...r, name: e.target.value } : r,
+                      ),
                     )
                   }
                   className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none focus:border-foreground"
@@ -165,7 +175,9 @@ export function ReviewModeration() {
                   value={row.role}
                   onChange={(e) =>
                     setRows((list) =>
-                      (list ?? []).map((r) => (r.id === row.id ? { ...r, role: e.target.value } : r)),
+                      (list ?? []).map((r) =>
+                        r.id === row.id ? { ...r, role: e.target.value } : r,
+                      ),
                     )
                   }
                   className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none focus:border-foreground"

@@ -54,10 +54,7 @@ export const Route = createFileRoute("/")({
 type Filter = "all" | CategorySlug;
 
 function Home() {
-  const featured = useMemo(
-    () => featuredIds.map(photoById).filter((p) => p !== undefined),
-    [],
-  );
+  const featured = useMemo(() => featuredIds.map(photoById).filter((p) => p !== undefined), []);
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
@@ -77,7 +74,6 @@ function Home() {
   const shown = isMobile ? visible.slice(0, mobileCount) : visible;
   const allShown = mobileCount >= visible.length;
 
-
   useEffect(() => {
     const track = servicesRef.current;
     if (!track || !isMobile) return;
@@ -95,7 +91,8 @@ function Home() {
         const ease = servicesBoostRef.current * 0.12;
         servicesBoostRef.current -= ease;
         if (Math.abs(servicesBoostRef.current) < 0.2) servicesBoostRef.current = 0;
-        const next = ((servicesPosRef.current + drift + ease) % loopWidth + loopWidth) % loopWidth;
+        const next =
+          (((servicesPosRef.current + drift + ease) % loopWidth) + loopWidth) % loopWidth;
         servicesPosRef.current = next;
         track.style.transform = `translate3d(${-next}px, 0, 0)`;
       }
@@ -122,9 +119,12 @@ function Home() {
     resumeTimer.current = setTimeout(() => (servicesPausedRef.current = false), delay);
   }, []);
 
-  useEffect(() => () => {
-    if (resumeTimer.current) clearTimeout(resumeTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    },
+    [],
+  );
 
   const stepServices = useCallback((dir: number) => {
     const track = servicesRef.current;
@@ -132,7 +132,6 @@ function Home() {
     const card = track.firstElementChild?.firstElementChild as HTMLElement | null;
     servicesBoostRef.current += dir * (card ? card.offsetWidth + 12 : 180);
   }, []);
-
 
   // Section copy, order and visibility all come from the content studio.
   const ordered = sectionsFor("home");
@@ -278,7 +277,9 @@ function Home() {
                 onClick={() => setEdit(i)}
                 className={cn(
                   "relative size-20 overflow-hidden border transition-all duration-300 md:size-24",
-                  i === edit ? "border-foreground opacity-100" : "border-hairline opacity-50 hover:opacity-90",
+                  i === edit
+                    ? "border-foreground opacity-100"
+                    : "border-hairline opacity-50 hover:opacity-90",
                 )}
                 aria-label={s.title}
                 aria-pressed={i === edit}
@@ -302,7 +303,9 @@ function Home() {
           </div>
         </div>
       </section>
-    ) : <></>,
+    ) : (
+      <></>
+    ),
 
     services: (
       <section key="services" className="border-t border-hairline bg-surface/30 py-24 md:py-32">
@@ -342,7 +345,10 @@ function Home() {
                   {[0, 1, 2].map((group) => (
                     <div key={group} className="flex shrink-0 gap-3 pr-3" aria-hidden={group > 0}>
                       {services.map((s, i) => (
-                        <div key={`${group}-${s.slug}`} className="w-[calc((100vw-4.5rem)/2)] shrink-0">
+                        <div
+                          key={`${group}-${s.slug}`}
+                          className="w-[calc((100vw-4.5rem)/2)] shrink-0"
+                        >
                           <ServiceCard service={s} index={i} />
                         </div>
                       ))}
@@ -372,9 +378,7 @@ function Home() {
       </section>
     ),
 
-    experience: (
-      <ExperienceSection key="experience" section={sectionFor("home", "experience")} />
-    ),
+    experience: <ExperienceSection key="experience" section={sectionFor("home", "experience")} />,
 
     testimonials: <Testimonials key="testimonials" />,
 
@@ -393,7 +397,10 @@ function Home() {
             <SocialLinks className="mt-10 justify-center" size="lg" />
             <p className="mt-10 text-sm text-muted-foreground">
               Prefer email?{" "}
-              <a href={`mailto:${site.email}`} className="text-foreground underline underline-offset-4">
+              <a
+                href={`mailto:${site.email}`}
+                className="text-foreground underline underline-offset-4"
+              >
                 {site.email}
               </a>
             </p>
@@ -416,7 +423,12 @@ function Home() {
 
       {ordered.map((s) => blocks[s.key] ?? null)}
 
-      <Lightbox photos={visible} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
+      <Lightbox
+        photos={visible}
+        index={lightbox}
+        onClose={() => setLightbox(null)}
+        onIndexChange={setLightbox}
+      />
     </>
   );
 }
