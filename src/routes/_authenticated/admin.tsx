@@ -289,8 +289,8 @@ function AdminPage() {
             fields={section.fields}
             itemLabel={section.itemLabel}
             titleKey={section.titleKey}
-            allowAdd={section.allowAdd ?? true}
-            note={section.note}
+            allowAdd={(section as { allowAdd?: boolean }).allowAdd ?? true}
+            note={(section as { note?: string }).note}
           />
         )}
       </div>
