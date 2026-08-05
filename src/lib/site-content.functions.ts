@@ -101,7 +101,12 @@ export const getSiteContent = createServerFn({ method: "GET" }).handler(
         table("services"),
         table("stats"),
         table("experience"),
-        table("testimonials"),
+        // email is intentionally omitted: reviewer emails are studio-only
+        supabase
+          .from("testimonials" as never)
+          .select("id,name,role,occasion,quote,rating,images,status,sort_order")
+          .order("sort_order", { ascending: true })
+          .then((r) => (r.data ?? []) as unknown as Row[]),
         table("process_steps"),
         table("page_sections"),
         table("site_copy"),
