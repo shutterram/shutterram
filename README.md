@@ -141,6 +141,16 @@ Two ways, both in the studio:
   4. **Upload N** uploads every file and creates its row. Failures are reported per file and stay
      in the list so you can retry; successful ones disappear and appear in the list below.
 
+**Automatic image optimisation** (`src/lib/optimise-image.ts`) — every image you upload through the
+studio (single, bulk, logos, social icons) is decoded in the browser, downscaled so its longest edge
+is at most **2400px**, and re-encoded to **WebP at quality 0.82** before it is stored. You can drop
+straight-out-of-camera JPEG/PNG/TIFF-style exports of any size; a toast reports the saving. SVG and
+GIF pass through untouched (vectors/animation), and any format the browser cannot decode (e.g. HEIC)
+is uploaded as-is rather than failing. Client review photos go through the same step before the 6MB
+per-file limit is checked. Tune `MAX_EDGE` / `QUALITY` in that file if you want larger originals.
+
+
+
 **Social links** accept either a built-in icon name (`instagram`, `facebook`, `twitter`, `flickr`)
 or a **custom icon** you upload (SVG or PNG). Uploaded icons are rendered through a CSS mask, so they
 are automatically resized to the standard icon box and recoloured to match the site's text colour on
