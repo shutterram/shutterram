@@ -1,5 +1,5 @@
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { site, logos } from "@/data/portfolio";
+import { site, logos, logoStyle } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,6 +29,7 @@ export function LogoLockup({
           logoSize,
           logos.invert && "invert",
         )}
+        style={logoStyle(variant)}
       />
       {showTagline ? <span className="eyebrow mt-3">{site.tagline}</span> : null}
     </span>

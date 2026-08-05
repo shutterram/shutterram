@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { categories, site } from "@/data/portfolio";
+import { categories, site, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export function HeroSlider() {
@@ -73,14 +73,14 @@ export function HeroSlider() {
               params={{ category: categories[active]!.slug }}
               className="glow-hover inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
             >
-              View More
+              {t("btn.view_more")}
             </Link>
             <Link
               to="/contact"
               search={{ form: "quote" as const, service: categories[active]!.slug }}
               className="glow-hover inline-flex items-center border border-foreground bg-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-background hover:bg-transparent hover:text-foreground"
             >
-              Book Your Date
+              {t("btn.book_date")}
             </Link>
           </div>
         </div>

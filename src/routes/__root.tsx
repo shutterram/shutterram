@@ -94,10 +94,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
       { name: "twitter:title", content: "Shutter Ram: Wedding, Portrait & Corporate Photography" },
-      { property: "og:description", content: "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today." },
-      { name: "twitter:description", content: "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png" },
+      {
+        property: "og:description",
+        content:
+          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Capturing your tomorrow's memories today.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1d29a2d5-8daf-4219-a782-0396fe1db0ba/id-preview-15a9fbfa--45f3e6db-80e3-4769-9011-011ab2cc627f.lovable.app-1785754525360.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -116,7 +132,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

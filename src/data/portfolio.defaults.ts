@@ -71,7 +71,19 @@ export interface LogoSet {
   favicon: string;
   /** Invert logo colours (on for dark artwork on this dark theme). */
   invert: boolean;
+  /** Per-slot size (px height, 0 = use the built-in size) and nudge. */
+  layout: Record<LogoSlot, LogoPlacement>;
 }
+
+export type LogoSlot = "header" | "footer" | "mobile" | "loader";
+
+export interface LogoPlacement {
+  height: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+export const emptyPlacement: LogoPlacement = { height: 0, offsetX: 0, offsetY: 0 };
 
 export const defaultLogos: LogoSet = {
   header: "",
@@ -80,6 +92,77 @@ export const defaultLogos: LogoSet = {
   loader: "",
   favicon: "",
   invert: true,
+  layout: {
+    header: { ...emptyPlacement },
+    footer: { ...emptyPlacement },
+    mobile: { ...emptyPlacement },
+    loader: { ...emptyPlacement },
+  },
+};
+
+/** Built-in fallbacks for every editable label on the site. */
+export const defaultCopy: Record<string, string> = {
+  "nav.home": "Home",
+  "nav.gallery": "Gallery",
+  "nav.services": "Services",
+  "nav.about": "About Me",
+  "nav.contact": "Contact",
+  "nav.book": "Book Your Date",
+  "nav.menu_open": "Menu",
+  "nav.menu_close": "Close",
+  "btn.view_more": "View More",
+  "btn.view_less": "View Less",
+  "btn.book_date": "Book Your Date",
+  "btn.request_quote": "Request a Quote",
+  "btn.start_conversation": "Start a Conversation",
+  "btn.work_with_me": "Work with me",
+  "btn.close": "Close",
+  "gallery.eyebrow": "Previous Works",
+  "gallery.title": "The Gallery",
+  "gallery.intro":
+    "Everything worth keeping from the last few years, in one place. Filter by category, or open any frame full screen and step through with the arrow keys.",
+  "gallery.jump": "Jump to a category",
+  "gallery.filter_all": "All",
+  "about.eyebrow": "About Me",
+  "about.title": "I'd rather wait for the real moment.",
+  "about.image":
+    "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80",
+  "about.kit_heading": "Kit, briefly",
+  "about.kit_text":
+    "Two mirrorless bodies, three primes, one very tired 24\u201370, and a pair of lights that only come out when the room refuses to cooperate.",
+  "about.hello_heading": "Say hello",
+  "contact.eyebrow": "Contact",
+  "contact.title": "Let's talk about your day.",
+  "contact.intro":
+    "Tell me what you have in mind. I reply to every message personally, usually within a day.",
+  "contact.tab_quote": "Request a Quote",
+  "contact.tab_message": "Send a Message",
+  "contact.submit_quote": "Send Quote Request",
+  "contact.submit_message": "Send Message",
+  "review.eyebrow": "Private link \u2014 clients only",
+  "review.title": "How was your shoot?",
+  "review.intro":
+    "If you have two minutes, a few honest words go further than anything I could write about my own work. Thank you.",
+  "review.rating_label": "Your rating",
+  "review.photos_label": "Add photos (optional)",
+  "review.submit": "Submit Review",
+  "review.thanks": "Thank you \u2014 your review has been sent for approval.",
+  "testimonial.photos_button": "See photos",
+  "testimonial.modal_photos": "Photos from this shoot",
+  "testimonial.read_more": "Click to read",
+  "footer.nav_heading": "Navigation",
+  "footer.categories_heading": "Categories",
+  "footer.contact_heading": "Get in touch",
+  "footer.rights": "All rights reserved.",
+  "footer.blurb":
+    "A one-person studio photographing weddings, brands and people who would rather be remembered honestly than perfectly.",
+  "footer.note": "Every frame edited by hand",
+  "loader.label": "Loading",
+  "error.eyebrow": "Something went wrong",
+  "error.title": "This page didn't load",
+  "error.body": "The frame slipped. Try again, or head back to the homepage.",
+  "error.retry": "Try again",
+  "error.home": "Go home",
 };
 
 export type CategorySlug = string;
@@ -371,6 +454,10 @@ export interface Testimonial {
   name: string;
   role: string;
   rating: number;
+  /** What was photographed (shown in the review pop-up). */
+  occasion?: string;
+  /** Client-supplied photographs, shown in the review pop-up. */
+  images?: string[];
 }
 
 export const defaultTestimonials: Testimonial[] = [

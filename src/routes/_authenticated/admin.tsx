@@ -3,15 +3,24 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/ContentEditor";
+import { CopyEditor } from "@/components/admin/CopyEditor";
+import { LogoStudio } from "@/components/admin/LogoStudio";
+import { ReviewModeration } from "@/components/admin/ReviewModeration";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "Content Studio | Shutter Ram" },
-      { name: "description", content: "Private content studio for editing the Shutter Ram website." },
+      {
+        name: "description",
+        content: "Private content studio for editing the Shutter Ram website.",
+      },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Content Studio | Shutter Ram" },
-      { property: "og:description", content: "Private content studio for the Shutter Ram website." },
+      {
+        property: "og:description",
+        content: "Private content studio for the Shutter Ram website.",
+      },
     ],
   }),
   component: AdminPage,
@@ -29,7 +38,11 @@ const SECTIONS = [
       { key: "email", label: "Email" },
       { key: "phone", label: "Phone" },
       { key: "location", label: "Location line" },
-      { key: "form_endpoint", label: "Form endpoint URL", placeholder: "Formspree / Basin / Getform URL" },
+      {
+        key: "form_endpoint",
+        label: "Form endpoint URL",
+        placeholder: "Formspree / Basin / Getform URL",
+      },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
@@ -63,17 +76,23 @@ const SECTIONS = [
   {
     id: "logos",
     label: "Logos",
-    kind: "single" as const,
+    kind: "logos" as const,
     table: "settings",
-    note: "Upload a different logo for each place it appears. Leave a slot empty to keep the built-in logo.",
-    fields: [
-      { key: "logo_header", label: "Header logo", type: "image" },
-      { key: "logo_mobile", label: "Mobile menu logo", type: "image" },
-      { key: "logo_footer", label: "Footer logo", type: "image" },
-      { key: "logo_loader", label: "Loading screen logo", type: "image" },
-      { key: "logo_favicon", label: "Browser tab icon (favicon)", type: "image" },
-      { key: "logo_invert", label: "Invert logo colours (for dark artwork)", type: "bool" },
-    ] satisfies FieldSpec[],
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "copy",
+    label: "Wording",
+    kind: "copy" as const,
+    table: "site_copy",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "reviews",
+    label: "Client reviews",
+    kind: "reviews" as const,
+    table: "testimonials",
+    fields: [] satisfies FieldSpec[],
   },
   {
     id: "hero",
@@ -229,7 +248,11 @@ const SECTIONS = [
       { key: "name", label: "Name" },
       { key: "href", label: "URL" },
       { key: "icon", label: "Built-in icon (instagram, facebook, twitter, flickr)" },
-      { key: "icon_url", label: "Custom icon (SVG or PNG — recoloured and resized automatically)", type: "image" },
+      {
+        key: "icon_url",
+        label: "Custom icon (SVG or PNG — recoloured and resized automatically)",
+        type: "image",
+      },
     ] satisfies FieldSpec[],
   },
 ];
@@ -319,8 +342,18 @@ function AdminPage() {
       </nav>
 
       <div className="mt-12">
-        {section.kind === "single" ? (
-          <SingletonEditor table={section.table} fields={section.fields} note={"note" in section ? section.note : undefined} />
+        {section.kind === "logos" ? (
+          <LogoStudio />
+        ) : section.kind === "copy" ? (
+          <CopyEditor />
+        ) : section.kind === "reviews" ? (
+          <ReviewModeration />
+        ) : section.kind === "single" ? (
+          <SingletonEditor
+            table={section.table}
+            fields={section.fields}
+            note={"note" in section ? section.note : undefined}
+          />
         ) : (
           <ListEditor
             key={section.id}

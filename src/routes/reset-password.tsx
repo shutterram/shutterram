@@ -10,7 +10,10 @@ export const Route = createFileRoute("/reset-password")({
       { name: "description", content: "Set a new password for the Shutter Ram studio account." },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Reset Password | Shutter Ram" },
-      { property: "og:description", content: "Set a new password for the Shutter Ram studio account." },
+      {
+        property: "og:description",
+        content: "Set a new password for the Shutter Ram studio account.",
+      },
     ],
   }),
   component: ResetPasswordPage,

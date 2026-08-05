@@ -1,5 +1,5 @@
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { loader, logos } from "@/data/portfolio";
+import { loader, logos, t } from "@/data/portfolio";
 
 /** Full-screen loading state shown while a page's content is being fetched. */
 export function PageLoader() {
@@ -33,7 +33,7 @@ export function PageLoader() {
           style={{ height: size * 0.5 }}
         />
       </div>
-      <p className="eyebrow animate-pulse">Loading</p>
+      <p className="eyebrow animate-pulse">{t("loader.label")}</p>
     </div>
   );
 }

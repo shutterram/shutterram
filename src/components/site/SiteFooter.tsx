@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { categories, site } from "@/data/portfolio";
+import { categories, site, t } from "@/data/portfolio";
 import { LogoLockup } from "./LogoLockup";
 import { SocialLinks } from "./SocialLinks";
 
 const navLinks = [
-  { label: "Home", to: "/" as const },
-  { label: "Gallery", to: "/gallery" as const },
-  { label: "Services", to: "/services" as const },
-  { label: "About Me", to: "/about" as const },
-  { label: "Contact", to: "/contact" as const },
+  { key: "nav.home", to: "/" as const },
+  { key: "nav.gallery", to: "/gallery" as const },
+  { key: "nav.services", to: "/services" as const },
+  { key: "nav.about", to: "/about" as const },
+  { key: "nav.contact", to: "/contact" as const },
 ];
 
 export function SiteFooter() {
@@ -26,15 +26,13 @@ export function SiteFooter() {
               <span className="eyebrow mt-3">{site.tagline}</span>
             </Link>
             <p className="mx-auto mt-7 max-w-sm text-sm leading-relaxed text-muted-foreground md:mx-0">
-              A one-person studio photographing weddings, brands and people who would
-              rather be remembered honestly than perfectly.
+              {t("footer.blurb")}
             </p>
             <SocialLinks className="mt-9 justify-center md:justify-start" />
           </div>
 
           <div className="md:col-span-6 lg:col-span-2">
-
-            <p className="eyebrow">Navigate</p>
+            <p className="eyebrow">{t("footer.nav_heading")}</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {navLinks.map((l) => (
                 <li key={l.to}>
@@ -42,7 +40,7 @@ export function SiteFooter() {
                     to={l.to}
                     className="text-muted-foreground transition-colors duration-500 hover:text-foreground"
                   >
-                    {l.label}
+                    {t(l.key)}
                   </Link>
                 </li>
               ))}
@@ -50,7 +48,7 @@ export function SiteFooter() {
           </div>
 
           <div className="md:col-span-6 lg:col-span-2">
-            <p className="eyebrow">Categories</p>
+            <p className="eyebrow">{t("footer.categories_heading")}</p>
             <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm md:mt-6 md:block md:space-y-3">
               {categories.slice(0, 6).map((c) => (
                 <li key={c.slug}>
@@ -67,7 +65,7 @@ export function SiteFooter() {
           </div>
 
           <div className="md:col-span-12 lg:col-span-3">
-            <p className="eyebrow">Get in touch</p>
+            <p className="eyebrow">{t("footer.contact_heading")}</p>
             <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
               <li className="flex items-start justify-center gap-3 md:justify-start">
                 <Phone className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
@@ -86,7 +84,6 @@ export function SiteFooter() {
                 >
                   {site.email}
                 </a>
-
               </li>
               <li className="flex items-start justify-center gap-3 md:justify-start">
                 <MapPin className="mt-0.5 size-4 shrink-0" strokeWidth={1.4} />
@@ -98,7 +95,7 @@ export function SiteFooter() {
               search={{ form: "quote" as const }}
               className="glow-hover mt-7 inline-flex items-center border border-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase transition-colors hover:bg-foreground hover:text-background"
             >
-              Book Your Date
+              {t("btn.book_date")}
             </Link>
           </div>
         </div>
@@ -106,8 +103,10 @@ export function SiteFooter() {
 
       <div className="border-t border-hairline">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} Shutter Ram. All rights reserved.</p>
-          <p className="eyebrow">Every frame edited by hand</p>
+          <p>
+            © {new Date().getFullYear()} {site.name}. {t("footer.rights")}
+          </p>
+          <p className="eyebrow">{t("footer.note")}</p>
         </div>
       </div>
     </footer>

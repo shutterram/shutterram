@@ -6,6 +6,7 @@
 // panel can edit every piece of copy and every image on the site.
 // ---------------------------------------------------------------------------
 
+import type { CSSProperties } from "react";
 import type { SiteContentPayload, Row } from "@/lib/site-content.functions";
 import {
   defaultSite,
@@ -25,6 +26,8 @@ import {
   defaultPageSections,
   defaultLoader,
   defaultLogos,
+  defaultCopy,
+  emptyPlacement,
 } from "./portfolio.defaults";
 
 export { unedited } from "./portfolio.defaults";
@@ -42,6 +45,8 @@ export type {
   SectionConfig,
   LoaderConfig,
   LogoSet,
+  LogoSlot,
+  LogoPlacement,
 } from "./portfolio.defaults";
 
 import type {
@@ -58,6 +63,8 @@ import type {
   SectionConfig,
   LoaderConfig,
   LogoSet,
+  LogoSlot,
+  LogoPlacement,
 } from "./portfolio.defaults";
 
 // Live bindings — reassigned by applyContent().
@@ -79,6 +86,22 @@ export let budgetRanges: string[] = [...defaultBudgetRanges];
 export let hourOptions: string[] = [...defaultHourOptions];
 export let loader: LoaderConfig = defaultLoader;
 export let logos: LogoSet = defaultLogos;
+export let copyMap: Record<string, string> = { ...defaultCopy };
+
+/** Editable label lookup — falls back to the built-in wording. */
+export function t(key: string, fallback?: string): string {
+  const value = copyMap[key];
+  return value !== undefined && value !== "" ? value : (fallback ?? defaultCopy[key] ?? "");
+}
+
+/** Size / nudge for a logo slot, as inline styles. */
+export function logoStyle(slot: LogoSlot): CSSProperties {
+  const p: LogoPlacement = logos.layout?.[slot] ?? emptyPlacement;
+  const style: CSSProperties = {};
+  if (p.height > 0) style.height = `${p.height}px`;
+  if (p.offsetX || p.offsetY) style.transform = `translate(${p.offsetX}px, ${p.offsetY}px)`;
+  return style;
+}
 
 const str = (v: unknown, fallback = "") => (typeof v === "string" ? v : fallback);
 const num = (v: unknown, fallback = 0) => (typeof v === "number" ? v : fallback);
@@ -120,6 +143,28 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       loader: str(s["logo_loader"]),
       favicon: str(s["logo_favicon"]),
       invert: s["logo_invert"] !== false,
+      layout: {
+        header: {
+          height: num(s["logo_header_height"]),
+          offsetX: num(s["logo_header_offset_x"]),
+          offsetY: num(s["logo_header_offset_y"]),
+        },
+        mobile: {
+          height: num(s["logo_mobile_height"]),
+          offsetX: num(s["logo_mobile_offset_x"]),
+          offsetY: num(s["logo_mobile_offset_y"]),
+        },
+        footer: {
+          height: num(s["logo_footer_height"]),
+          offsetX: num(s["logo_footer_offset_x"]),
+          offsetY: num(s["logo_footer_offset_y"]),
+        },
+        loader: {
+          height: num(s["logo_loader_height"]),
+          offsetX: num(s["logo_loader_offset_x"]),
+          offsetY: num(s["logo_loader_offset_y"]),
+        },
+      },
     };
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
@@ -209,6 +254,8 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       name: str(r["name"]),
       role: str(r["role"]),
       rating: num(r["rating"], 5),
+      occasion: str(r["occasion"]),
+      images: list(r["images"]),
     }));
   }
 
@@ -235,6 +282,15 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       intro: str(r["intro"]),
       enabled: r["enabled"] !== false,
     }));
+  }
+
+  if (payload.site_copy.length) {
+    const next = { ...defaultCopy };
+    for (const r of payload.site_copy) {
+      const key = str(r["key"]);
+      if (key) next[key] = str(r["value"]);
+    }
+    copyMap = next;
   }
 }
 

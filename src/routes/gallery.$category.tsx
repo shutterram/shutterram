@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Lightbox } from "@/components/site/Lightbox";
-import { categories, categoryBySlug, photosByCategory } from "@/data/portfolio";
+import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
 
 export const Route = createFileRoute("/gallery/$category")({
   loader: ({ params }) => {
@@ -13,7 +13,10 @@ export const Route = createFileRoute("/gallery/$category")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Category not found | Shutter Ram" }, { name: "robots", content: "noindex" }],
+        meta: [
+          { title: "Category not found | Shutter Ram" },
+          { name: "robots", content: "noindex" },
+        ],
       };
     }
     const { category } = loaderData;
@@ -42,11 +45,13 @@ function CategoryGallery() {
         <img src={category.hero} alt={category.title} className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/70" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <p className="eyebrow">Previous Works</p>
+          <p className="eyebrow">{t("gallery.eyebrow")}</p>
           <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
             {category.title}
           </h1>
-          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">{category.tagline}</p>
+          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
+            {category.tagline}
+          </p>
         </div>
       </div>
 
@@ -87,7 +92,7 @@ function CategoryGallery() {
             hash="quote"
             className="inline-flex items-center border border-foreground bg-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-background transition-opacity hover:opacity-85"
           >
-            Request a Quote
+            {t("btn.request_quote")}
           </Link>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             {categories
@@ -106,7 +111,12 @@ function CategoryGallery() {
         </div>
       </div>
 
-      <Lightbox photos={items} index={lightbox} onClose={() => setLightbox(null)} onIndexChange={setLightbox} />
+      <Lightbox
+        photos={items}
+        index={lightbox}
+        onClose={() => setLightbox(null)}
+        onIndexChange={setLightbox}
+      />
     </div>
   );
 }

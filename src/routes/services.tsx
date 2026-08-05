@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
-import { sectionFor, services } from "@/data/portfolio";
+import { sectionFor, services, t } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,8 @@ export const Route = createFileRoute("/services")({
       { property: "og:title", content: "Services & Rates | Shutter Ram" },
       {
         property: "og:description",
-        content: "Photography services from Shutter Ram — coverage, deliverables and starting rates.",
+        content:
+          "Photography services from Shutter Ram — coverage, deliverables and starting rates.",
       },
       { property: "og:image", content: services[0]!.image },
       { name: "twitter:image", content: services[0]!.image },
@@ -35,9 +36,8 @@ function ServicesPage() {
           How we can work together
         </h1>
         <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          Six ways I usually work, though nothing here is rigid. If your project sits
-          somewhere between two of these, tell me about it — most of my favourite work
-          started that way.
+          Six ways I usually work, though nothing here is rigid. If your project sits somewhere
+          between two of these, tell me about it — most of my favourite work started that way.
         </p>
       </div>
 
@@ -85,21 +85,20 @@ function ServicesPage() {
                   params={{ category: s.category }}
                   className="inline-flex items-center border border-hairline px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
-                  View More
+                  {t("btn.view_more")}
                 </Link>
                 <Link
                   to="/contact"
                   search={{ service: s.slug, form: "quote" as const }}
                   className="inline-flex items-center border border-foreground bg-foreground px-4 py-2.5 text-[0.625rem] tracking-[0.2em] uppercase text-background transition-opacity hover:opacity-85 md:px-6 md:py-3 md:text-[0.6875rem] md:tracking-[0.24em]"
                 >
-                  Request a Quote
+                  {t("btn.request_quote")}
                 </Link>
               </div>
             </Reveal>
           </section>
         ))}
       </div>
-
 
       <ExperienceSection className="mt-28" section={sectionFor("services", "experience")} />
     </div>

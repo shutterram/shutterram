@@ -1,9 +1,83 @@
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
-import { testimonials } from "@/data/portfolio";
+import { ChevronLeft, ChevronRight, Images, Star, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { t, testimonials, type Testimonial } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 import { SectionHeading } from "./SectionHeading";
+
+/** Pop-up with the full review and any photographs the client attached. */
+function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+  const images = review.images ?? [];
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/92 px-4 py-10 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-h-full w-full max-w-2xl overflow-y-auto border border-hairline bg-surface/80 p-8 md:p-12"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label={t("btn.close")}
+          onClick={onClose}
+          className="absolute right-4 top-4 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <X className="size-5" strokeWidth={1.2} />
+        </button>
+
+        <div className="flex gap-1" aria-label={`${review.rating} out of 5`}>
+          {Array.from({ length: review.rating }).map((_, s) => (
+            <Star key={s} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
+          ))}
+        </div>
+
+        <blockquote className="mt-6 font-display text-xl leading-relaxed md:text-2xl">
+          “{review.quote}”
+        </blockquote>
+
+        <div className="mt-8 border-t border-hairline pt-5">
+          <p className="text-sm">{review.name}</p>
+          <p className="eyebrow mt-1">{review.occasion || review.role}</p>
+        </div>
+
+        {images.length ? (
+          <div className="mt-10">
+            <p className="eyebrow">{t("testimonial.modal_photos")}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {images.map((src) => (
+                <a key={src} href={src} target="_blank" rel="noreferrer">
+                  <img
+                    src={src}
+                    alt=""
+                    loading="lazy"
+                    className="aspect-square w-full border border-hairline object-cover transition-opacity duration-500 hover:opacity-80"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 /**
  * Continuously drifting testimonial marquee. Transform-based so it never
@@ -14,6 +88,7 @@ export function Testimonials({ className }: { className?: string }) {
   const pausedRef = useRef(false);
   const posRef = useRef(0);
   const boostRef = useRef(0);
+  const [openReview, setOpenReview] = useState<Testimonial | null>(null);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -46,6 +121,10 @@ export function Testimonials({ className }: { className?: string }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  useEffect(() => {
+    pausedRef.current = openReview !== null;
+  }, [openReview]);
 
   const step = useCallback((dir: number) => {
     const track = trackRef.current;
@@ -90,37 +169,68 @@ export function Testimonials({ className }: { className?: string }) {
       <div
         className="mt-6 overflow-hidden pl-6"
         onMouseEnter={() => (pausedRef.current = true)}
-        onMouseLeave={() => (pausedRef.current = false)}
+        onMouseLeave={() => (pausedRef.current = openReview !== null)}
         onFocusCapture={() => (pausedRef.current = true)}
-        onBlurCapture={() => (pausedRef.current = false)}
+        onBlurCapture={() => (pausedRef.current = openReview !== null)}
       >
         <div ref={trackRef} className="flex w-max will-change-transform">
           {[0, 1, 2, 3].map((group) => (
             <div key={group} className="flex shrink-0" aria-hidden={group === 1}>
-              {testimonials.map((t) => (
+              {testimonials.map((review) => (
                 <figure
-                  key={`${group}-${t.id}`}
-                  className="glow-hover mr-6 flex w-[80vw] shrink-0 flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
+                  key={`${group}-${review.id}`}
+                  onClick={() => setOpenReview(review)}
+                  className="glow-hover mr-6 flex w-[80vw] shrink-0 cursor-pointer flex-col border border-hairline bg-background/40 p-8 transition-colors duration-700 hover:border-foreground/30 sm:w-[24rem] md:p-10"
                 >
-                  <div className="flex gap-1" aria-label={`${t.rating} out of 5`}>
-                    {Array.from({ length: t.rating }).map((_, s) => (
-                      <Star key={s} className="size-3.5 fill-foreground text-foreground" strokeWidth={0} />
+                  <div className="flex gap-1" aria-label={`${review.rating} out of 5`}>
+                    {Array.from({ length: review.rating }).map((_, s) => (
+                      <Star
+                        key={s}
+                        className="size-3.5 fill-foreground text-foreground"
+                        strokeWidth={0}
+                      />
                     ))}
                   </div>
-                  <blockquote className="mt-6 font-display text-lg leading-relaxed md:text-xl">
-                    “{t.quote}”
+                  <blockquote className="mt-6 line-clamp-6 font-display text-lg leading-relaxed md:text-xl">
+                    “{review.quote}”
                   </blockquote>
                   <figcaption className="mt-auto border-t border-hairline pt-5 [margin-top:2rem]">
-                    <p className="text-sm text-foreground">{t.name}</p>
-                    <p className="eyebrow mt-1">{t.role}</p>
+                    <p className="text-sm text-foreground">{review.name}</p>
+                    <p className="eyebrow mt-1">{review.role}</p>
+                    <div className="mt-4 flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenReview(review);
+                        }}
+                        className="eyebrow text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {t("testimonial.read_more")}
+                      </button>
+                      {review.images?.length ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenReview(review);
+                          }}
+                          className="eyebrow inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <Images className="size-3.5" strokeWidth={1.4} />
+                          {t("testimonial.photos_button")}
+                        </button>
+                      ) : null}
+                    </div>
                   </figcaption>
                 </figure>
               ))}
             </div>
           ))}
         </div>
-
       </div>
+
+      {openReview ? <ReviewDialog review={openReview} onClose={() => setOpenReview(null)} /> : null}
     </section>
   );
 }
