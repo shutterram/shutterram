@@ -151,15 +151,22 @@ export interface EditSample {
   id: string;
   title: string;
   note: string;
+  /** The finished, edited frame. */
   src: string;
+  /** The straight-out-of-camera frame shown on the left of the slider. */
+  srcBefore: string;
 }
 
+/** Placeholder frames — replace both images from the studio. */
+const BEFORE_PLACEHOLDER = "/placeholders/before.svg";
+const AFTER_PLACEHOLDER = "/placeholders/after.svg";
+
 export const defaultEditSamples: EditSample[] = [
-  { id: "ed1", title: "Golden Hour Wedding", note: "Warmth recovered, skin tones balanced, sky graded back in.", src: u("1519741497674-611481863552", 1800) },
-  { id: "ed2", title: "Studio Portrait", note: "Dodge and burn, blemish work, subtle contrast curve.", src: u("1494790108377-be9c29b29330", 1800) },
-  { id: "ed3", title: "Corporate Feature", note: "Colour cast removed, background cleaned, sharpening pass.", src: u("1521737711867-e3b97375f902", 1800) },
-  { id: "ed4", title: "Evening Event", note: "Noise reduction, mixed lighting neutralised, highlight rescue.", src: u("1511632765486-a01980e01a18", 1800) },
-  { id: "ed5", title: "Product Still Life", note: "Reflections tamed, dust removed, deep blacks restored.", src: u("1600880292203-757bb62b4baf", 1800) },
+  { id: "ed1", title: "Golden Hour Wedding", note: "Warmth recovered, skin tones balanced, sky graded back in.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
+  { id: "ed2", title: "Studio Portrait", note: "Dodge and burn, blemish work, subtle contrast curve.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
+  { id: "ed3", title: "Corporate Feature", note: "Colour cast removed, background cleaned, sharpening pass.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
+  { id: "ed4", title: "Evening Event", note: "Noise reduction, mixed lighting neutralised, highlight rescue.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
+  { id: "ed5", title: "Product Still Life", note: "Reflections tamed, dust removed, deep blacks restored.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
 ];
 
 export interface Service {
