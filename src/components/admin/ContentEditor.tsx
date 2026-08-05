@@ -369,8 +369,22 @@ export function ListEditor({
     else toast.success("Saved");
   }
 
+  /** Write sort_order for every row so the new visual order sticks. */
+  async function persistOrder(next: Row[]) {
+    const ordered: Row[] = next.map((r, i) => ({ ...r, sort_order: i }));
+    setRows(ordered);
+    await Promise.all(
+      ordered.map((r, i) =>
+        supabase
+          .from(table as never)
+          .update({ sort_order: i } as never)
+          .eq("id", r["id"] as string),
+      ),
+    );
+  }
+
   async function addRow() {
-    const draft: Row = { sort_order: rows!.length };
+    const draft: Row = { sort_order: 0 };
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
@@ -385,9 +399,12 @@ export function ListEditor({
       return;
     }
     const created = (((data ?? [])[0] ?? null) as unknown) as Row | null;
-    setRows([...(rows ?? []), ...(created ? [created] : [])]);
-    if (created) setOpen(created["id"] as string);
+    if (!created) return;
+    // New entries appear at the top of the list, so there's nothing to scroll to.
+    await persistOrder([created, ...(rows ?? [])]);
+    setOpen(created["id"] as string);
   }
+
 
   async function removeRow(id: string) {
     const { error } = await supabase.from(table as never).delete().eq("id", id);
@@ -430,7 +447,7 @@ export function ListEditor({
           itemLabel={itemLabel}
           titleKey={titleKey}
           startOrder={rows.length}
-          onCreated={(created) => setRows([...(rows ?? []), ...created])}
+          onCreated={(created) => void persistOrder([...created, ...(rows ?? [])])}
         />
       ) : null}
 
