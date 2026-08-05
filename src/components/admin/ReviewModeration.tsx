@@ -43,22 +43,28 @@ export function ReviewModeration() {
     );
   }
 
-  async function patch(row: ReviewRow, changes: Partial<ReviewRow>) {
+  async function patch(row: ReviewRow, changes: Partial<ReviewRow>): Promise<void> {
     setSavingId(row.id);
     const { error } = await supabase
       .from("testimonials" as never)
       .update(changes as never)
       .eq("id", row.id);
     setSavingId(null);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setRows((list) => (list ?? []).map((r) => (r.id === row.id ? { ...r, ...changes } : r)));
     toast.success("Review updated");
   }
 
-  async function remove(row: ReviewRow) {
+  async function remove(row: ReviewRow): Promise<void> {
     if (!confirm(`Delete the review from ${row.name}?`)) return;
     const { error } = await supabase.from("testimonials" as never).delete().eq("id", row.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setRows((list) => (list ?? []).filter((r) => r.id !== row.id));
     toast.success("Review deleted");
   }
