@@ -407,3 +407,30 @@ export const defaultProcessSteps: ProcessStep[] = [
     detail: "Every frame hand-graded and delivered in a private gallery, ready to print, share and revisit for decades.",
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Page sections — order / visibility / wording, editable in the content studio.
+// ---------------------------------------------------------------------------
+
+export interface SectionConfig {
+  page: string;
+  key: string;
+  label: string;
+  eyebrow: string;
+  heading: string;
+  headingAccent: string;
+  intro: string;
+  enabled: boolean;
+}
+
+export const defaultPageSections: SectionConfig[] = [
+  { page: "home", key: "about", label: "Home — About me", eyebrow: "About Me", heading: "A quiet eye, fifteen years in.", headingAccent: "", intro: "", enabled: true },
+  { page: "home", key: "featured", label: "Home — Featured work", eyebrow: "Featured Work", heading: "A handful of favourites.", headingAccent: "", intro: "A rotating selection from recent commissions. Click any frame to open it full screen.", enabled: true },
+  { page: "home", key: "editing", label: "Home — Power of editing", eyebrow: "The Power of Editing", heading: "Same frame. Two different photographs.", headingAccent: "", intro: "Drag the handle across the image to reveal the unedited capture on one side and the finished, hand-graded frame on the other.", enabled: true },
+  { page: "home", key: "services", label: "Home — Services", eyebrow: "Services", heading: "What I can photograph for you.", headingAccent: "", intro: "Every engagement is quoted individually — these are the starting points.", enabled: true },
+  { page: "home", key: "experience", label: "Home — The Experience", eyebrow: "The Experience", heading: "Easy from first hello", headingAccent: "to final frame.", intro: "", enabled: true },
+  { page: "home", key: "testimonials", label: "Home — Testimonials", eyebrow: "", heading: "", headingAccent: "", intro: "", enabled: true },
+  { page: "home", key: "connect", label: "Home — Connect with me", eyebrow: "Connect With Me", heading: "Follow the work in progress.", headingAccent: "", intro: "New frames, behind-the-scenes and the occasional 4am street photograph.", enabled: true },
+  { page: "about", key: "experience", label: "About page — The Experience", eyebrow: "The Experience", heading: "How you can work", headingAccent: "with me.", intro: "", enabled: true },
+  { page: "services", key: "experience", label: "Services page — The Experience", eyebrow: "The Experience", heading: "Easy from first hello", headingAccent: "to final frame.", intro: "", enabled: true },
+];
