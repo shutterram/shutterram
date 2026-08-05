@@ -140,6 +140,24 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "sections",
+    label: "Page sections",
+    kind: "list" as const,
+    table: "page_sections",
+    itemLabel: "section",
+    titleKey: "label",
+    allowAdd: false,
+    note: "Reorder sections with the arrows, hide one with “Show on site”, or delete it entirely. The order here is the order they appear on the page.",
+    fields: [
+      { key: "label", label: "Section name (studio only)" },
+      { key: "enabled", label: "Show on site", type: "bool" },
+      { key: "eyebrow", label: "Small label above the heading" },
+      { key: "heading", label: "Heading" },
+      { key: "heading_accent", label: "Heading — second (italic) line" },
+      { key: "intro", label: "Intro paragraph", type: "textarea" },
+    ] satisfies FieldSpec[],
+  },
+  {
     id: "process",
     label: "Process steps",
     kind: "list" as const,
@@ -147,6 +165,15 @@ const SECTIONS = [
     itemLabel: "step",
     titleKey: "title",
     fields: [
+      {
+        key: "section_key",
+        label: "Which Experience section",
+        type: "select",
+        options: [
+          { value: "default", label: "Home & Services pages" },
+          { value: "about", label: "About Me page" },
+        ],
+      },
       { key: "step", label: "Number" },
       { key: "title", label: "Title" },
       { key: "detail", label: "Detail", type: "textarea" },
@@ -162,7 +189,8 @@ const SECTIONS = [
     fields: [
       { key: "name", label: "Name" },
       { key: "href", label: "URL" },
-      { key: "icon", label: "Icon (instagram, facebook, twitter, flickr)" },
+      { key: "icon", label: "Built-in icon (instagram, facebook, twitter, flickr)" },
+      { key: "icon_url", label: "Custom icon (SVG or PNG — recoloured and resized automatically)", type: "image" },
     ] satisfies FieldSpec[],
   },
 ];
@@ -261,6 +289,8 @@ function AdminPage() {
             fields={section.fields}
             itemLabel={section.itemLabel}
             titleKey={section.titleKey}
+            allowAdd={section.allowAdd ?? true}
+            note={section.note}
           />
         )}
       </div>
