@@ -57,6 +57,31 @@ supabase/                 project config; migrations are applied via the platfor
 1. Go to `/auth` and create an account (the **first** account created is the administrator).
 2. You are redirected to `/admin`.
 
+### Password reset (admin accounts)
+The studio ships with a self-service reset flow:
+
+1. On `/auth`, click **Forgot password?** and enter the account email.
+2. Supabase Auth emails a recovery link pointing at `<your-site>/reset-password`
+   (the app passes `redirectTo: ${window.location.origin}/reset-password`).
+3. That page (`src/routes/reset-password.tsx`) is public, reads the recovery session from the URL
+   and calls `supabase.auth.updateUser({ password })` to set the new password.
+
+**Setup required on your own Supabase project:**
+
+- **Redirect URLs** — Authentication → URL Configuration: set *Site URL* to your production origin
+  and add `https://your-domain.com/reset-password` (plus `http://localhost:8080/reset-password` for
+  local dev) to *Redirect URLs*. Links to URLs not on this list are rejected.
+- **SMTP** — Authentication → Emails → SMTP Settings: Supabase's built-in sender is rate-limited and
+  meant for testing only. Point it at a real sender (Resend, Postmark, SendGrid, Amazon SES, your own
+  SMTP) so reset emails actually arrive.
+- **Email template** — Authentication → Emails → Templates → *Reset password*: the template must keep
+  the `{{ .ConfirmationURL }}` variable; restyle the copy around it freely.
+- **Expiry / rate limits** — recovery links default to 1 hour (`Email OTP expiration`) and auth emails
+  are hourly-rate-limited under Authentication → Rate Limits; raise it if you have many admins.
+- Keep `/reset-password` **outside** any auth guard — it must be reachable while signed out.
+
+
+
 ### What's editable
 `Site & About` (studio name, tagline, email, phone, location, form endpoint, about copy, quote-form
 dropdown options), `Hero categories`, `Photos`, `Services`, `Editing samples`, `Stats`,
