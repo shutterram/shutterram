@@ -1,21 +1,45 @@
-import { processSteps } from "@/data/portfolio";
+import { processSteps as defaultSteps, type ProcessStep, type SectionConfig } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Reveal";
 
 /**
  * "The Experience" — the client's journey, drawn as a curving timeline with a
  * milestone per step (horizontal on desktop, vertical on mobile).
+ *
+ * Copy and steps are supplied per page so the About page can tell a different
+ * story from the home / services pages. Passing `section = null` (a section the
+ * studio hid or deleted) renders nothing.
  */
-export function ExperienceSection({ className }: { className?: string }) {
+export function ExperienceSection({
+  className,
+  section,
+  steps = defaultSteps,
+}: {
+  className?: string;
+  section?: SectionConfig | null;
+  steps?: ProcessStep[];
+}) {
+  if (section === null) return null;
+  if (!steps.length) return null;
+
+  const eyebrow = section?.eyebrow || "The Experience";
+  const heading = section?.heading || "Easy from first hello";
+  const accent = section?.headingAccent || "to final frame.";
+
   return (
     <section className={cn("border-t border-hairline py-24 md:py-32", className)}>
       <div className="mx-auto max-w-7xl px-6">
         <Reveal>
-          <p className="eyebrow">The Experience</p>
+          <p className="eyebrow">{eyebrow}</p>
           <h2 className="mt-5 max-w-3xl font-display text-[clamp(2.25rem,5.5vw,4.25rem)] leading-[1.05]">
-            Easy from first hello
-            <span className="block italic text-muted-foreground">to final frame.</span>
+            {heading}
+            {accent ? <span className="block italic text-muted-foreground">{accent}</span> : null}
           </h2>
+          {section?.intro ? (
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+              {section.intro}
+            </p>
+          ) : null}
         </Reveal>
 
         {/* ------------------------------------------------ desktop: horizontal */}
@@ -35,9 +59,12 @@ export function ExperienceSection({ className }: { className?: string }) {
             />
           </svg>
 
-          <ol className="relative grid grid-cols-4">
-            {processSteps.map((s, i) => (
-              <Reveal key={s.step} delay={i * 120} as="li">
+          <ol
+            className="relative grid"
+            style={{ gridTemplateColumns: `repeat(${Math.max(steps.length, 1)}, minmax(0, 1fr))` }}
+          >
+            {steps.map((s, i) => (
+              <Reveal key={`${s.step}-${i}`} delay={i * 120} as="li">
                 <div className="group flex h-[26rem] flex-col items-center px-5 text-center">
                   <div className="flex h-1/2 w-full items-end justify-center pb-8">
                     {i % 2 === 0 ? <StepText title={s.title} detail={s.detail} /> : null}
@@ -56,12 +83,12 @@ export function ExperienceSection({ className }: { className?: string }) {
         {/* --------------------------------------------------- mobile: vertical */}
         <div className="relative mt-16 md:hidden">
           <ol className="relative">
-            {processSteps.map((s, i) => (
-              <Reveal key={s.step} delay={i * 90} as="li">
+            {steps.map((s, i) => (
+              <Reveal key={`${s.step}-${i}`} delay={i * 90} as="li">
                 <div className="flex items-stretch gap-6 pb-12 last:pb-0">
                   <div className="flex shrink-0 flex-col items-center">
                     <Milestone step={s.step} className="shrink-0" />
-                    {i < processSteps.length - 1 ? (
+                    {i < steps.length - 1 ? (
                       <svg
                         viewBox="0 0 60 120"
                         preserveAspectRatio="none"
