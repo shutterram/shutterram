@@ -361,6 +361,7 @@ export type Database = {
           logo_mobile_offset_x: number
           logo_mobile_offset_y: number
           name: string
+          og_image: string
           phone: string
           tagline: string
           updated_at: string
@@ -399,6 +400,7 @@ export type Database = {
           logo_mobile_offset_x?: number
           logo_mobile_offset_y?: number
           name?: string
+          og_image?: string
           phone?: string
           tagline?: string
           updated_at?: string
@@ -437,6 +439,7 @@ export type Database = {
           logo_mobile_offset_x?: number
           logo_mobile_offset_y?: number
           name?: string
+          og_image?: string
           phone?: string
           tagline?: string
           updated_at?: string
