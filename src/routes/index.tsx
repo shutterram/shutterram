@@ -140,7 +140,7 @@ function Home() {
     return {
       eyebrow: s?.eyebrow || fallback.eyebrow,
       title: s?.heading || fallback.heading,
-      intro: s?.intro || fallback.intro,
+      intro: s?.intro || fallback.intro || "",
     };
   };
 

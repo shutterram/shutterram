@@ -369,8 +369,8 @@ export function ListEditor({
   itemLabel: string;
   titleKey: string;
   /** Set false for lists whose rows are tied to the code (e.g. page sections). */
-  allowAdd?: boolean;
-  note?: string;
+  allowAdd?: boolean | undefined;
+  note?: string | undefined;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [saving, setSaving] = useState(false);
