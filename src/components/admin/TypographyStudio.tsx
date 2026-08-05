@@ -207,7 +207,17 @@ export function TypographyStudio() {
                   <div className="min-w-0">
                     <p className="text-sm">{r.label}</p>
                     {r.hint ? <p className="text-xs text-muted-foreground">{r.hint}</p> : null}
+                    <div className="mt-3 min-w-0 border-l-2 border-hairline pl-3">
+                      <p
+                        className="overflow-hidden text-ellipsis"
+                        style={previewStyle(r, view.sizeKey, site)}
+                      >
+                        {r.sample_text || r.label}
+                      </p>
+                    </div>
                   </div>
+
+
 
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <label className="block">
