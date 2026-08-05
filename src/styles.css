@@ -257,3 +257,13 @@
     box-shadow: 0 0 44px -14px oklch(1 0 0 / 28%);
   }
 }
+
+/* --- Loading screen pulse ------------------------------------------------ */
+@keyframes loader-pulse-out {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(var(--loader-scale, 1.8)); opacity: 0; }
+}
+@keyframes loader-pulse-in {
+  0% { transform: scale(var(--loader-scale, 1.8)); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
