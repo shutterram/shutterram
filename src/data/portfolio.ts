@@ -22,6 +22,7 @@ import {
   defaultAboutLong,
   defaultBudgetRanges,
   defaultHourOptions,
+  defaultPageSections,
 } from "./portfolio.defaults";
 
 export { unedited } from "./portfolio.defaults";
@@ -36,6 +37,7 @@ export type {
   ExperienceItem,
   Testimonial,
   ProcessStep,
+  SectionConfig,
 } from "./portfolio.defaults";
 
 import type {
@@ -49,6 +51,7 @@ import type {
   Testimonial,
   ProcessStep,
   CategorySlug,
+  SectionConfig,
 } from "./portfolio.defaults";
 
 // Live bindings — reassigned by applyContent().
@@ -62,6 +65,8 @@ export let stats: Stat[] = defaultStats;
 export let experience: ExperienceItem[] = defaultExperience;
 export let testimonials: Testimonial[] = defaultTestimonials;
 export let processSteps: ProcessStep[] = defaultProcessSteps;
+export let aboutProcessSteps: ProcessStep[] = defaultProcessSteps;
+export let pageSections: SectionConfig[] = defaultPageSections;
 export let aboutShort: string = defaultAboutShort;
 export let aboutLong: string[] = [...defaultAboutLong];
 export let budgetRanges: string[] = [...defaultBudgetRanges];
@@ -90,6 +95,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
             name: str(r["name"]),
             href: str(r["href"]),
             icon: str(r["icon"], "flickr"),
+            iconUrl: str(r["icon_url"]),
           }))
         : defaultSite.socials,
     };
@@ -107,6 +113,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
         name: str(r["name"]),
         href: str(r["href"]),
         icon: str(r["icon"], "flickr"),
+        iconUrl: str(r["icon_url"]),
       })),
     };
   }
@@ -184,13 +191,36 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
   }
 
   if (payload.process_steps.length) {
-    processSteps = payload.process_steps.map((r: Row) => ({
+    const toStep = (r: Row): ProcessStep => ({
       step: str(r["step"]),
       title: str(r["title"]),
       detail: str(r["detail"]),
+    });
+    const main = payload.process_steps.filter((r: Row) => str(r["section_key"], "default") !== "about");
+    const about = payload.process_steps.filter((r: Row) => str(r["section_key"]) === "about");
+    if (main.length) processSteps = main.map(toStep);
+    aboutProcessSteps = about.length ? about.map(toStep) : processSteps;
+  }
+
+  if (payload.page_sections.length) {
+    pageSections = payload.page_sections.map((r: Row) => ({
+      page: str(r["page"]),
+      key: str(r["section_key"]),
+      label: str(r["label"]),
+      eyebrow: str(r["eyebrow"]),
+      heading: str(r["heading"]),
+      headingAccent: str(r["heading_accent"]),
+      intro: str(r["intro"]),
+      enabled: r["enabled"] !== false,
     }));
   }
 }
+
+/** Enabled sections for a page, in the order set in the content studio. */
+export const sectionsFor = (page: string) => pageSections.filter((s) => s.page === page && s.enabled);
+/** A single enabled section, or null when it is hidden / deleted. */
+export const sectionFor = (page: string, key: string) =>
+  pageSections.find((s) => s.page === page && s.key === key && s.enabled) ?? null;
 
 export const photoById = (id: string) => photos.find((p) => p.id === id);
 export const photosByCategory = (slug: CategorySlug) =>
