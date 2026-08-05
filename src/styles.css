@@ -109,6 +109,7 @@
 .light {
   color-scheme: light;
   --glow: oklch(0 0 0 / 22%);
+  --cursor-glow: oklch(0 0 0 / 8%);
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.18 0 0);
   --surface: oklch(0.955 0 0);
