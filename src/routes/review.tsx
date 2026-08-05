@@ -8,7 +8,9 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { t } from "@/data/portfolio";
+import { optimiseImage } from "@/lib/optimise-image";
 import { submitReview } from "@/lib/submit-review.functions";
+
 import { cn } from "@/lib/utils";
 import { getSeo } from "@/lib/seo.functions";
 import { buildSeoHead } from "@/lib/seo";
