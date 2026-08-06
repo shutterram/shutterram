@@ -696,3 +696,131 @@ Adjust the port above if `npm run preview` reports a different one.
   up automatically.
 - **External integrations** — internal logic goes in `createServerFn`; webhooks and public APIs go in
   `src/routes/api/public/*` and must verify the caller inside the handler.
+
+---
+
+## 17. Long-term maintenance & operations
+
+This section is for the months and years *after* launch — everything you need to keep the site
+healthy, safe and changeable without help.
+
+### 17.1 Routine rhythm
+
+| Frequency | Task |
+| --- | --- |
+| Weekly | Approve/decline new client reviews in **Client reviews**; skim the contact inbox to confirm forms still deliver |
+| Monthly | Send one test submission from each contact form; open the site on a phone and a desktop; check `/sitemap.xml` still lists every page |
+| Quarterly | Refresh gallery photos and featured selections; review SEO titles/descriptions; check Search Console coverage & Core Web Vitals; export a database backup |
+| Yearly | Renew the domain; rotate the admin password; review Supabase and host billing/plan limits; run a dependency update (17.4) |
+| After any content push | Press **Refresh site** in the studio, then hard-reload a public page to confirm the change is live |
+
+### 17.2 Backups and restore
+
+Two things must be backed up — they are **separate**:
+
+1. **The database** (all your text, settings, SEO, colours, fonts, reviews).
+   - Supabase → Database → Backups gives daily automated backups on paid plans.
+   - A manual, portable copy any time:
+     ```sh
+     pg_dump "postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres" \
+       --no-owner --no-privileges -Fc -f shutterram-$(date +%F).dump
+     ```
+   - Restore into a fresh project with:
+     ```sh
+     pg_restore --no-owner --no-privileges -d "<new connection string>" shutterram-<date>.dump
+     ```
+     Then re-apply the `GRANT`s and RLS policies from section 5 if the dump was schema-light.
+2. **Storage objects** (every uploaded photo, logo and icon) — these are **not** in a SQL dump.
+   Download the `site-images` bucket from the Supabase Storage UI, or sync it with the
+   Storage API / `supabase storage` CLI. Keep the original full-resolution photographs on your own
+   drive as well; the site stores optimised WebP copies, not masters.
+
+**Test a restore at least once.** A backup you have never restored is a hope, not a backup.
+
+### 17.3 Keys, passwords and access
+
+- **Publishable / anon key** — safe in the browser bundle. Rotating it requires a rebuild.
+- **Service-role key** — bypasses all security. Server-side environment variable only. If it is ever
+  pasted into client code, a screenshot, or a chat, rotate it immediately in Supabase → API keys and
+  update the host's env var.
+- **Admin account** — the first account created holds the `admin` role in `user_roles`. Add another
+  admin by inserting a row for that user's `id`; remove access by deleting the row (deleting the auth
+  user is cleaner). Keep **anonymous sign-ups disabled** permanently.
+- **Password reset** depends on your SMTP credentials staying valid — providers expire API keys.
+  If reset emails stop arriving, check SMTP before anything else.
+- Never commit `.env`. Host env vars are the source of truth in production.
+
+### 17.4 Updating dependencies safely
+
+```sh
+npm outdated              # see what moved
+npm update                # safe, semver-compatible bumps
+npm run lint && npx tsc --noEmit && npm run build
+npm run preview           # click through every page before deploying
+```
+
+Rules that keep this painless:
+- Bump **one** major version at a time (React, TanStack, Tailwind, Supabase are the four that matter)
+  and test between each.
+- Do **not** add another router. TanStack Router is structural to this app.
+- Tailwind v4 has no `tailwind.config.js` — tokens live in `src/styles.css`. Ignore any advice that
+  tells you to create one.
+- `src/routeTree.gen.ts` and everything in `src/integrations/supabase/` are generated. Never hand-edit;
+  they regenerate on build.
+- Keep a deploy you can roll back to (git tag, or your host's previous deployment).
+
+### 17.5 Monitoring & performance
+
+- **Uptime** — point a free monitor (UptimeRobot, Better Stack) at `https://your-domain.com` and at
+  `/sitemap.xml` (the second proves the database is reachable, not just the CDN).
+- **Errors** — the SSR entry (`src/server.ts`) converts crashes into a styled error page and logs the
+  real error to your host's log stream. Check the host's logs when something looks wrong.
+- **Speed** — images dominate. Keep uploads under ~2400px (the studio enforces this), prefer WebP,
+  and don't put twenty full-bleed photos in one section. Run PageSpeed Insights after big galleries.
+- **Database size** — text tables stay tiny; storage is what grows. Delete photo rows *and* their
+  files when retiring old work.
+
+### 17.6 Changing things later — where to start
+
+| I want to… | Do this |
+| --- | --- |
+| Change any visible word | Studio → **Wording** (or the section's row in **Page sections**) |
+| Add / remove a gallery category | Studio → **Hero categories** or the Category dropdown on Photos; route, cover, sitemap and SEO row follow automatically |
+| Re-order or hide a homepage section | Studio → **Page sections** (↑ ↓ and *Show on site*) |
+| Change colours or the mobile-menu background | Studio → **Colours** (undo/redo per token) |
+| Change a font size on phones only | Studio → **Fonts** → that section's *mobile* column |
+| Swap a logo or favicon | Studio → **Logos** |
+| Change where contact forms go | Studio → **Form delivery** |
+| Change a page's title/description/share image | Studio → **SEO** |
+| Move to a new domain | Update `SITE_URL` in `src/lib/seo.ts`, the `Sitemap:` line in `public/robots.txt`, Supabase Auth *Site URL* + *Redirect URLs*, then rebuild and redeploy |
+| Add a whole new page or content type | Section 16 — this needs code |
+
+### 17.7 Handing the project to another developer
+
+Give them: this README, repository access, the Supabase project (or a dump + storage export), the
+host account, and the domain registrar login. Point them at section 2 (layout), section 3 (content
+flow) and section 5 (schema + RLS) first — those three explain 90% of the codebase. Everything else
+is conventional React.
+
+---
+
+## 18. Quick reference — "where do I change X?"
+
+| Thing | Location |
+| --- | --- |
+| Site URL used for canonical / OG / sitemap | `src/lib/seo.ts` → `SITE_URL` |
+| Crawler rules | `public/robots.txt` |
+| Sitemap generation | `src/routes/sitemap[.]xml.tsx` |
+| Design tokens & palettes | `src/styles.css` (studio-overridable via `theme_tokens`) |
+| Typography variables | `src/lib/type-css.ts` (studio-driven via `type_tokens`) |
+| Fallback content when the DB is down | `src/data/portfolio.defaults.ts` |
+| Content loading | `src/lib/site-content.functions.ts` → `applyContent()` in `src/data/portfolio.ts` |
+| Contact form delivery | `src/lib/submit-form.functions.ts` + `admin_settings.form_endpoint` |
+| Review submission | `src/lib/submit-review.functions.ts` |
+| Image optimisation limits | `src/lib/optimise-image.ts` (`MAX_EDGE`, `QUALITY`) |
+| Private-bucket image proxy | `src/routes/api/public/img.$.ts` |
+| Studio tabs | `src/routes/_authenticated/admin.tsx` |
+| Floating save bar | `src/components/admin/FloatingSaveBar.tsx` |
+| Grid/column view selector | `src/components/site/ViewSelector.tsx` |
+| Auth gate | `src/routes/_authenticated/route.tsx` |
+| Global head defaults, fonts, theme script | `src/routes/__root.tsx` |
