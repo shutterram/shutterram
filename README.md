@@ -39,6 +39,8 @@ code.
 14. [QA test pass](#14-qa-test-pass)
 15. [Troubleshooting](#15-troubleshooting)
 16. [Extending the site](#16-extending-the-site)
+17. [Long-term maintenance & operations](#17-long-term-maintenance--operations)
+18. [Quick reference — "where do I change X?"](#18-quick-reference--where-do-i-change-x)
 
 ---
 
