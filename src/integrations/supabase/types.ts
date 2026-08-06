@@ -131,6 +131,24 @@ export type Database = {
         }
         Relationships: []
       }
+      image_settings: {
+        Row: {
+          indexable: boolean
+          path: string
+          updated_at: string
+        }
+        Insert: {
+          indexable?: boolean
+          path: string
+          updated_at?: string
+        }
+        Update: {
+          indexable?: boolean
+          path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_sections: {
         Row: {
           enabled: boolean
