@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { FilterPills } from "@/components/site/FilterPills";
+
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
 import { getSeo } from "@/lib/seo.functions";
@@ -52,14 +52,32 @@ export const Route = createFileRoute("/gallery/$category")({
 const COLUMN_CLASS: Record<string, string> = {
   "1": "columns-1",
   "2": "columns-2",
-  "3": "columns-1 sm:columns-2 lg:columns-3",
+  "3": "columns-3",
 };
+
+/** Little box glyphs so the view switcher reads at a glance. */
+const VIEW_OPTIONS = [
+  { value: "1" as const, cells: 1, label: "One column" },
+  { value: "2" as const, cells: 2, label: "Two columns" },
+  { value: "3" as const, cells: 3, label: "Three columns" },
+];
+
+function ViewGlyph({ cells }: { cells: number }) {
+  return (
+    <span className="flex h-4 w-4 gap-[2px]">
+      {Array.from({ length: cells }).map((_, i) => (
+        <span key={i} className="flex-1 border border-current" />
+      ))}
+    </span>
+  );
+}
 
 function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [cols, setCols] = useState<"1" | "2" | "3">("1");
+  const [cols, setCols] = useState<"1" | "2" | "3">("2");
+
 
   return (
     <div>
@@ -90,18 +108,27 @@ function CategoryGallery() {
             <ArrowLeft className="size-3.5 shrink-0" /> All work
           </Link>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="eyebrow hidden sm:inline">View</span>
-            <FilterPills
-              options={[
-                { value: "1" as const, label: "1 line" },
-                { value: "2" as const, label: "2 lines" },
-                { value: "3" as const, label: "3 lines" },
-              ]}
-              value={cols}
-              onChange={setCols}
-            />
+            {VIEW_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                aria-label={o.label}
+                aria-pressed={cols === o.value}
+                onClick={() => setCols(o.value)}
+                className={
+                  "flex size-9 items-center justify-center border transition-colors " +
+                  (cols === o.value
+                    ? "border-foreground text-foreground"
+                    : "border-hairline text-muted-foreground hover:border-foreground hover:text-foreground")
+                }
+              >
+                <ViewGlyph cells={o.cells} />
+              </button>
+            ))}
           </div>
+
         </div>
 
         <div className={`mt-10 gap-5 [&>*]:mb-5 ${COLUMN_CLASS[cols]}`}>

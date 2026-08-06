@@ -338,6 +338,7 @@ export function SingletonEditor({
 }) {
   const [row, setRow] = useState<Row | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     void supabase
@@ -359,7 +360,10 @@ export function SingletonEditor({
       .upsert({ ...(row as object), id: true } as never);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Saved");
+    else {
+      setDirty(false);
+      toast.success("Saved");
+    }
   }
 
   return (
@@ -371,14 +375,19 @@ export function SingletonEditor({
             key={f.key}
             spec={f}
             value={row[f.key]}
-            onChange={(v) => setRow({ ...row, [f.key]: v })}
+            onChange={(v) => {
+              setRow({ ...row, [f.key]: v });
+              setDirty(true);
+            }}
           />
         ))}
       </div>
       <SaveButton onClick={() => void save()} saving={saving} />
+      {dirty ? <FloatingSave onClick={() => void save()} saving={saving} /> : null}
     </div>
   );
 }
+
 
 /** Editor for a list table: add, edit, reorder and delete rows. */
 export function ListEditor({
@@ -403,6 +412,7 @@ export function ListEditor({
   const [rows, setRows] = useState<Row[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [dirtyId, setDirtyId] = useState<string | null>(null);
 
   async function load() {
     const { data, error } = await supabase
@@ -420,8 +430,10 @@ export function ListEditor({
 
   if (!rows) return <Loading />;
 
-  const update = (id: string, patch: Row) =>
+  const update = (id: string, patch: Row) => {
     setRows(rows.map((r) => (r["id"] === id ? { ...r, ...patch } : r)));
+    setDirtyId(id);
+  };
 
   async function saveRow(row: Row) {
     setSaving(true);
@@ -431,8 +443,12 @@ export function ListEditor({
       .eq("id", row["id"] as string);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Saved");
+    else {
+      setDirtyId(null);
+      toast.success("Saved");
+    }
   }
+
 
   /** Write sort_order for every row so the new visual order sticks. */
   async function persistOrder(next: Row[]) {
@@ -612,8 +628,18 @@ export function ListEditor({
           );
         })}
       </ul>
+      {dirtyId ? (
+        <FloatingSave
+          onClick={() => {
+            const row = rows.find((r) => r["id"] === dirtyId);
+            if (row) void saveRow(row);
+          }}
+          saving={saving}
+        />
+      ) : null}
     </div>
   );
+
 }
 
 interface StagedFile {
@@ -848,6 +874,21 @@ function SaveButton({ onClick, saving }: { onClick: () => void; saving: boolean 
     </button>
   );
 }
+
+/** Sticks to the bottom of the screen while there are unsaved edits. */
+function FloatingSave({ onClick, saving }: { onClick: () => void; saving: boolean }) {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-6 pb-6">
+      <div className="pointer-events-auto flex items-center gap-4 border border-hairline bg-background/95 px-5 py-3 shadow-lg backdrop-blur">
+        <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+          Unsaved changes
+        </span>
+        <SaveButton onClick={onClick} saving={saving} />
+      </div>
+    </div>
+  );
+}
+
 
 function Loading() {
   return (
