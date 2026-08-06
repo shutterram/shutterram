@@ -84,10 +84,10 @@ function Gallery() {
           setMobileCount(4);
         }}
         options={[
-          { value: "all" as Filter, label: `All (${photos.length})` },
+          { value: "all" as Filter, label: `All (${galleryPhotos.length})` },
           ...categories.map((c) => ({
             value: c.slug as Filter,
-            label: `${c.label} (${photos.filter((p) => p.category === c.slug).length})`,
+            label: `${c.label} (${galleryPhotos.filter((p) => p.category === c.slug).length})`,
           })),
         ]}
       />
