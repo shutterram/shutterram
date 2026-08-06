@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FONT_CHOICES } from "@/lib/type-css";
+import { FontLibrary, type FontRow } from "@/components/admin/FontLibrary";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 
 type Row = {
@@ -72,10 +73,12 @@ export function TypographyStudio() {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [view, setView] = useState<(typeof VIEWS)[number]>(VIEWS[0]);
+  const [fonts, setFonts] = useState<FontRow[]>([]);
+  const [removedFonts, setRemovedFonts] = useState<string[]>([]);
 
   useEffect(() => {
     void (async () => {
-      const [tokens, settings] = await Promise.all([
+      const [tokens, settings, fontRows] = await Promise.all([
         supabase
           .from("type_tokens" as never)
           .select("*")
@@ -87,11 +90,16 @@ export function TypographyStudio() {
           )
           .limit(1)
           .maybeSingle(),
+        supabase
+          .from("custom_fonts" as never)
+          .select("*")
+          .order("sort_order", { ascending: true }),
       ]);
       if (tokens.error) toast.error(tokens.error.message);
       if (settings.error) toast.error(settings.error.message);
       setRows((tokens.data ?? []) as unknown as Row[]);
       setSite((settings.data ?? null) as unknown as Site | null);
+      setFonts((fontRows.data ?? []) as unknown as FontRow[]);
     })();
   }, []);
 
@@ -116,7 +124,13 @@ export function TypographyStudio() {
   async function save() {
     if (!rows || !site) return;
     setSaving(true);
-    const [tokens, settings] = await Promise.all([
+    if (removedFonts.length) {
+      await supabase
+        .from("custom_fonts" as never)
+        .delete()
+        .in("id", removedFonts);
+    }
+    const [tokens, settings, fontSave] = await Promise.all([
       supabase.from("type_tokens" as never).upsert(rows as never),
       supabase
         .from("settings" as never)
@@ -128,9 +142,13 @@ export function TypographyStudio() {
           font_scale_mobile: site.font_scale_mobile,
         } as never)
         .eq("id", true),
+      fonts.length
+        ? supabase.from("custom_fonts" as never).upsert(fonts as never)
+        : Promise.resolve({ error: null }),
     ]);
     setSaving(false);
-    const error = tokens.error ?? settings.error;
+    setRemovedFonts([]);
+    const error = tokens.error ?? settings.error ?? fontSave.error;
     if (error) toast.error(error.message);
     else {
       setDirty(false);
@@ -138,6 +156,9 @@ export function TypographyStudio() {
     }
   }
 
+  const families = [
+    ...new Set([...fonts.map((f) => f.family.trim()).filter(Boolean), ...FONT_CHOICES]),
+  ];
   const groups = [...new Set(rows.map((r) => r.group_label))];
   const scale = Number(site[view.scaleKey] ?? 1);
 
@@ -165,6 +186,18 @@ export function TypographyStudio() {
         </div>
       </div>
 
+      <FontLibrary
+        fonts={fonts}
+        onChange={(next) => {
+          setFonts(next);
+          setDirty(true);
+        }}
+        onRemove={(id) => {
+          setRemovedFonts([...removedFonts, id]);
+          setDirty(true);
+        }}
+      />
+
       <section className="border-t border-hairline pt-8">
         <p className="eyebrow">Site fonts</p>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -186,7 +219,7 @@ export function TypographyStudio() {
             </label>
           ))}
           <datalist id="studio-font-choices">
-            {FONT_CHOICES.map((f) => (
+            {families.map((f) => (
               <option key={f} value={f} />
             ))}
           </datalist>
@@ -255,7 +288,7 @@ export function TypographyStudio() {
                         <option value="">Default</option>
                         <option value="display">Heading font</option>
                         <option value="sans">Body font</option>
-                        {FONT_CHOICES.map((f) => (
+                        {families.map((f) => (
                           <option key={f} value={f}>
                             {f}
                           </option>
