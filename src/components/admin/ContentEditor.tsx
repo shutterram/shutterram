@@ -524,7 +524,7 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool") draft[f.key] = false;
+      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
