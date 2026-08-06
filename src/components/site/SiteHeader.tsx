@@ -61,22 +61,22 @@ export function SiteHeader() {
         )}
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
-          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center md:flex md:justify-center">
-            <span className="md:hidden" aria-hidden="true" />
+          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-center">
+            <span className="size-6 md:hidden" aria-hidden="true" />
             <Link
               to="/"
-              className="group flex flex-col items-center"
+              className="group flex min-w-0 flex-col items-center"
               onClick={() => setOpen(false)}
             >
               <img
                 src={logos.header || logo.url}
                 alt="Shutter Ram"
                 className={cn(
-                  "w-auto shrink-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  "max-w-full w-auto object-contain transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   logos.invert && theme === "dark" && "invert",
-                  scrolled ? "h-12" : "h-16 md:h-24",
+                  scrolled ? "h-10 md:h-12" : "h-13 md:h-24",
                 )}
-                style={logoStyle("header")}
+                style={headerLogoStyle}
               />
               <span
                 className={cn(
