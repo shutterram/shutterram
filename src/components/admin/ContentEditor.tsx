@@ -835,7 +835,17 @@ function BulkUploader({
           <p className="mt-1 text-xs text-muted-foreground">
             Pick several files, set details for each, then add them all at once.
           </p>
+          <label className="mt-3 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={bulkIndexable}
+              onChange={(e) => setBulkIndexable(e.target.checked)}
+              className="size-3 accent-current"
+            />
+            Show these in Google / search
+          </label>
         </div>
+
         <div className="flex items-center gap-2">
           <button
             type="button"
