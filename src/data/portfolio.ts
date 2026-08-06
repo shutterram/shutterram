@@ -9,7 +9,12 @@
 import type { CSSProperties } from "react";
 import type { SiteContentPayload, Row } from "@/lib/site-content.functions";
 import type { ThemeToken } from "@/lib/theme-css";
-import { defaultTypography, type TypeToken, type Typography } from "@/lib/type-css";
+import {
+  defaultTypography,
+  type SiteFont,
+  type TypeToken,
+  type Typography,
+} from "@/lib/type-css";
 import {
   defaultSite,
   defaultCategories,
@@ -95,6 +100,7 @@ export let logos: LogoSet = defaultLogos;
 export let copyMap: Record<string, string> = { ...defaultCopy };
 export let themeTokens: ThemeToken[] = [];
 export let typeTokens: TypeToken[] = [];
+export let siteFonts: SiteFont[] = [];
 export let typography: Typography = defaultTypography;
 
 /** Editable label lookup — falls back to the built-in wording. */
@@ -343,6 +349,15 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
     sizeTablet: str(r["size_tablet"]),
     sizeMobile: str(r["size_mobile"]),
     sampleText: str(r["sample_text"]),
+  }));
+
+  siteFonts = (payload.custom_fonts ?? []).map((r: Row) => ({
+    id: str(r["id"]),
+    family: str(r["family"]),
+    source: str(r["source"], "google"),
+    cssUrl: str(r["css_url"]),
+    weights: list(r["weights"]),
+    styles: list(r["styles"]),
   }));
 }
 
