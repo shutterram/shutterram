@@ -256,7 +256,9 @@ function Home() {
                 key={p.id}
                 type="button"
                 onClick={() => setLightbox(i)}
+                aria-label={`Enlarge photograph: ${p.caption}`}
                 className="group relative block w-full break-inside-avoid overflow-hidden"
+
               >
                 <img
                   src={p.src}
