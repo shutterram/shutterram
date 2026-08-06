@@ -244,6 +244,8 @@ export interface Photo {
   src: string;
   category: CategorySlug;
   caption: string;
+  /** When false, the photo is hidden from the all-work gallery but still shows on its category page. */
+  inGallery?: boolean;
 }
 
 export const defaultPhotos: Photo[] = [

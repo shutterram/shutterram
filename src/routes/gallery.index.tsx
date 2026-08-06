@@ -35,9 +35,12 @@ function Gallery() {
   const [cols, setCols] = useColumnView();
   const isMobile = useIsMobile();
 
+  // Photos flagged "hide from main gallery" still appear on their category page.
+  const galleryPhotos = useMemo(() => photos.filter((p) => p.inGallery !== false), []);
+
   const visible = useMemo(
-    () => (filter === "all" ? photos : photos.filter((p) => p.category === filter)),
-    [filter],
+    () => (filter === "all" ? galleryPhotos : galleryPhotos.filter((p) => p.category === filter)),
+    [filter, galleryPhotos],
   );
 
   const shown = isMobile ? visible.slice(0, mobileCount) : visible;
@@ -81,10 +84,10 @@ function Gallery() {
           setMobileCount(4);
         }}
         options={[
-          { value: "all" as Filter, label: `All (${photos.length})` },
+          { value: "all" as Filter, label: `All (${galleryPhotos.length})` },
           ...categories.map((c) => ({
             value: c.slug as Filter,
-            label: `${c.label} (${photos.filter((p) => p.category === c.slug).length})`,
+            label: `${c.label} (${galleryPhotos.filter((p) => p.category === c.slug).length})`,
           })),
         ]}
       />

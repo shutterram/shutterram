@@ -508,8 +508,9 @@ Also shipped:
 
 ### Per-image search visibility
 Every image field in the studio (hero, covers, gallery photos, services, before/after, logos,
-OG images) has a **Show in Google / search** checkbox, and the bulk uploader has one that applies to
-the whole batch. New images default to *visible*.
+OG images) has a **Show in Google / search** checkbox. In the bulk uploader each staged file has its
+own checkbox too — the one in the panel header only sets the default for files you add next, and
+**Apply first to all** copies it along with the other details. New images default to *visible*.
 
 - Unticked images are still shown normally on the site, but they are served with
   `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet`, so Google Images, Bing and other
@@ -518,6 +519,13 @@ the whole batch. New images default to *visible*.
   `src/routes/api/public/img.$.ts`.
 - Changing a flag takes effect on the next crawl; already-indexed images can take a few weeks to
   disappear (use Search Console **Removals** to speed it up).
+
+### Hiding a photo from the main gallery
+Each photo (Studio → **Photos**, and in the bulk uploader) has a **Show on main gallery page**
+checkbox, stored as `photos.in_gallery`. Untick it and the photo disappears from `/gallery` and its
+filter counts, but still appears on its category page (`/gallery/<category>`). New photos default to
+shown.
+
 
 
 ### Google Search Console (on your own host)

@@ -524,7 +524,7 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool") draft[f.key] = false;
+      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
@@ -702,6 +702,8 @@ interface StagedFile {
   file: File;
   preview: string;
   attrs: Row;
+  /** Per-file search-engine visibility, applied right after the upload. */
+  indexable: boolean;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
@@ -745,7 +747,7 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool") attrs[f.key] = false;
+      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;
@@ -758,6 +760,7 @@ function BulkUploader({
       file,
       preview: URL.createObjectURL(file),
       attrs: blankAttrs(file),
+      indexable: bulkIndexable,
       status: "pending" as const,
     }));
     setStaged((prev) => [...prev, ...next]);
@@ -777,7 +780,11 @@ function BulkUploader({
       return prev.map((s, i) =>
         i === 0
           ? s
-          : { ...s, attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] } },
+          : {
+              ...s,
+              indexable: first.indexable,
+              attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] },
+            },
       );
     });
   }
@@ -792,7 +799,7 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
-        if (!bulkIndexable) await setImageIndexable(src, false);
+        if (!item.indexable) await setImageIndexable(src, false);
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
 
         if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
@@ -842,7 +849,7 @@ function BulkUploader({
               onChange={(e) => setBulkIndexable(e.target.checked)}
               className="size-3 accent-current"
             />
-            Show these in Google / search
+            Default for new files: show in Google / search
           </label>
         </div>
 
@@ -907,6 +914,21 @@ function BulkUploader({
                     onChange={(v) => patch(s.id, { [f.key]: v })}
                   />
                 ))}
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={s.indexable}
+                    onChange={(e) =>
+                      setStaged((prev) =>
+                        prev.map((x) =>
+                          x.id === s.id ? { ...x, indexable: e.target.checked } : x,
+                        ),
+                      )
+                    }
+                    className="size-3 accent-current"
+                  />
+                  Show in Google / search
+                </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
                 {s.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : null}

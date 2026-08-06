@@ -224,6 +224,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       category: str(r["category_slug"]) as CategorySlug,
       caption: str(r["caption"]),
       src: str(r["src"]) || "/placeholders/photo.svg",
+      inGallery: r["in_gallery"] !== false,
     }));
     featuredIds = payload.photos
       .filter((r: Row) => r["featured"] === true)
