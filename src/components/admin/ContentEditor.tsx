@@ -875,6 +875,21 @@ function SaveButton({ onClick, saving }: { onClick: () => void; saving: boolean 
   );
 }
 
+/** Sticks to the bottom of the screen while there are unsaved edits. */
+function FloatingSave({ onClick, saving }: { onClick: () => void; saving: boolean }) {
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-6 pb-6">
+      <div className="pointer-events-auto flex items-center gap-4 border border-hairline bg-background/95 px-5 py-3 shadow-lg backdrop-blur">
+        <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+          Unsaved changes
+        </span>
+        <SaveButton onClick={onClick} saving={saving} />
+      </div>
+    </div>
+  );
+}
+
+
 function Loading() {
   return (
     <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground">
