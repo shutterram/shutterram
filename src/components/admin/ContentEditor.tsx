@@ -865,7 +865,7 @@ function BulkUploader({
               onChange={(e) => setBulkIndexable(e.target.checked)}
               className="size-3 accent-current"
             />
-            Default for new files: show in Google / search
+            Default for new files: show on Internet
           </label>
         </div>
 
@@ -943,7 +943,7 @@ function BulkUploader({
                     }
                     className="size-3 accent-current"
                   />
-                  Show in Google / search
+                  Show on Internet
                 </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
