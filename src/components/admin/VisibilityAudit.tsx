@@ -10,8 +10,6 @@ type Audit = {
   bySource: { label: string; counts: Counts }[];
 };
 
-const empty: Counts = { total: 0, shown: 0, hidden: 0 };
-
 /** Read-only overview of how many images are public / visible on the gallery. */
 export function VisibilityAudit() {
   const [audit, setAudit] = useState<Audit | null>(null);
@@ -159,5 +157,3 @@ function Card({
   );
 }
 
-export default VisibilityAudit;
-export const _emptyCounts = empty;
