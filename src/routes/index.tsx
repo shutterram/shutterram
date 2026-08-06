@@ -6,6 +6,7 @@ import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
 import {
   DESKTOP_COLUMN_CLASS,
+  MOBILE_GRID_CLASS,
   ViewSelector,
   useColumnView,
 } from "@/components/site/ViewSelector";
