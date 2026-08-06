@@ -551,9 +551,11 @@ the `LocalBusiness` JSON-LD, so placeholder values are the one thing that will f
   device from the **Fonts** tab (`type_tokens` → `src/lib/type-css.ts`). Sharp corners throughout;
   form fields are underlines, not boxes.
 - **Grid view selector.** Anywhere the site shows a wall of photographs — Home → Featured work,
-  `/gallery`, and each `/gallery/:category` — a small glyph dropdown (`ViewSelector.tsx` +
-  `useColumnView`) lets the visitor pick how many columns of masonry they want. **Two columns is the
-  default**; mobile always collapses to its own two-up grid regardless of the choice.
+  `/gallery`, and each `/gallery/:category` — a small glyph control (`ViewSelector.tsx` +
+  `useColumnView`) lets the visitor pick 1, 2 or 3 columns. **Two columns is the default on every
+  device**, and the selector is shown on mobile, tablet and desktop alike: phones apply the choice as
+  a CSS grid (`MOBILE_GRID_CLASS`), tablet/desktop as masonry columns (`DESKTOP_COLUMN_CLASS`, or
+  `COLUMN_CLASS` on category pages).
 - **Carousels.** The Services rail and the Testimonials rail loop infinitely, pause on hover/tap, and
   can be dragged/swiped left and right; the helper line under each reads "swipe or use the arrows".
 
