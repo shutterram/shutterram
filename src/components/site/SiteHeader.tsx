@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
 import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "@/hooks/use-theme";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const navItems = [
   { key: "nav.home", to: "/" },
@@ -20,6 +22,19 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { theme } = useTheme();
+  const isMobile = useIsMobile();
+
+  /** Studio heights are tuned for desktop — clamp them so the mark never clips on phones. */
+  const headerLogoStyle = (() => {
+    const style = { ...logoStyle("header") };
+    if (isMobile) {
+      const h = typeof style.height === "string" ? parseFloat(style.height) : 0;
+      style.height = `${Math.min(h || (scrolled ? 40 : 52), scrolled ? 40 : 52)}px`;
+      style.transform = undefined;
+    }
+    return style;
+  })();
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
