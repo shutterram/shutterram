@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FONT_CHOICES } from "@/lib/type-css";
+import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 
 type Row = {
   id: string;
