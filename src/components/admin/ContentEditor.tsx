@@ -412,6 +412,7 @@ export function ListEditor({
   const [rows, setRows] = useState<Row[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [dirtyId, setDirtyId] = useState<string | null>(null);
 
   async function load() {
     const { data, error } = await supabase
@@ -429,8 +430,10 @@ export function ListEditor({
 
   if (!rows) return <Loading />;
 
-  const update = (id: string, patch: Row) =>
+  const update = (id: string, patch: Row) => {
     setRows(rows.map((r) => (r["id"] === id ? { ...r, ...patch } : r)));
+    setDirtyId(id);
+  };
 
   async function saveRow(row: Row) {
     setSaving(true);
@@ -440,8 +443,12 @@ export function ListEditor({
       .eq("id", row["id"] as string);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Saved");
+    else {
+      setDirtyId(null);
+      toast.success("Saved");
+    }
   }
+
 
   /** Write sort_order for every row so the new visual order sticks. */
   async function persistOrder(next: Row[]) {
