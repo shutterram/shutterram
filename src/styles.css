@@ -67,6 +67,10 @@
  */
 :root {
   --radius: 0rem;
+  /* Mobile navigation panel — separate from the page background so the hero fade
+     can be tuned without changing the menu. */
+  --nav-surface: var(--background);
+
   --glow: oklch(1 0 0 / 28%);
   --cursor-glow: oklch(1 0 0 / 10%);
   --background: oklch(0.145 0 0);

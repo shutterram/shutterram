@@ -69,6 +69,7 @@ export function TypographyStudio() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [site, setSite] = useState<Site | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [view, setView] = useState<(typeof VIEWS)[number]>(VIEWS[0]);
 
   useEffect(() => {
@@ -101,8 +102,15 @@ export function TypographyStudio() {
     );
   }
 
-  const set = (id: string, patch: Partial<Row>) =>
+  const set = (id: string, patch: Partial<Row>) => {
     setRows(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setDirty(true);
+  };
+
+  const setSiteField = (patch: Partial<Site>) => {
+    setSite({ ...site, ...patch } as Site);
+    setDirty(true);
+  };
 
   async function save() {
     if (!rows || !site) return;
@@ -123,14 +131,17 @@ export function TypographyStudio() {
     setSaving(false);
     const error = tokens.error ?? settings.error;
     if (error) toast.error(error.message);
-    else toast.success("Fonts saved — reload the site to see them");
+    else {
+      setDirty(false);
+      toast.success("Fonts saved — reload the site to see them");
+    }
   }
 
   const groups = [...new Set(rows.map((r) => r.group_label))];
   const scale = Number(site[view.scaleKey] ?? 1);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 pb-24">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-xl text-xs leading-relaxed text-muted-foreground">
           Choose the site fonts, then fine-tune each kind of text. Sizes are set separately for
@@ -167,7 +178,7 @@ export function TypographyStudio() {
               <input
                 list="studio-font-choices"
                 value={String(site[key] ?? "")}
-                onChange={(e) => setSite({ ...site, [key]: e.target.value })}
+                onChange={(e) => setSiteField({ [key]: e.target.value } as Partial<Site>)}
                 placeholder="Any Google Font name"
                 className={field}
               />
@@ -188,7 +199,7 @@ export function TypographyStudio() {
             max={140}
             value={Math.round(scale * 100)}
             onChange={(e) =>
-              setSite({ ...site, [view.scaleKey]: Number(e.target.value) / 100 } as Site)
+              setSiteField({ [view.scaleKey]: Number(e.target.value) / 100 } as Partial<Site>)
             }
             className="w-56 accent-foreground"
           />
@@ -326,6 +337,25 @@ export function TypographyStudio() {
         {saving ? <Loader2 className="size-3 animate-spin" /> : null}
         Save fonts
       </button>
+
+      {dirty ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-6 pb-6">
+          <div className="pointer-events-auto flex items-center gap-4 border border-hairline bg-background/95 px-5 py-3 shadow-lg backdrop-blur">
+            <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+              Unsaved changes
+            </span>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving}
+              className="inline-flex items-center gap-2 border border-foreground bg-foreground px-5 py-2 text-[0.625rem] tracking-[0.2em] uppercase text-background disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="size-3 animate-spin" /> : null}
+              Save fonts
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
