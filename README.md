@@ -506,27 +506,30 @@ Also shipped:
   `OfferCatalog` / `Person` schema where relevant.
 - `/review` is `noindex, nofollow`.
 
-### Per-image internet visibility
-Every image field in the studio (hero, covers, gallery photos, services, before/after, logos,
-OG images) has a **Show on Internet** checkbox — single uploads included, and it can be set before
-the file is even uploaded. In the bulk uploader each staged file has its own checkbox too — the one
-in the panel header only sets the default for files you add next, and **Apply first to all** copies
-it along with the other details. New images default to *visible*.
+### Image visibility — two independent switches
+Every image uploaded anywhere in the studio (single field or bulk uploader) carries its own choices:
+
+| Toggle | Where it applies | Effect when unticked |
+| --- | --- | --- |
+| **Show on Internet** | Every image field: hero, category covers, gallery photos, services, before/after pairs, logos, OG images | Still visible to people browsing the site; served with `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet` so it never appears in Google/Bing image results or link previews |
+| **Show on main gallery page** | Gallery photos | Hidden from `/gallery` and its filter counts, still shown on its category page `/gallery/<category>` |
+
+Both default to *ticked* (visible) for new uploads.
+
+**Per file, never grouped.** In the bulk uploader each staged file has its own pair of checkboxes; the
+checkbox in the panel header only sets the default for files you add next, and **Apply first to all**
+copies the choices down the list. Single-image fields show the same checkboxes, and you can set them
+before the file is even uploaded — the choice is applied at upload time.
+
+Where it lives:
+- `image_settings` table (keyed by stored file name) → enforced in `src/routes/api/public/img.$.ts`;
+  helpers in `src/lib/image-index.ts`.
+- `photos.in_gallery` column → filtered in `src/routes/gallery.index.tsx`.
+- Hidden images are also skipped by the sitemap, so nothing links to them from outside the site.
+- Flag changes take effect on the next crawl; already-indexed images can take a few weeks to drop out
+  (use Search Console **Removals** to speed it up).
 
 
-- Unticked images are still shown normally on the site, but they are served with
-  `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet`, so Google Images, Bing and other
-  crawlers drop them and never surface them outside your pages.
-- The flags live in the `image_settings` table (keyed by the stored file name) and are enforced in
-  `src/routes/api/public/img.$.ts`.
-- Changing a flag takes effect on the next crawl; already-indexed images can take a few weeks to
-  disappear (use Search Console **Removals** to speed it up).
-
-### Hiding a photo from the main gallery
-Each photo (Studio → **Photos**, and in the bulk uploader) has a **Show on main gallery page**
-checkbox, stored as `photos.in_gallery`. Untick it and the photo disappears from `/gallery` and its
-filter counts, but still appears on its category page (`/gallery/<category>`). New photos default to
-shown.
 
 
 
