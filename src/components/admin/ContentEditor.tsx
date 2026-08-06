@@ -845,7 +845,7 @@ function BulkUploader({
               onChange={(e) => setBulkIndexable(e.target.checked)}
               className="size-3 accent-current"
             />
-            Show these in Google / search
+            Default for new files: show in Google / search
           </label>
         </div>
 
