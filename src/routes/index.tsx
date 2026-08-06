@@ -247,7 +247,8 @@ function Home() {
           <div
             ref={railRef}
             className={cn(
-              "mt-12 grid grid-cols-2 gap-3 md:block md:gap-5 md:[&>*]:mb-5",
+              "mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5",
+              MOBILE_GRID_CLASS[cols],
               DESKTOP_COLUMN_CLASS[cols],
             )}
           >
