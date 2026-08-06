@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FONT_CHOICES } from "@/lib/type-css";
+import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 
 type Row = {
   id: string;
@@ -339,22 +340,7 @@ export function TypographyStudio() {
       </button>
 
       {dirty ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-6 pb-6">
-          <div className="pointer-events-auto flex items-center gap-4 border border-hairline bg-background/95 px-5 py-3 shadow-lg backdrop-blur">
-            <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
-              Unsaved changes
-            </span>
-            <button
-              type="button"
-              onClick={() => void save()}
-              disabled={saving}
-              className="inline-flex items-center gap-2 border border-foreground bg-foreground px-5 py-2 text-[0.625rem] tracking-[0.2em] uppercase text-background disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="size-3 animate-spin" /> : null}
-              Save fonts
-            </button>
-          </div>
-        </div>
+        <FloatingSaveBar onClick={() => void save()} saving={saving} label="Save fonts" />
       ) : null}
     </div>
   );

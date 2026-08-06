@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import { optimiseImage, kb } from "@/lib/optimise-image";
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
@@ -877,16 +878,7 @@ function SaveButton({ onClick, saving }: { onClick: () => void; saving: boolean 
 
 /** Sticks to the bottom of the screen while there are unsaved edits. */
 function FloatingSave({ onClick, saving }: { onClick: () => void; saving: boolean }) {
-  return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-6 pb-6">
-      <div className="pointer-events-auto flex items-center gap-4 border border-hairline bg-background/95 px-5 py-3 shadow-lg backdrop-blur">
-        <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
-          Unsaved changes
-        </span>
-        <SaveButton onClick={onClick} saving={saving} />
-      </div>
-    </div>
-  );
+  return <FloatingSaveBar onClick={onClick} saving={saving} label="Save changes" />;
 }
 
 
