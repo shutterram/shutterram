@@ -26,22 +26,36 @@ export async function uploadSiteImage(file: File): Promise<string> {
 }
 
 
-/** Checkbox that controls whether an uploaded image may be indexed by search engines. */
+/** Checkbox controlling whether an image may appear anywhere on the public internet. */
 export function SearchVisibilityToggle({ src }: { src: string }) {
   const [indexable, setIndexable] = useState(true);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const key = imageKeyOf(src);
+  const desired = useRef(true);
 
   useEffect(() => {
     let live = true;
     if (!key) {
-      setReady(false);
+      setIndexable(desired.current);
+      setReady(true);
       return;
     }
     setReady(false);
-    void getImageIndexable(src).then((value) => {
+    void getImageIndexable(src).then(async (value) => {
       if (!live) return;
-      setIndexable(value);
+      // Apply a choice the user made before the file was uploaded.
+      if (!desired.current && value) {
+        try {
+          await setImageIndexable(src, false);
+        } catch {
+          /* surfaced on next manual toggle */
+        }
+        if (!live) return;
+        setIndexable(false);
+      } else {
+        setIndexable(value);
+        desired.current = value;
+      }
       setReady(true);
     });
     return () => {
@@ -49,15 +63,16 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
     };
   }, [src, key]);
 
-  if (!key) return null;
-
   async function toggle(next: boolean) {
+    desired.current = next;
     setIndexable(next);
+    if (!key) return;
     try {
       await setImageIndexable(src, next);
-      toast.success(next ? "Image can appear in search" : "Image hidden from search");
+      toast.success(next ? "Image can appear on the internet" : "Image hidden from the internet");
     } catch (error) {
       setIndexable(!next);
+      desired.current = !next;
       toast.error(error instanceof Error ? error.message : "Could not update visibility");
     }
   }
@@ -71,10 +86,11 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
         onChange={(e) => void toggle(e.target.checked)}
         className="size-3 accent-current"
       />
-      Show in Google / search
+      Show on Internet
     </label>
   );
 }
+
 
 export function ImageField({
   value,
@@ -849,7 +865,7 @@ function BulkUploader({
               onChange={(e) => setBulkIndexable(e.target.checked)}
               className="size-3 accent-current"
             />
-            Default for new files: show in Google / search
+            Default for new files: show on Internet
           </label>
         </div>
 
@@ -927,7 +943,7 @@ function BulkUploader({
                     }
                     className="size-3 accent-current"
                   />
-                  Show in Google / search
+                  Show on Internet
                 </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">

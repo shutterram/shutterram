@@ -506,11 +506,13 @@ Also shipped:
   `OfferCatalog` / `Person` schema where relevant.
 - `/review` is `noindex, nofollow`.
 
-### Per-image search visibility
+### Per-image internet visibility
 Every image field in the studio (hero, covers, gallery photos, services, before/after, logos,
-OG images) has a **Show in Google / search** checkbox. In the bulk uploader each staged file has its
-own checkbox too — the one in the panel header only sets the default for files you add next, and
-**Apply first to all** copies it along with the other details. New images default to *visible*.
+OG images) has a **Show on Internet** checkbox — single uploads included, and it can be set before
+the file is even uploaded. In the bulk uploader each staged file has its own checkbox too — the one
+in the panel header only sets the default for files you add next, and **Apply first to all** copies
+it along with the other details. New images default to *visible*.
+
 
 - Unticked images are still shown normally on the site, but they are served with
   `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet`, so Google Images, Bing and other
