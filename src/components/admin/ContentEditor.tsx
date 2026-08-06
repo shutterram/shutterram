@@ -747,7 +747,7 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool") attrs[f.key] = false;
+      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;
@@ -760,6 +760,7 @@ function BulkUploader({
       file,
       preview: URL.createObjectURL(file),
       attrs: blankAttrs(file),
+      indexable: bulkIndexable,
       status: "pending" as const,
     }));
     setStaged((prev) => [...prev, ...next]);
