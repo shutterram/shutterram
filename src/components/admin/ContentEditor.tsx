@@ -702,6 +702,8 @@ interface StagedFile {
   file: File;
   preview: string;
   attrs: Row;
+  /** Per-file search-engine visibility, applied right after the upload. */
+  indexable: boolean;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
