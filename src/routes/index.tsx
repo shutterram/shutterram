@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } 
 import { HeroSlider } from "@/components/site/HeroSlider";
 import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
+import {
+  DESKTOP_COLUMN_CLASS,
+  ViewSelector,
+  useColumnView,
+} from "@/components/site/ViewSelector";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { SocialLinks } from "@/components/site/SocialLinks";
@@ -72,6 +77,7 @@ type Filter = "all" | CategorySlug;
 function Home() {
   const featured = useMemo(() => featuredIds.map(photoById).filter((p) => p !== undefined), []);
   const [filter, setFilter] = useState<Filter>("all");
+  const [cols, setCols] = useColumnView();
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
   const [mobileCount, setMobileCount] = useState(4);
@@ -222,6 +228,10 @@ function Home() {
               align="center"
             />
 
+            <div className="mt-8 hidden justify-center md:flex">
+              <ViewSelector value={cols} onChange={setCols} />
+            </div>
+
             <FilterPills
               variant="tabs"
               className="mt-10 justify-center"
@@ -237,7 +247,8 @@ function Home() {
           <div
             ref={railRef}
             className={cn(
-              "mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 xl:columns-4 md:[&>*]:mb-5",
+              "mt-12 grid grid-cols-2 gap-3 md:block md:gap-5 md:[&>*]:mb-5",
+              DESKTOP_COLUMN_CLASS[cols],
             )}
           >
             {shown.map((p, i) => (

@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { FilterPills } from "@/components/site/FilterPills";
+import {
+  DESKTOP_COLUMN_CLASS,
+  ViewSelector,
+  useColumnView,
+} from "@/components/site/ViewSelector";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, photos, type CategorySlug, t } from "@/data/portfolio";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -26,6 +31,7 @@ function Gallery() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [mobileCount, setMobileCount] = useState(4);
+  const [cols, setCols] = useColumnView();
   const isMobile = useIsMobile();
 
   const visible = useMemo(
@@ -61,8 +67,12 @@ function Gallery() {
         ))}
       </div>
 
+      <div className="mt-10 hidden justify-end md:flex">
+        <ViewSelector value={cols} onChange={setCols} />
+      </div>
+
       <FilterPills
-        className="mt-10"
+        className="mt-6"
         value={filter}
         onChange={(v) => {
           setFilter(v);
@@ -78,7 +88,7 @@ function Gallery() {
         ]}
       />
 
-      <div className="mt-12 grid grid-cols-2 gap-3 md:block md:columns-2 md:gap-5 lg:columns-3 md:[&>*]:mb-5">
+      <div className={`mt-12 grid grid-cols-2 gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${DESKTOP_COLUMN_CLASS[cols]}`}>
         {shown.map((p, i) => (
           <button
             key={p.id}
