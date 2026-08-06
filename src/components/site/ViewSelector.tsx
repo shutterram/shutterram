@@ -9,11 +9,18 @@ export const COLUMN_CLASS: Record<ColumnCount, string> = {
   "3": "columns-3",
 };
 
-/** Desktop-only variants, for grids that stay 2-up on phones. */
+/** Desktop-only variants, for grids that switch to masonry from md up. */
 export const DESKTOP_COLUMN_CLASS: Record<ColumnCount, string> = {
   "1": "md:columns-1",
   "2": "md:columns-2",
   "3": "md:columns-3",
+};
+
+/** Phone grid variants, so the same choice applies on mobile. */
+export const MOBILE_GRID_CLASS: Record<ColumnCount, string> = {
+  "1": "grid-cols-1",
+  "2": "grid-cols-2",
+  "3": "grid-cols-3",
 };
 
 const VIEW_OPTIONS: { value: ColumnCount; cells: number; label: string }[] = [
