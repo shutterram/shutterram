@@ -206,9 +206,6 @@ Saved fonts live in the `custom_fonts` table, are served on every page from
 `src/routes/__root.tsx` (`fontStylesheetHrefs` in `src/lib/type-css.ts`), and immediately appear in
 every font dropdown — site heading font, site body font, and each per-section row.
 
-
-
-
 ### Page sections
 Each row is one section of one page (`Home — Featured work`, `About page — The Experience`, …):
 
@@ -570,10 +567,6 @@ Where it lives:
 - Hidden images are also skipped by the sitemap, so nothing links to them from outside the site.
 - Flag changes take effect on the next crawl; already-indexed images can take a few weeks to drop out
   (use Search Console **Removals** to speed it up).
-
-
-
-
 
 ### Google Search Console (on your own host)
 1. Add a **Domain** property (DNS TXT) or **URL prefix** property at
