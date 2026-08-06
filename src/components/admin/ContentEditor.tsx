@@ -24,6 +24,56 @@ export async function uploadSiteImage(file: File): Promise<string> {
 }
 
 
+/** Checkbox that controls whether an uploaded image may be indexed by search engines. */
+export function SearchVisibilityToggle({ src }: { src: string }) {
+  const [indexable, setIndexable] = useState(true);
+  const [ready, setReady] = useState(false);
+  const key = imageKeyOf(src);
+
+  useEffect(() => {
+    let live = true;
+    if (!key) {
+      setReady(false);
+      return;
+    }
+    setReady(false);
+    void getImageIndexable(src).then((value) => {
+      if (!live) return;
+      setIndexable(value);
+      setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [src, key]);
+
+  if (!key) return null;
+
+  async function toggle(next: boolean) {
+    setIndexable(next);
+    try {
+      await setImageIndexable(src, next);
+      toast.success(next ? "Image can appear in search" : "Image hidden from search");
+    } catch (error) {
+      setIndexable(!next);
+      toast.error(error instanceof Error ? error.message : "Could not update visibility");
+    }
+  }
+
+  return (
+    <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+      <input
+        type="checkbox"
+        checked={indexable}
+        disabled={!ready}
+        onChange={(e) => void toggle(e.target.checked)}
+        className="size-3 accent-current"
+      />
+      Show in Google / search
+    </label>
+  );
+}
+
 export function ImageField({
   value,
   onChange,
@@ -80,6 +130,7 @@ export function ImageField({
             {busy ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
             Upload
           </button>
+          <SearchVisibilityToggle src={value} />
           <input
             ref={inputRef}
             type="file"
@@ -92,6 +143,7 @@ export function ImageField({
     </div>
   );
 }
+
 
 /** Dropdown of gallery categories, with inline add / remove. */
 export function CategoryField({
