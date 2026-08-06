@@ -115,7 +115,7 @@ export function SiteHeader() {
       {/* Mobile drawer — sibling of the header so the blurred header never clips it */}
       <div
         className={cn(
-          "fixed inset-0 z-[70] bg-background transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
+          "fixed inset-0 z-[70] bg-[var(--nav-surface)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
           open ? "visible opacity-100" : "pointer-events-none invisible opacity-0",
         )}
         aria-hidden={!open}
