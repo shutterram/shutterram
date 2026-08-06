@@ -628,8 +628,18 @@ export function ListEditor({
           );
         })}
       </ul>
+      {dirtyId ? (
+        <FloatingSave
+          onClick={() => {
+            const row = rows.find((r) => r["id"] === dirtyId);
+            if (row) void saveRow(row);
+          }}
+          saving={saving}
+        />
+      ) : null}
     </div>
   );
+
 }
 
 interface StagedFile {
