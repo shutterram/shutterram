@@ -100,7 +100,9 @@ function CategoryGallery() {
               key={p.id}
               type="button"
               onClick={() => setLightbox(i)}
+              aria-label={`Enlarge photograph: ${p.caption}`}
               className="group relative block w-full overflow-hidden break-inside-avoid"
+
             >
               <img
                 src={p.src}
