@@ -597,6 +597,10 @@ export type Database = {
         Row: {
           dark_opacity: number
           dark_value: string
+          default_dark_opacity: number | null
+          default_dark_value: string | null
+          default_light_opacity: number | null
+          default_light_value: string | null
           group_label: string
           hint: string
           id: string
@@ -610,6 +614,10 @@ export type Database = {
         Insert: {
           dark_opacity?: number
           dark_value?: string
+          default_dark_opacity?: number | null
+          default_dark_value?: string | null
+          default_light_opacity?: number | null
+          default_light_value?: string | null
           group_label?: string
           hint?: string
           id?: string
@@ -623,6 +631,10 @@ export type Database = {
         Update: {
           dark_opacity?: number
           dark_value?: string
+          default_dark_opacity?: number | null
+          default_dark_value?: string | null
+          default_light_opacity?: number | null
+          default_light_value?: string | null
           group_label?: string
           hint?: string
           id?: string
