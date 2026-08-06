@@ -3,6 +3,7 @@ import { Loader2, RotateCcw, Redo2, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { mix } from "@/lib/theme-css";
+import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 
 type Row = {
   id: string;
