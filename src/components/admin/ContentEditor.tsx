@@ -780,7 +780,11 @@ function BulkUploader({
       return prev.map((s, i) =>
         i === 0
           ? s
-          : { ...s, attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] } },
+          : {
+              ...s,
+              indexable: first.indexable,
+              attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] },
+            },
       );
     });
   }
