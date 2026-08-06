@@ -19,9 +19,16 @@ import { ScrollToTop } from "@/components/site/ScrollToTop";
 import { CursorGlow } from "@/components/site/CursorGlow";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteContent } from "@/lib/site-content.functions";
-import { applyContent, logos, themeTokens, typeTokens, typography } from "@/data/portfolio";
+import {
+  applyContent,
+  logos,
+  siteFonts,
+  themeTokens,
+  typeTokens,
+  typography,
+} from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
-import { googleFontsHref, typographyCss } from "@/lib/type-css";
+import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
 
 function NotFoundComponent() {
   return (
@@ -136,7 +143,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const paletteCss = themeCss(themeTokens);
   const typeCss = typographyCss(typeTokens, typography);
-  const fontsHref = googleFontsHref(typography);
+  const fontHrefs = fontStylesheetHrefs(siteFonts, typography);
 
   // Swap the browser tab icon when a custom favicon is set in the studio.
   const favicon = logos.favicon;
@@ -154,7 +161,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {fontsHref ? <link rel="stylesheet" href={fontsHref} precedence="high" /> : null}
+      {fontHrefs.map((href) => (
+        <link key={href} rel="stylesheet" href={href} precedence="high" />
+      ))}
       {paletteCss ? <style dangerouslySetInnerHTML={{ __html: paletteCss }} /> : null}
       {typeCss ? <style dangerouslySetInnerHTML={{ __html: typeCss }} /> : null}
       {isStudio ? null : <SiteHeader />}
