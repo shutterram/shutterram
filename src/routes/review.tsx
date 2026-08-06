@@ -214,8 +214,13 @@ function ReviewPage() {
               </div>
             ))}
             {files.length < 6 ? (
-              <label className="grid size-20 cursor-pointer place-items-center border border-dashed border-hairline text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+              <label
+                aria-label="Add photographs to your review"
+                className="grid size-20 cursor-pointer place-items-center border border-dashed border-hairline text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+              >
                 <Upload className="size-4" strokeWidth={1.4} />
+                <span className="sr-only">Add photographs to your review</span>
+
                 <input
                   type="file"
                   accept="image/*"
