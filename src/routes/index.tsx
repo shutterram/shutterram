@@ -228,7 +228,7 @@ function Home() {
               align="center"
             />
 
-            <div className="mt-8 hidden justify-center md:flex">
+            <div className="mt-8 flex justify-center">
               <ViewSelector value={cols} onChange={setCols} />
             </div>
 
