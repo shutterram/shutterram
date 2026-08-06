@@ -206,9 +206,6 @@ Saved fonts live in the `custom_fonts` table, are served on every page from
 `src/routes/__root.tsx` (`fontStylesheetHrefs` in `src/lib/type-css.ts`), and immediately appear in
 every font dropdown — site heading font, site body font, and each per-section row.
 
-
-
-
 ### Page sections
 Each row is one section of one page (`Home — Featured work`, `About page — The Experience`, …):
 
@@ -521,6 +518,33 @@ Also shipped:
   `OfferCatalog` / `Person` schema where relevant.
 - `/review` is `noindex, nofollow`.
 
+### What the sitemap is and how you use it
+
+`https://your-domain.com/sitemap.xml` is a machine-readable list of every public page on the site,
+and — for gallery pages — every photo on that page with its caption. It is written for search
+engines, not for visitors; there is no need to link to it from the site.
+
+What it does for you:
+- Tells Google/Bing which pages exist, including every gallery category, without them having to
+  crawl link by link. New categories and photos show up in search faster.
+- Uses the Google **image sitemap** extension, so your photos are eligible for Google Images with the
+  caption as context — the main way a photographer gets found.
+- Respects your **Show on Internet** toggle: any image you unticked is left out entirely, so it is
+  never advertised to a crawler.
+- Any page whose SEO record is set to `noindex` is left out too.
+
+How to use it (one-time, ~5 minutes):
+1. Publish the site on the domain you want indexed.
+2. Open [Google Search Console](https://search.google.com/search-console), add and verify your
+   property (steps below).
+3. Go to **Sitemaps**, enter `sitemap.xml`, press Submit. Google re-reads it automatically from then
+   on — you never resubmit after adding photos or categories.
+4. Optionally repeat in [Bing Webmaster Tools](https://www.bing.com/webmasters).
+
+Sanity check any time: open `/sitemap.xml` in a browser. Every page you expect should be listed, and
+no image you hid should appear.
+
+
 ### Image visibility — two independent switches
 Every image uploaded anywhere in the studio (single field or bulk uploader) carries its own choices:
 
@@ -543,10 +567,6 @@ Where it lives:
 - Hidden images are also skipped by the sitemap, so nothing links to them from outside the site.
 - Flag changes take effect on the next crawl; already-indexed images can take a few weeks to drop out
   (use Search Console **Removals** to speed it up).
-
-
-
-
 
 ### Google Search Console (on your own host)
 1. Add a **Domain** property (DNS TXT) or **URL prefix** property at
