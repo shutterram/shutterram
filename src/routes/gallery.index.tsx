@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { FilterPills } from "@/components/site/FilterPills";
 import {
   DESKTOP_COLUMN_CLASS,
+  MOBILE_GRID_CLASS,
   ViewSelector,
   useColumnView,
 } from "@/components/site/ViewSelector";
@@ -67,7 +68,7 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 hidden justify-end md:flex">
+      <div className="mt-10 flex justify-end">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
 
@@ -88,7 +89,7 @@ function Gallery() {
         ]}
       />
 
-      <div className={`mt-12 grid grid-cols-2 gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${DESKTOP_COLUMN_CLASS[cols]}`}>
+      <div className={`mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
         {shown.map((p, i) => (
           <button
             key={p.id}

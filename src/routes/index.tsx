@@ -6,6 +6,7 @@ import { Lightbox } from "@/components/site/Lightbox";
 import { FilterPills } from "@/components/site/FilterPills";
 import {
   DESKTOP_COLUMN_CLASS,
+  MOBILE_GRID_CLASS,
   ViewSelector,
   useColumnView,
 } from "@/components/site/ViewSelector";
@@ -228,7 +229,7 @@ function Home() {
               align="center"
             />
 
-            <div className="mt-8 hidden justify-center md:flex">
+            <div className="mt-8 flex justify-center">
               <ViewSelector value={cols} onChange={setCols} />
             </div>
 
@@ -247,7 +248,8 @@ function Home() {
           <div
             ref={railRef}
             className={cn(
-              "mt-12 grid grid-cols-2 gap-3 md:block md:gap-5 md:[&>*]:mb-5",
+              "mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5",
+              MOBILE_GRID_CLASS[cols],
               DESKTOP_COLUMN_CLASS[cols],
             )}
           >
