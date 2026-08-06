@@ -727,6 +727,8 @@ function BulkUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [running, setRunning] = useState(false);
+  const [bulkIndexable, setBulkIndexable] = useState(true);
+
   const attrFields = fields.filter((f) => f.key !== imageKey);
 
   useEffect(() => {
