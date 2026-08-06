@@ -108,18 +108,27 @@ function CategoryGallery() {
             <ArrowLeft className="size-3.5 shrink-0" /> All work
           </Link>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="eyebrow hidden sm:inline">View</span>
-            <FilterPills
-              options={[
-                { value: "1" as const, label: "1 line" },
-                { value: "2" as const, label: "2 lines" },
-                { value: "3" as const, label: "3 lines" },
-              ]}
-              value={cols}
-              onChange={setCols}
-            />
+            {VIEW_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                aria-label={o.label}
+                aria-pressed={cols === o.value}
+                onClick={() => setCols(o.value)}
+                className={
+                  "flex size-9 items-center justify-center border transition-colors " +
+                  (cols === o.value
+                    ? "border-foreground text-foreground"
+                    : "border-hairline text-muted-foreground hover:border-foreground hover:text-foreground")
+                }
+              >
+                <ViewGlyph cells={o.cells} />
+              </button>
+            ))}
           </div>
+
         </div>
 
         <div className={`mt-10 gap-5 [&>*]:mb-5 ${COLUMN_CLASS[cols]}`}>
