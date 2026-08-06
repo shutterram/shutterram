@@ -790,7 +790,9 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
+        if (!bulkIndexable) await setImageIndexable(src, false);
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
+
         if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
           draft["photo_key"] = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         }
