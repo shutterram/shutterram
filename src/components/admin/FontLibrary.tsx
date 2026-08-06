@@ -69,6 +69,11 @@ export function FontLibrary({
 
   return (
     <section className="border-t border-hairline pt-8">
+      {fonts
+        .filter((f) => f.family.trim() && f.source === "google")
+        .map((f) => (
+          <link key={f.id} rel="stylesheet" href={googleFontHref(toSiteFont(f))} precedence="high" />
+        ))}
       <p className="eyebrow">Font library</p>
       <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
         Load new fonts into the site. Type any Google Font name, or paste a stylesheet link from
