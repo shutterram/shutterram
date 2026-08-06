@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import { optimiseImage, kb } from "@/lib/optimise-image";
+import { getImageIndexable, imageKeyOf, setImageIndexable } from "@/lib/image-index";
+
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
 export async function uploadSiteImage(file: File): Promise<string> {
@@ -23,6 +25,56 @@ export async function uploadSiteImage(file: File): Promise<string> {
   return `/api/public/img/${key}`;
 }
 
+
+/** Checkbox that controls whether an uploaded image may be indexed by search engines. */
+export function SearchVisibilityToggle({ src }: { src: string }) {
+  const [indexable, setIndexable] = useState(true);
+  const [ready, setReady] = useState(false);
+  const key = imageKeyOf(src);
+
+  useEffect(() => {
+    let live = true;
+    if (!key) {
+      setReady(false);
+      return;
+    }
+    setReady(false);
+    void getImageIndexable(src).then((value) => {
+      if (!live) return;
+      setIndexable(value);
+      setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [src, key]);
+
+  if (!key) return null;
+
+  async function toggle(next: boolean) {
+    setIndexable(next);
+    try {
+      await setImageIndexable(src, next);
+      toast.success(next ? "Image can appear in search" : "Image hidden from search");
+    } catch (error) {
+      setIndexable(!next);
+      toast.error(error instanceof Error ? error.message : "Could not update visibility");
+    }
+  }
+
+  return (
+    <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+      <input
+        type="checkbox"
+        checked={indexable}
+        disabled={!ready}
+        onChange={(e) => void toggle(e.target.checked)}
+        className="size-3 accent-current"
+      />
+      Show in Google / search
+    </label>
+  );
+}
 
 export function ImageField({
   value,
@@ -80,6 +132,7 @@ export function ImageField({
             {busy ? <Loader2 className="size-3 animate-spin" /> : <Upload className="size-3" />}
             Upload
           </button>
+          <SearchVisibilityToggle src={value} />
           <input
             ref={inputRef}
             type="file"
@@ -92,6 +145,7 @@ export function ImageField({
     </div>
   );
 }
+
 
 /** Dropdown of gallery categories, with inline add / remove. */
 export function CategoryField({
@@ -673,6 +727,8 @@ function BulkUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [running, setRunning] = useState(false);
+  const [bulkIndexable, setBulkIndexable] = useState(true);
+
   const attrFields = fields.filter((f) => f.key !== imageKey);
 
   useEffect(() => {
@@ -736,7 +792,9 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
+        if (!bulkIndexable) await setImageIndexable(src, false);
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
+
         if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
           draft["photo_key"] = `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         }
@@ -777,7 +835,17 @@ function BulkUploader({
           <p className="mt-1 text-xs text-muted-foreground">
             Pick several files, set details for each, then add them all at once.
           </p>
+          <label className="mt-3 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={bulkIndexable}
+              onChange={(e) => setBulkIndexable(e.target.checked)}
+              className="size-3 accent-current"
+            />
+            Show these in Google / search
+          </label>
         </div>
+
         <div className="flex items-center gap-2">
           <button
             type="button"

@@ -506,6 +506,20 @@ Also shipped:
   `OfferCatalog` / `Person` schema where relevant.
 - `/review` is `noindex, nofollow`.
 
+### Per-image search visibility
+Every image field in the studio (hero, covers, gallery photos, services, before/after, logos,
+OG images) has a **Show in Google / search** checkbox, and the bulk uploader has one that applies to
+the whole batch. New images default to *visible*.
+
+- Unticked images are still shown normally on the site, but they are served with
+  `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet`, so Google Images, Bing and other
+  crawlers drop them and never surface them outside your pages.
+- The flags live in the `image_settings` table (keyed by the stored file name) and are enforced in
+  `src/routes/api/public/img.$.ts`.
+- Changing a flag takes effect on the next crawl; already-indexed images can take a few weeks to
+  disappear (use Search Console **Removals** to speed it up).
+
+
 ### Google Search Console (on your own host)
 1. Add a **Domain** property (DNS TXT) or **URL prefix** property at
    [search.google.com/search-console](https://search.google.com/search-console).
