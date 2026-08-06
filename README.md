@@ -39,6 +39,8 @@ code.
 14. [QA test pass](#14-qa-test-pass)
 15. [Troubleshooting](#15-troubleshooting)
 16. [Extending the site](#16-extending-the-site)
+17. [Long-term maintenance & operations](#17-long-term-maintenance--operations)
+18. [Quick reference — "where do I change X?"](#18-quick-reference--where-do-i-change-x)
 
 ---
 
@@ -141,11 +143,12 @@ Press **Refresh site** after saving to reload public pages with the new content.
 | **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
-| **Colours** | Every colour token, separately for dark and light mode, with opacity sliders |
+| **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
+| **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text |
 | **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
-| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots |
+| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
 | **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
-| **Hero categories** | Slug, title, label, tagline, hero image per category |
+| **Hero categories** | Slug, title, label, tagline, hero image and **category cover image** per category |
 | **Photos** | Caption, category, image, featured flag + position, internal key |
 | **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
 | **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
@@ -158,6 +161,38 @@ Press **Refresh site** after saving to reload public pages with the new content.
 
 Every list supports add, edit, reorder (↑ ↓) and delete. **New entries — single or bulk — are
 inserted at the top of the list**, right under the Add controls, so you never scroll to fill them in.
+
+### Saving your edits
+Long tabs (Fonts, Colours, Wording, Photos…) never make you hunt for the Save button: as soon as any
+field changes, a **floating save bar** appears pinned to the bottom of the viewport
+(`src/components/admin/FloatingSaveBar.tsx`, rendered through a React portal onto `document.body` so
+no transformed parent can trap it). Click **Save changes** from wherever you are on the page. The
+static button at the bottom of each tab still works and does the same thing.
+
+### Colours tab safety net
+Every token row has three icon buttons on the right:
+
+| Button | Effect |
+| --- | --- |
+| ↶ Undo | Step back through your changes to that single token (per-token history, unlimited depth for the session) |
+| ↷ Redo | Step forward again |
+| ⟲ Reset | Restore that token's shipped default (`default_dark_*` / `default_light_*` columns) |
+
+**Reset all** at the top restores every token's default in one action — and is itself undoable per
+token. History lives in memory only, so it clears on reload; **Save** is what makes changes
+permanent. Colour edits apply to the public site after a reload.
+
+The mobile navigation drawer uses its **own** `nav-surface` token, deliberately decoupled from the
+page background so you can tune the hero fade without turning the mobile menu transparent.
+
+### Fonts tab
+Typography is stored in `type_tokens` and rendered into CSS variables by `src/lib/type-css.ts`.
+Each row targets one **section** of the site (hero headline, section heading, body copy, eyebrow,
+buttons, footer, …) and each row exposes **three device columns** — desktop, tablet, mobile — so a
+headline can be 72px on desktop and 34px on mobile without touching code. Each row shows a real
+sample of the text it controls, so you can tune it visually. Google Fonts named here are loaded
+automatically (`googleFontsHref`), so picking a new family needs no code change.
+
 
 ### Page sections
 Each row is one section of one page (`Home — Featured work`, `About page — The Experience`, …):
@@ -512,8 +547,15 @@ the `LocalBusiness` JSON-LD, so placeholder values are the one thing that will f
 - **Motion.** `Reveal.tsx` handles scroll-in fades; the testimonials rail and the mobile services
   rail loop endlessly by duplicating items and pause on hover/tap. Keep animation subtle — the
   photographs carry the page.
-- **Typography.** Literata for display, Manrope for body. Sharp corners throughout; form fields are
-  underlines, not boxes.
+- **Typography.** Literata for display, Manrope for body — both overridable per section and per
+  device from the **Fonts** tab (`type_tokens` → `src/lib/type-css.ts`). Sharp corners throughout;
+  form fields are underlines, not boxes.
+- **Grid view selector.** Anywhere the site shows a wall of photographs — Home → Featured work,
+  `/gallery`, and each `/gallery/:category` — a small glyph dropdown (`ViewSelector.tsx` +
+  `useColumnView`) lets the visitor pick how many columns of masonry they want. **Two columns is the
+  default**; mobile always collapses to its own two-up grid regardless of the choice.
+- **Carousels.** The Services rail and the Testimonials rail loop infinitely, pause on hover/tap, and
+  can be dragged/swiped left and right; the helper line under each reads "swipe or use the arrows".
 
 ---
 
@@ -654,3 +696,131 @@ Adjust the port above if `npm run preview` reports a different one.
   up automatically.
 - **External integrations** — internal logic goes in `createServerFn`; webhooks and public APIs go in
   `src/routes/api/public/*` and must verify the caller inside the handler.
+
+---
+
+## 17. Long-term maintenance & operations
+
+This section is for the months and years *after* launch — everything you need to keep the site
+healthy, safe and changeable without help.
+
+### 17.1 Routine rhythm
+
+| Frequency | Task |
+| --- | --- |
+| Weekly | Approve/decline new client reviews in **Client reviews**; skim the contact inbox to confirm forms still deliver |
+| Monthly | Send one test submission from each contact form; open the site on a phone and a desktop; check `/sitemap.xml` still lists every page |
+| Quarterly | Refresh gallery photos and featured selections; review SEO titles/descriptions; check Search Console coverage & Core Web Vitals; export a database backup |
+| Yearly | Renew the domain; rotate the admin password; review Supabase and host billing/plan limits; run a dependency update (17.4) |
+| After any content push | Press **Refresh site** in the studio, then hard-reload a public page to confirm the change is live |
+
+### 17.2 Backups and restore
+
+Two things must be backed up — they are **separate**:
+
+1. **The database** (all your text, settings, SEO, colours, fonts, reviews).
+   - Supabase → Database → Backups gives daily automated backups on paid plans.
+   - A manual, portable copy any time:
+     ```sh
+     pg_dump "postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres" \
+       --no-owner --no-privileges -Fc -f shutterram-$(date +%F).dump
+     ```
+   - Restore into a fresh project with:
+     ```sh
+     pg_restore --no-owner --no-privileges -d "<new connection string>" shutterram-<date>.dump
+     ```
+     Then re-apply the `GRANT`s and RLS policies from section 5 if the dump was schema-light.
+2. **Storage objects** (every uploaded photo, logo and icon) — these are **not** in a SQL dump.
+   Download the `site-images` bucket from the Supabase Storage UI, or sync it with the
+   Storage API / `supabase storage` CLI. Keep the original full-resolution photographs on your own
+   drive as well; the site stores optimised WebP copies, not masters.
+
+**Test a restore at least once.** A backup you have never restored is a hope, not a backup.
+
+### 17.3 Keys, passwords and access
+
+- **Publishable / anon key** — safe in the browser bundle. Rotating it requires a rebuild.
+- **Service-role key** — bypasses all security. Server-side environment variable only. If it is ever
+  pasted into client code, a screenshot, or a chat, rotate it immediately in Supabase → API keys and
+  update the host's env var.
+- **Admin account** — the first account created holds the `admin` role in `user_roles`. Add another
+  admin by inserting a row for that user's `id`; remove access by deleting the row (deleting the auth
+  user is cleaner). Keep **anonymous sign-ups disabled** permanently.
+- **Password reset** depends on your SMTP credentials staying valid — providers expire API keys.
+  If reset emails stop arriving, check SMTP before anything else.
+- Never commit `.env`. Host env vars are the source of truth in production.
+
+### 17.4 Updating dependencies safely
+
+```sh
+npm outdated              # see what moved
+npm update                # safe, semver-compatible bumps
+npm run lint && npx tsc --noEmit && npm run build
+npm run preview           # click through every page before deploying
+```
+
+Rules that keep this painless:
+- Bump **one** major version at a time (React, TanStack, Tailwind, Supabase are the four that matter)
+  and test between each.
+- Do **not** add another router. TanStack Router is structural to this app.
+- Tailwind v4 has no `tailwind.config.js` — tokens live in `src/styles.css`. Ignore any advice that
+  tells you to create one.
+- `src/routeTree.gen.ts` and everything in `src/integrations/supabase/` are generated. Never hand-edit;
+  they regenerate on build.
+- Keep a deploy you can roll back to (git tag, or your host's previous deployment).
+
+### 17.5 Monitoring & performance
+
+- **Uptime** — point a free monitor (UptimeRobot, Better Stack) at `https://your-domain.com` and at
+  `/sitemap.xml` (the second proves the database is reachable, not just the CDN).
+- **Errors** — the SSR entry (`src/server.ts`) converts crashes into a styled error page and logs the
+  real error to your host's log stream. Check the host's logs when something looks wrong.
+- **Speed** — images dominate. Keep uploads under ~2400px (the studio enforces this), prefer WebP,
+  and don't put twenty full-bleed photos in one section. Run PageSpeed Insights after big galleries.
+- **Database size** — text tables stay tiny; storage is what grows. Delete photo rows *and* their
+  files when retiring old work.
+
+### 17.6 Changing things later — where to start
+
+| I want to… | Do this |
+| --- | --- |
+| Change any visible word | Studio → **Wording** (or the section's row in **Page sections**) |
+| Add / remove a gallery category | Studio → **Hero categories** or the Category dropdown on Photos; route, cover, sitemap and SEO row follow automatically |
+| Re-order or hide a homepage section | Studio → **Page sections** (↑ ↓ and *Show on site*) |
+| Change colours or the mobile-menu background | Studio → **Colours** (undo/redo per token) |
+| Change a font size on phones only | Studio → **Fonts** → that section's *mobile* column |
+| Swap a logo or favicon | Studio → **Logos** |
+| Change where contact forms go | Studio → **Form delivery** |
+| Change a page's title/description/share image | Studio → **SEO** |
+| Move to a new domain | Update `SITE_URL` in `src/lib/seo.ts`, the `Sitemap:` line in `public/robots.txt`, Supabase Auth *Site URL* + *Redirect URLs*, then rebuild and redeploy |
+| Add a whole new page or content type | Section 16 — this needs code |
+
+### 17.7 Handing the project to another developer
+
+Give them: this README, repository access, the Supabase project (or a dump + storage export), the
+host account, and the domain registrar login. Point them at section 2 (layout), section 3 (content
+flow) and section 5 (schema + RLS) first — those three explain 90% of the codebase. Everything else
+is conventional React.
+
+---
+
+## 18. Quick reference — "where do I change X?"
+
+| Thing | Location |
+| --- | --- |
+| Site URL used for canonical / OG / sitemap | `src/lib/seo.ts` → `SITE_URL` |
+| Crawler rules | `public/robots.txt` |
+| Sitemap generation | `src/routes/sitemap[.]xml.tsx` |
+| Design tokens & palettes | `src/styles.css` (studio-overridable via `theme_tokens`) |
+| Typography variables | `src/lib/type-css.ts` (studio-driven via `type_tokens`) |
+| Fallback content when the DB is down | `src/data/portfolio.defaults.ts` |
+| Content loading | `src/lib/site-content.functions.ts` → `applyContent()` in `src/data/portfolio.ts` |
+| Contact form delivery | `src/lib/submit-form.functions.ts` + `admin_settings.form_endpoint` |
+| Review submission | `src/lib/submit-review.functions.ts` |
+| Image optimisation limits | `src/lib/optimise-image.ts` (`MAX_EDGE`, `QUALITY`) |
+| Private-bucket image proxy | `src/routes/api/public/img.$.ts` |
+| Studio tabs | `src/routes/_authenticated/admin.tsx` |
+| Floating save bar | `src/components/admin/FloatingSaveBar.tsx` |
+| Grid/column view selector | `src/components/site/ViewSelector.tsx` |
+| Auth gate | `src/routes/_authenticated/route.tsx` |
+| Global head defaults, fonts, theme script | `src/routes/__root.tsx` |
