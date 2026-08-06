@@ -545,8 +545,15 @@ the `LocalBusiness` JSON-LD, so placeholder values are the one thing that will f
 - **Motion.** `Reveal.tsx` handles scroll-in fades; the testimonials rail and the mobile services
   rail loop endlessly by duplicating items and pause on hover/tap. Keep animation subtle — the
   photographs carry the page.
-- **Typography.** Literata for display, Manrope for body. Sharp corners throughout; form fields are
-  underlines, not boxes.
+- **Typography.** Literata for display, Manrope for body — both overridable per section and per
+  device from the **Fonts** tab (`type_tokens` → `src/lib/type-css.ts`). Sharp corners throughout;
+  form fields are underlines, not boxes.
+- **Grid view selector.** Anywhere the site shows a wall of photographs — Home → Featured work,
+  `/gallery`, and each `/gallery/:category` — a small glyph dropdown (`ViewSelector.tsx` +
+  `useColumnView`) lets the visitor pick how many columns of masonry they want. **Two columns is the
+  default**; mobile always collapses to its own two-up grid regardless of the choice.
+- **Carousels.** The Services rail and the Testimonials rail loop infinitely, pause on hover/tap, and
+  can be dragged/swiped left and right; the helper line under each reads "swipe or use the arrows".
 
 ---
 
