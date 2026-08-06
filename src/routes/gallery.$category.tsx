@@ -52,14 +52,32 @@ export const Route = createFileRoute("/gallery/$category")({
 const COLUMN_CLASS: Record<string, string> = {
   "1": "columns-1",
   "2": "columns-2",
-  "3": "columns-1 sm:columns-2 lg:columns-3",
+  "3": "columns-3",
 };
+
+/** Little box glyphs so the view switcher reads at a glance. */
+const VIEW_OPTIONS = [
+  { value: "1" as const, cells: 1, label: "One column" },
+  { value: "2" as const, cells: 2, label: "Two columns" },
+  { value: "3" as const, cells: 3, label: "Three columns" },
+];
+
+function ViewGlyph({ cells }: { cells: number }) {
+  return (
+    <span className="flex h-4 w-4 gap-[2px]">
+      {Array.from({ length: cells }).map((_, i) => (
+        <span key={i} className="flex-1 border border-current" />
+      ))}
+    </span>
+  );
+}
 
 function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [cols, setCols] = useState<"1" | "2" | "3">("1");
+  const [cols, setCols] = useState<"1" | "2" | "3">("2");
+
 
   return (
     <div>
