@@ -191,7 +191,22 @@ Each row targets one **section** of the site (hero headline, section heading, bo
 buttons, footer, …) and each row exposes **three device columns** — desktop, tablet, mobile — so a
 headline can be 72px on desktop and 34px on mobile without touching code. Each row shows a real
 sample of the text it controls, so you can tune it visually. Google Fonts named here are loaded
-automatically (`googleFontsHref`), so picking a new family needs no code change.
+automatically, so picking a new family needs no code change.
+
+**Font library.** At the top of the Fonts tab you can load brand-new fonts into the site:
+
+- **Font name** — any Google Font name (e.g. *Instrument Sans*), or the family name served by your
+  own stylesheet.
+- **Where it loads from** — *Google Fonts* (the link is built for you) or *Stylesheet link* for a
+  CSS URL from another provider (Adobe Fonts, Fontshare, a self-hosted `@font-face` sheet).
+- **Weights** (100–900) and **styles** (normal / italic) — only what you tick is downloaded, so the
+  site stays fast.
+
+Saved fonts live in the `custom_fonts` table, are served on every page from
+`src/routes/__root.tsx` (`fontStylesheetHrefs` in `src/lib/type-css.ts`), and immediately appear in
+every font dropdown — site heading font, site body font, and each per-section row.
+
+
 
 
 ### Page sections

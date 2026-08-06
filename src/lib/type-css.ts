@@ -105,6 +105,51 @@ export function typographyCss(tokens: TypeToken[], type: Typography): string {
   return parts.filter(Boolean).join("");
 }
 
+/** A font added through the studio's font library. */
+export interface SiteFont {
+  id: string;
+  family: string;
+  /** "google" builds a Google Fonts URL, "url" uses a stylesheet link as-is. */
+  source: string;
+  cssUrl: string;
+  weights: string[];
+  styles: string[];
+}
+
+const uniq = (v: string[]) => [...new Set(v.map(clean).filter(Boolean))];
+
+/** Google Fonts URL for one family with the chosen weights and styles. */
+export function googleFontHref(font: SiteFont): string {
+  const family = clean(font.family);
+  if (!family) return "";
+  const weights = uniq(font.weights).length ? uniq(font.weights) : ["400"];
+  const styles = uniq(font.styles).length ? uniq(font.styles) : ["normal"];
+  const italic = styles.includes("italic");
+  const name = encodeURIComponent(family).replace(/%20/g, "+");
+  const sorted = [...weights].sort((a, b) => Number(a) - Number(b));
+  const spec = italic
+    ? `ital,wght@${[
+        ...sorted.map((w) => `0,${w}`),
+        ...(styles.includes("normal") ? [] : []),
+        ...sorted.map((w) => `1,${w}`),
+      ].join(";")}`
+    : `wght@${sorted.join(";")}`;
+  return `https://fonts.googleapis.com/css2?family=${name}:${spec}&display=swap`;
+}
+
+/** Every stylesheet the site needs for its fonts, de-duplicated. */
+export function fontStylesheetHrefs(fonts: SiteFont[], type: Typography): string[] {
+  const hrefs = fonts.map((f) =>
+    clean(f.source) === "url" ? clean(f.cssUrl) : googleFontHref(f),
+  );
+  const known = new Set(fonts.map((f) => clean(f.family).toLowerCase()));
+  const missing = [clean(type.heading), clean(type.body)].filter(
+    (f) => f && !known.has(f.toLowerCase()),
+  );
+  if (missing.length) hrefs.push(googleFontsHref({ ...type, heading: missing[0] ?? "", body: missing[1] ?? "" }));
+  return [...new Set(hrefs.filter(Boolean))];
+}
+
 /** Google Fonts stylesheet URL for the chosen heading + body families. */
 export function googleFontsHref(type: Typography): string {
   const families = [clean(type.heading), clean(type.body)].filter(Boolean);
@@ -115,6 +160,7 @@ export function googleFontsHref(type: Typography): string {
     .join("&");
   return `https://fonts.googleapis.com/css2?${query}&display=swap`;
 }
+
 
 /** Curated list offered in the studio (any Google Font name also works). */
 export const FONT_CHOICES = [

@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_fonts: {
+        Row: {
+          css_url: string
+          family: string
+          id: string
+          sort_order: number
+          source: string
+          styles: string[]
+          updated_at: string
+          weights: string[]
+        }
+        Insert: {
+          css_url?: string
+          family: string
+          id?: string
+          sort_order?: number
+          source?: string
+          styles?: string[]
+          updated_at?: string
+          weights?: string[]
+        }
+        Update: {
+          css_url?: string
+          family?: string
+          id?: string
+          sort_order?: number
+          source?: string
+          styles?: string[]
+          updated_at?: string
+          weights?: string[]
+        }
+        Relationships: []
+      }
       edit_samples: {
         Row: {
           id: string
