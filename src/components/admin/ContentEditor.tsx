@@ -910,6 +910,21 @@ function BulkUploader({
                     onChange={(v) => patch(s.id, { [f.key]: v })}
                   />
                 ))}
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={s.indexable}
+                    onChange={(e) =>
+                      setStaged((prev) =>
+                        prev.map((x) =>
+                          x.id === s.id ? { ...x, indexable: e.target.checked } : x,
+                        ),
+                      )
+                    }
+                    className="size-3 accent-current"
+                  />
+                  Show in Google / search
+                </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
                 {s.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : null}
