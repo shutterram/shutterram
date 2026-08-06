@@ -77,6 +77,7 @@ type Filter = "all" | CategorySlug;
 function Home() {
   const featured = useMemo(() => featuredIds.map(photoById).filter((p) => p !== undefined), []);
   const [filter, setFilter] = useState<Filter>("all");
+  const [cols, setCols] = useColumnView();
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
   const [mobileCount, setMobileCount] = useState(4);
