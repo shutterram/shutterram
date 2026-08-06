@@ -198,6 +198,7 @@ export type Database = {
           featured: boolean
           featured_order: number
           id: string
+          in_gallery: boolean
           photo_key: string
           sort_order: number
           src: string
@@ -209,6 +210,7 @@ export type Database = {
           featured?: boolean
           featured_order?: number
           id?: string
+          in_gallery?: boolean
           photo_key: string
           sort_order?: number
           src: string
@@ -220,6 +222,7 @@ export type Database = {
           featured?: boolean
           featured_order?: number
           id?: string
+          in_gallery?: boolean
           photo_key?: string
           sort_order?: number
           src?: string
