@@ -9,6 +9,7 @@ import { ReviewModeration } from "@/components/admin/ReviewModeration";
 import { SeoPageSync } from "@/components/admin/SeoPageSync";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
+import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -341,6 +342,13 @@ const SECTIONS = [
       },
     ] satisfies FieldSpec[],
   },
+  {
+    id: "audit",
+    label: "Image visibility",
+    kind: "audit" as const,
+    table: "photos",
+    fields: [] satisfies FieldSpec[],
+  },
 ];
 
 function AdminPage() {
@@ -428,7 +436,9 @@ function AdminPage() {
       </nav>
 
       <div className="mt-12">
-        {section.kind === "theme" ? (
+        {section.kind === "audit" ? (
+          <VisibilityAudit />
+        ) : section.kind === "theme" ? (
           <ThemeStudio />
         ) : section.kind === "type" ? (
           <TypographyStudio />
