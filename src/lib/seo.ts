@@ -1,6 +1,6 @@
 import type { SeoRow } from "./seo.server";
 
-export const SITE_URL = "https://shutterram.lovable.app";
+export const SITE_URL = "https://shutterram.com";
 
 export type SeoFallback = {
   path: string;
