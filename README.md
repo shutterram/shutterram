@@ -141,11 +141,12 @@ Press **Refresh site** after saving to reload public pages with the new content.
 | **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
-| **Colours** | Every colour token, separately for dark and light mode, with opacity sliders |
+| **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
+| **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text |
 | **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
-| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots |
+| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
 | **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
-| **Hero categories** | Slug, title, label, tagline, hero image per category |
+| **Hero categories** | Slug, title, label, tagline, hero image and **category cover image** per category |
 | **Photos** | Caption, category, image, featured flag + position, internal key |
 | **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
 | **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
@@ -158,6 +159,38 @@ Press **Refresh site** after saving to reload public pages with the new content.
 
 Every list supports add, edit, reorder (↑ ↓) and delete. **New entries — single or bulk — are
 inserted at the top of the list**, right under the Add controls, so you never scroll to fill them in.
+
+### Saving your edits
+Long tabs (Fonts, Colours, Wording, Photos…) never make you hunt for the Save button: as soon as any
+field changes, a **floating save bar** appears pinned to the bottom of the viewport
+(`src/components/admin/FloatingSaveBar.tsx`, rendered through a React portal onto `document.body` so
+no transformed parent can trap it). Click **Save changes** from wherever you are on the page. The
+static button at the bottom of each tab still works and does the same thing.
+
+### Colours tab safety net
+Every token row has three icon buttons on the right:
+
+| Button | Effect |
+| --- | --- |
+| ↶ Undo | Step back through your changes to that single token (per-token history, unlimited depth for the session) |
+| ↷ Redo | Step forward again |
+| ⟲ Reset | Restore that token's shipped default (`default_dark_*` / `default_light_*` columns) |
+
+**Reset all** at the top restores every token's default in one action — and is itself undoable per
+token. History lives in memory only, so it clears on reload; **Save** is what makes changes
+permanent. Colour edits apply to the public site after a reload.
+
+The mobile navigation drawer uses its **own** `nav-surface` token, deliberately decoupled from the
+page background so you can tune the hero fade without turning the mobile menu transparent.
+
+### Fonts tab
+Typography is stored in `type_tokens` and rendered into CSS variables by `src/lib/type-css.ts`.
+Each row targets one **section** of the site (hero headline, section heading, body copy, eyebrow,
+buttons, footer, …) and each row exposes **three device columns** — desktop, tablet, mobile — so a
+headline can be 72px on desktop and 34px on mobile without touching code. Each row shows a real
+sample of the text it controls, so you can tune it visually. Google Fonts named here are loaded
+automatically (`googleFontsHref`), so picking a new family needs no code change.
+
 
 ### Page sections
 Each row is one section of one page (`Home — Featured work`, `About page — The Experience`, …):
