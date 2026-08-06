@@ -68,7 +68,7 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 hidden justify-end md:flex">
+      <div className="mt-10 flex justify-end">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
 
