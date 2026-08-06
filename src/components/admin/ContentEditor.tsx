@@ -338,6 +338,7 @@ export function SingletonEditor({
 }) {
   const [row, setRow] = useState<Row | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     void supabase
@@ -359,7 +360,10 @@ export function SingletonEditor({
       .upsert({ ...(row as object), id: true } as never);
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Saved");
+    else {
+      setDirty(false);
+      toast.success("Saved");
+    }
   }
 
   return (
@@ -371,14 +375,19 @@ export function SingletonEditor({
             key={f.key}
             spec={f}
             value={row[f.key]}
-            onChange={(v) => setRow({ ...row, [f.key]: v })}
+            onChange={(v) => {
+              setRow({ ...row, [f.key]: v });
+              setDirty(true);
+            }}
           />
         ))}
       </div>
       <SaveButton onClick={() => void save()} saving={saving} />
+      {dirty ? <FloatingSave onClick={() => void save()} saving={saving} /> : null}
     </div>
   );
 }
+
 
 /** Editor for a list table: add, edit, reorder and delete rows. */
 export function ListEditor({
