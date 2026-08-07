@@ -191,6 +191,25 @@ export function AnalyticsDashboard() {
               </div>
             </div>
           </section>
+
+          <section>
+            <p className="eyebrow">Share links</p>
+            <div className="mt-4 divide-y divide-hairline border-y border-hairline text-sm">
+              {data.shareLinks.map((l) => (
+                <div key={l.token} className="flex items-center justify-between gap-4 py-3">
+                  <span className="truncate">{l.label}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {l.views} views · {l.visitors} visitors
+                  </span>
+                </div>
+              ))}
+              {data.shareLinks.length === 0 ? (
+                <p className="py-3 text-muted-foreground">
+                  No visits through a share link yet in this period.
+                </p>
+              ) : null}
+            </div>
+          </section>
         </>
       )}
     </div>
