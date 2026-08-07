@@ -50,6 +50,37 @@ const tooltipStyle = {
   fontSize: 12,
 } as const;
 
+/** Small search box used above every breakdown. */
+function FilterBox({
+  value,
+  onChange,
+  placeholder = "Filter…",
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="mt-2 w-full max-w-xs border-b border-hairline bg-transparent py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+    />
+  );
+}
+
+/** Formats a number of seconds as "3m 20s". */
+function duration(seconds: number): string {
+  if (!seconds) return "0s";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 /** A ranked breakdown with a proportional bar behind each row. */
 function SliceList({
   title,
@@ -60,11 +91,16 @@ function SliceList({
   rows: { key: string; views: number; visitors: number }[];
   limit?: number;
 }) {
-  const top = rows.slice(0, limit);
+  const [query, setQuery] = useState("");
+  const filtered = query
+    ? rows.filter((r) => r.key.toLowerCase().includes(query.toLowerCase()))
+    : rows;
+  const top = filtered.slice(0, query ? 50 : limit);
   const max = top[0]?.views ?? 1;
   return (
     <div>
       <p className="eyebrow">{title}</p>
+      <FilterBox value={query} onChange={setQuery} placeholder={`Filter ${title.toLowerCase()}…`} />
       <div className="mt-4 space-y-2 text-sm">
         {top.map((r) => (
           <div key={r.key} className="relative border border-hairline px-3 py-2">
@@ -81,7 +117,9 @@ function SliceList({
             </span>
           </div>
         ))}
-        {top.length === 0 ? <p className="text-muted-foreground">Nothing yet.</p> : null}
+        {top.length === 0 ? (
+          <p className="text-muted-foreground">{query ? "No matches." : "Nothing yet."}</p>
+        ) : null}
       </div>
     </div>
   );
@@ -93,6 +131,10 @@ export function AnalyticsDashboard() {
   const [range, setRange] = useState<Range>("month");
   const [data, setData] = useState<AnalyticsPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pageQuery, setPageQuery] = useState("");
+  const [refQuery, setRefQuery] = useState("");
+  const [linkQuery, setLinkQuery] = useState("");
+  const [deviceQuery, setDeviceQuery] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -163,6 +205,16 @@ export function AnalyticsDashboard() {
             <Metric value={data.viewsPerVisitor} label="Views per visitor" />
             <Metric value={data.countries.length} label="Countries" />
             <Metric value={data.botViews} label="Bot / preview views" />
+            <Metric
+              value={duration(data.avgSecondsPerVisit)}
+              label="Avg. time on page"
+              hint="How long a visitor stays on a page before leaving or moving on."
+            />
+            <Metric
+              value={duration(data.avgSecondsPerVisitor)}
+              label="Avg. time per visitor"
+            />
+            <Metric value={duration(data.totalSeconds)} label="Total time on site" />
           </div>
 
           <section>
@@ -227,8 +279,11 @@ export function AnalyticsDashboard() {
 
           <section>
             <p className="eyebrow">Devices</p>
+            <FilterBox value={deviceQuery} onChange={setDeviceQuery} placeholder="Filter devices…" />
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              {data.devices.map((d) => (
+              {data.devices
+                .filter((d) => d.device.toLowerCase().includes(deviceQuery.toLowerCase()))
+                .map((d) => (
                 <div key={d.device} className="border border-hairline p-5">
                   <p className="font-display text-2xl capitalize leading-none">{d.device}</p>
                   <p className="mt-3 text-sm text-muted-foreground">
@@ -314,8 +369,11 @@ export function AnalyticsDashboard() {
           <section className="grid gap-10 md:grid-cols-2">
             <div>
               <p className="eyebrow">Every page</p>
+              <FilterBox value={pageQuery} onChange={setPageQuery} placeholder="Filter pages…" />
               <div className="mt-4 divide-y divide-hairline border-y border-hairline text-sm">
-                {data.pages.map((p) => (
+                {data.pages
+                  .filter((p) => p.path.toLowerCase().includes(pageQuery.toLowerCase()))
+                  .map((p) => (
                   <div key={p.path} className="flex items-center justify-between gap-4 py-3">
                     <span className="truncate">{p.path}</span>
                     <span className="shrink-0 text-muted-foreground">
@@ -330,8 +388,11 @@ export function AnalyticsDashboard() {
             </div>
             <div>
               <p className="eyebrow">Where visitors came from</p>
+              <FilterBox value={refQuery} onChange={setRefQuery} placeholder="Filter sources…" />
               <div className="mt-4 divide-y divide-hairline border-y border-hairline text-sm">
-                {data.referrers.map((r) => (
+                {data.referrers
+                  .filter((r) => r.source.toLowerCase().includes(refQuery.toLowerCase()))
+                  .map((r) => (
                   <div key={r.source} className="flex items-center justify-between gap-4 py-3">
                     <span className="truncate">{r.source}</span>
                     <span className="shrink-0 text-muted-foreground">{r.views} views</span>
@@ -346,8 +407,13 @@ export function AnalyticsDashboard() {
 
           <section>
             <p className="eyebrow">Share links</p>
+            <FilterBox value={linkQuery} onChange={setLinkQuery} placeholder="Filter links…" />
             <div className="mt-4 divide-y divide-hairline border-y border-hairline text-sm">
-              {data.shareLinks.map((l) => (
+              {data.shareLinks
+                .filter((l) =>
+                  `${l.label} ${l.url}`.toLowerCase().includes(linkQuery.toLowerCase()),
+                )
+                .map((l) => (
                 <div key={l.token} className="flex items-start justify-between gap-4 py-3">
                   <span className="min-w-0">
                     <span className="block truncate">{l.label}</span>
