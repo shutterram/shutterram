@@ -16,12 +16,22 @@ export interface AnalyticsPage {
   visitors: number;
 }
 
+export interface AnalyticsShareLink {
+  token: string;
+  label: string;
+  views: number;
+  visitors: number;
+}
+
 export interface AnalyticsPayload {
   totalViews: number;
   totalVisitors: number;
+  newVisitors: number;
+  returningVisitors: number;
   buckets: AnalyticsBucket[];
   pages: AnalyticsPage[];
   referrers: { source: string; views: number }[];
+  shareLinks: AnalyticsShareLink[];
 }
 
 /** Publishable-key client for the anonymous insert. */
@@ -45,11 +55,18 @@ function publicClient() {
 
 /** Records one page view. Anonymous, no personal data — just path + a random id. */
 export const trackPageView = createServerFn({ method: "POST" })
-  .inputValidator((input: { path?: string; visitorId?: string; referrer?: string } | undefined) => ({
-    path: String(input?.path ?? "/").slice(0, 200),
-    visitorId: String(input?.visitorId ?? "").slice(0, 64),
-    referrer: String(input?.referrer ?? "").slice(0, 200),
-  }))
+  .inputValidator(
+    (
+      input:
+        | { path?: string; visitorId?: string; referrer?: string; shareToken?: string }
+        | undefined,
+    ) => ({
+      path: String(input?.path ?? "/").slice(0, 200),
+      visitorId: String(input?.visitorId ?? "").slice(0, 64),
+      referrer: String(input?.referrer ?? "").slice(0, 200),
+      shareToken: String(input?.shareToken ?? "").slice(0, 64),
+    }),
+  )
   .handler(async ({ data }) => {
     if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true };
     if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
@@ -61,6 +78,7 @@ export const trackPageView = createServerFn({ method: "POST" })
         path: data.path,
         visitor_id: data.visitorId,
         referrer: data.referrer,
+        share_token: data.shareToken,
       } as never);
     if (error) console.error("[analytics] insert failed", error.message);
     return { ok: !error };
@@ -86,23 +104,41 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await context.supabase
       .from("page_views")
-      .select("path,visitor_id,referrer,created_at")
+      .select("path,visitor_id,referrer,created_at,share_token")
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: true })
       .limit(50000);
     if (error) throw new Error(error.message);
 
+    // Visitors already seen before this window count as returning.
+    const { data: earlier } = await context.supabase
+      .from("page_views")
+      .select("visitor_id")
+      .lt("created_at", since.toISOString())
+      .limit(50000);
+    const priorVisitors = new Set((earlier ?? []).map((r) => String(r.visitor_id || "")));
+
+    const { data: linkRows } = await context.supabase
+      .from("share_links")
+      .select("token,label");
+    const linkLabels = new Map(
+      (linkRows ?? []).map((r) => [String(r.token), String(r.label || "Untitled link")]),
+    );
+
     const monthly = data.range !== "month";
     const buckets = new Map<string, { views: number; visitors: Set<string> }>();
     const pages = new Map<string, { views: number; visitors: Set<string> }>();
     const referrers = new Map<string, number>();
+    const links = new Map<string, { views: number; visitors: Set<string> }>();
     const allVisitors = new Set<string>();
+    const visitorViews = new Map<string, number>();
 
     for (const row of rows ?? []) {
       const iso = String(row.created_at);
       const period = monthly ? iso.slice(0, 7) : iso.slice(0, 10);
       const visitor = String(row.visitor_id || iso);
       allVisitors.add(visitor);
+      visitorViews.set(visitor, (visitorViews.get(visitor) ?? 0) + 1);
 
       const b = buckets.get(period) ?? { views: 0, visitors: new Set<string>() };
       b.views += 1;
@@ -114,6 +150,14 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       p.views += 1;
       p.visitors.add(visitor);
       pages.set(path, p);
+
+      const token = String((row as { share_token?: string }).share_token || "");
+      if (token) {
+        const l = links.get(token) ?? { views: 0, visitors: new Set<string>() };
+        l.views += 1;
+        l.visitors.add(visitor);
+        links.set(token, l);
+      }
 
       const ref = String(row.referrer || "");
       let source = "Direct";
@@ -127,9 +171,16 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       referrers.set(source, (referrers.get(source) ?? 0) + 1);
     }
 
+    let returningVisitors = 0;
+    for (const visitor of allVisitors) {
+      if (priorVisitors.has(visitor) || (visitorViews.get(visitor) ?? 0) > 1) returningVisitors += 1;
+    }
+
     return {
       totalViews: rows?.length ?? 0,
       totalVisitors: allVisitors.size,
+      newVisitors: allVisitors.size - returningVisitors,
+      returningVisitors,
       buckets: [...buckets.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([period, v]) => ({ period, views: v.views, visitors: v.visitors.size })),
@@ -140,5 +191,13 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
         .map(([source, views]) => ({ source, views }))
         .sort((a, b) => b.views - a.views)
         .slice(0, 8),
+      shareLinks: [...links.entries()]
+        .map(([token, v]) => ({
+          token,
+          label: linkLabels.get(token) ?? "Revoked link",
+          views: v.views,
+          visitors: v.visitors.size,
+        }))
+        .sort((a, b) => b.views - a.views),
     };
   });
