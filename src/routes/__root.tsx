@@ -166,7 +166,8 @@ function RootComponent() {
     // and are not real audience traffic. Keeping analytics production-only
     // prevents socket disconnects from surfacing as blank-screen SSR failures
     // while also keeping the studio's visitor totals accurate.
-    if (import.meta.env.DEV) return;
+    const analyticsHosts = new Set(["shutterram.lovable.app", "www.shutterram.lovable.app"]);
+    if (import.meta.env.DEV || !analyticsHosts.has(window.location.hostname)) return;
     if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
     let id = "";
     try {
