@@ -38,6 +38,9 @@ export interface AnalyticsPayload {
   newVisitors: number;
   returningVisitors: number;
   viewsPerVisitor: number;
+  totalSeconds: number;
+  avgSecondsPerVisit: number;
+  avgSecondsPerVisitor: number;
   buckets: AnalyticsBucket[];
   pages: AnalyticsPage[];
   referrers: { source: string; views: number }[];
@@ -137,7 +140,7 @@ export const trackPageView = createServerFn({ method: "POST" })
     }
 
     const agent = data.userAgent || headerAgent;
-    const { error } = await publicClient()
+    const { data: inserted, error } = await publicClient()
       .from("page_views" as never)
       .insert({
         path: data.path,
@@ -154,8 +157,28 @@ export const trackPageView = createServerFn({ method: "POST" })
         timezone: data.timezone,
         screen_size: data.screenSize,
         is_bot: BOT_RE.test(agent),
-      } as never);
+      } as never)
+      .select("id")
+      .single();
     if (error) console.error("[analytics] insert failed", error.message);
+    return { ok: !error, id: (inserted as { id?: string } | null)?.id ?? "" };
+  });
+
+/** Records how long a visit lasted. Fire-and-forget when the page is closed. */
+export const recordViewDuration = createServerFn({ method: "POST" })
+  .inputValidator((input: { id?: string; seconds?: number } | undefined) => ({
+    id: String(input?.id ?? "").slice(0, 64),
+    seconds: Math.max(0, Math.min(7200, Math.round(Number(input?.seconds ?? 0)))),
+  }))
+  .handler(async ({ data }) => {
+    if (!data.id || data.seconds <= 0) return { ok: false };
+    if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
+      return { ok: false };
+    }
+    const { error } = await publicClient().rpc("record_view_duration" as never, {
+      _id: data.id,
+      _seconds: data.seconds,
+    } as never);
     return { ok: !error };
   });
 
@@ -186,6 +209,26 @@ function osOf(ua: string): string {
   return "Other";
 }
 
+/** Turns an ISO country code into a readable name ("SE" -> "Sweden"). */
+let regionNames: Intl.DisplayNames | null | undefined;
+function countryName(code: string): string {
+  const raw = code.trim().toUpperCase();
+  if (!raw) return "Unknown";
+  if (raw.length !== 2) return code;
+  if (regionNames === undefined) {
+    try {
+      regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+    } catch {
+      regionNames = null;
+    }
+  }
+  try {
+    return regionNames?.of(raw) ?? raw;
+  } catch {
+    return raw;
+  }
+}
+
 const RANGE_HOURS: Record<string, number> = {
   "5h": 5,
   "24h": 24,
@@ -214,7 +257,7 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
     const { data: rows, error } = await context.supabase
       .from("page_views")
       .select(
-        "path,visitor_id,referrer,created_at,share_token,device_type,country,region,city,browser,os,language,timezone,screen_size,is_bot",
+        "path,visitor_id,referrer,created_at,share_token,device_type,country,region,city,browser,os,language,timezone,screen_size,is_bot,duration_seconds",
       )
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: true })
@@ -279,6 +322,7 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
     };
     const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     let botViews = 0;
+    let totalSeconds = 0;
 
     for (const row of rows ?? []) {
       const iso = String(row.created_at);
@@ -318,7 +362,9 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
 
       const r = row as Record<string, unknown>;
       if (r["is_bot"] === true) botViews += 1;
-      addSlice("countries", String(r["country"] || "") || "Unknown", visitor);
+      const seconds = Number(r["duration_seconds"] ?? 0) || 0;
+      totalSeconds += seconds;
+      addSlice("countries", countryName(String(r["country"] || "")), visitor);
       addSlice("regions", String(r["region"] || "") || "Unknown", visitor);
       addSlice("cities", String(r["city"] || "") || "Unknown", visitor);
       addSlice("browsers", String(r["browser"] || "") || "Unknown", visitor);
@@ -359,6 +405,9 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       newVisitors: allVisitors.size - returningVisitors,
       returningVisitors,
       viewsPerVisitor: allVisitors.size ? Number((totalViews / allVisitors.size).toFixed(1)) : 0,
+      totalSeconds,
+      avgSecondsPerVisit: totalViews ? Math.round(totalSeconds / totalViews) : 0,
+      avgSecondsPerVisitor: allVisitors.size ? Math.round(totalSeconds / allVisitors.size) : 0,
       buckets: [...buckets.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([period, v]) => ({ period, views: v.views, visitors: v.visitors.size })),
