@@ -162,6 +162,11 @@ function RootComponent() {
   // Anonymous visit counter for the studio statistics dashboard.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Development/preview reloads are frequent, abort in-flight RPC requests,
+    // and are not real audience traffic. Keeping analytics production-only
+    // prevents socket disconnects from surfacing as blank-screen SSR failures
+    // while also keeping the studio's visitor totals accurate.
+    if (import.meta.env.DEV) return;
     if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
     let id = "";
     try {
