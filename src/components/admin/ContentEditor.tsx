@@ -237,12 +237,18 @@ export function CategoryField({
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    // Ask up front whether this category should also become a home page hero
+    // slide — some categories belong in the gallery only.
+    const showInHero = confirm(
+      `Show “${name}” as a slide in the home page hero slider?\n\nOK = yes, show it on the home page.\nCancel = gallery and featured work only.`,
+    );
     const { error } = await supabase.from("categories" as never).insert({
       slug,
       title: `${name} Photography`,
       label: name,
       tagline: "",
       hero: "",
+      show_in_hero: showInHero,
       sort_order: cats.length,
     } as never);
     if (error) {
@@ -251,7 +257,12 @@ export function CategoryField({
     }
     await load();
     onChange(slug);
-    toast.success("Category added — add its hero image under “Hero categories”.");
+    toast.success(
+      showInHero
+        ? "Category added — add its hero image under “Hero categories”."
+        : "Category added (gallery only) — it won't appear in the home hero.",
+    );
+
   }
 
   async function removeCategory() {
