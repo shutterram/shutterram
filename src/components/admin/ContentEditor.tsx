@@ -4,7 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import { optimiseImage, kb } from "@/lib/optimise-image";
-import { getImageIndexable, imageKeyOf, setImageIndexable } from "@/lib/image-index";
+import {
+  defaultImageFlags,
+  getImageFlags,
+  imageKeyOf,
+  setImageFlags,
+  type ImageFlags,
+} from "@/lib/image-index";
 
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
