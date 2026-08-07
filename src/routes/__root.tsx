@@ -173,8 +173,14 @@ function RootComponent() {
     } catch {
       id = "anonymous";
     }
+    let shareToken = "";
+    try {
+      shareToken = new URLSearchParams(window.location.search).get("k") ?? "";
+    } catch {
+      shareToken = "";
+    }
     void trackPageView({
-      data: { path: pathname, visitorId: id, referrer: document.referrer },
+      data: { path: pathname, visitorId: id, referrer: document.referrer, shareToken },
     }).catch(() => undefined);
   }, [pathname]);
 
