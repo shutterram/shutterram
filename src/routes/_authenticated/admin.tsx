@@ -269,11 +269,6 @@ const SECTIONS = [
       { key: "src", label: "Photo", type: "image" },
       { key: "featured", label: "Show in Featured Work", type: "bool" },
       { key: "in_gallery", label: "Show on main gallery page", type: "bool" },
-      {
-        key: "is_private",
-        label: "Private (hidden on the site unless opened through a share link)",
-        type: "bool",
-      },
       { key: "featured_order", label: "Featured position", type: "number" },
       { key: "photo_key", label: "Internal key" },
     ] satisfies FieldSpec[],
