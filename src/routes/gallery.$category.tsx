@@ -10,8 +10,7 @@ import {
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, invertClass, photosByCategory, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead } from "@/lib/seo";
+import { buildSeoHead, loadSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/$category")({
   loader: async ({ params }) => {

@@ -52,3 +52,16 @@ export function buildSeoHead(row: SeoRow | null | undefined, fallback: SeoFallba
 
   return { meta, links: [{ rel: "canonical", href: canonical }] };
 }
+
+/**
+ * Loads the studio SEO row without ever failing the route: a network hiccup or
+ * offline preview should fall back to the built-in defaults, not a blank screen.
+ */
+export async function loadSeo(path: string): Promise<SeoRow | null> {
+  const { getSeo } = await import("./seo.functions");
+  try {
+    return (await getSeo({ data: { path } })) ?? null;
+  } catch {
+    return null;
+  }
+}
