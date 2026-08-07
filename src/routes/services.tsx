@@ -4,11 +4,10 @@ import { sectionFor, services, t } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead } from "@/lib/seo";
+import { buildSeoHead, loadSeo } from "@/lib/seo";
 
 export const Route = createFileRoute("/services")({
-  loader: () => getSeo({ data: { path: "/services" } }),
+  loader: () => loadSeo("/services"),
   head: ({ loaderData }) => ({
     ...buildSeoHead(loaderData, {
       path: "/services",
