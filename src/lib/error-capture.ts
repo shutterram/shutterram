@@ -53,7 +53,7 @@ function isErrorLike(value: unknown): value is Error {
 // then emits `Error: aborted` from abortIncoming. That is normal client
 // behaviour, not an application failure, so it must never be recorded or
 // logged as one.
-function isClientAbort(value: unknown): boolean {
+export function isClientAbort(value: unknown): boolean {
   let current: unknown = value;
   for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
     if (current instanceof Error) {
