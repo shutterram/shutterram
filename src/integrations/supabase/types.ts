@@ -937,6 +937,7 @@ export type Database = {
           scope: string
         }[]
       }
+      share_link_og_image: { Args: { _token: string }; Returns: string }
     }
     Enums: {
       app_role: "admin"
