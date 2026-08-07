@@ -191,13 +191,29 @@ function RootComponent() {
     let viewId = "";
     const startedAt = Date.now();
     let sent = false;
-    const flush = () => {
+    const flush = (viaBeacon: boolean) => {
       if (sent || !viewId) return;
       sent = true;
       const seconds = Math.round((Date.now() - startedAt) / 1000);
       if (seconds <= 0) return;
-      void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
+      const payload = { id: viewId, seconds };
+      // On unload a normal fetch is torn down with the page, which surfaces as
+      // an "aborted" socket error. sendBeacon survives the unload cleanly.
+      const url = (recordViewDuration as unknown as { url?: string }).url;
+      if (viaBeacon && url && typeof navigator.sendBeacon === "function") {
+        try {
+          navigator.sendBeacon(
+            url,
+            new Blob([JSON.stringify({ data: payload })], { type: "application/json" }),
+          );
+          return;
+        } catch {
+          /* fall through to fetch */
+        }
+      }
+      void recordViewDuration({ data: payload }).catch(() => undefined);
     };
+
     void trackPageView({
       data: {
         path: pathname,
