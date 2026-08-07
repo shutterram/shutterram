@@ -13,6 +13,8 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
+import { GridDefaultsStudio } from "@/components/admin/GridDefaultsStudio";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -54,96 +56,6 @@ const SECTIONS = [
       { key: "about_image", label: "About page — photographer photo", type: "image" },
 
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
-      {
-        key: "grid_home_desktop",
-        label: "Home — featured work — default columns on desktop",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_home_tablet",
-        label: "Home — featured work — default columns on tablet",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_home_mobile",
-        label: "Home — featured work — default columns on mobile",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_gallery_desktop",
-        label: "Gallery — all work — default columns on desktop",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_gallery_tablet",
-        label: "Gallery — all work — default columns on tablet",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_gallery_mobile",
-        label: "Gallery — all work — default columns on mobile",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_category_desktop",
-        label: "Category pages — default columns on desktop",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_category_tablet",
-        label: "Category pages — default columns on tablet",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
-      {
-        key: "grid_category_mobile",
-        label: "Category pages — default columns on mobile",
-        type: "select",
-        options: [
-          { value: "1", label: "1 column" },
-          { value: "2", label: "2 columns" },
-          { value: "3", label: "3 columns" },
-        ],
-      },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
       { key: "hour_options", label: "Quote form: hours options", type: "list" },
       {
@@ -210,6 +122,20 @@ const SECTIONS = [
         placeholder: "Formspree / Basin / Getform URL",
       },
     ] satisfies FieldSpec[],
+  },
+  {
+    id: "grids",
+    label: "Grid defaults",
+    kind: "grids" as const,
+    table: "settings",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "analytics",
+    label: "Statistics",
+    kind: "analytics" as const,
+    table: "page_views",
+    fields: [] satisfies FieldSpec[],
   },
   {
     id: "logos",
@@ -542,7 +468,11 @@ function AdminPage() {
       </nav>
 
       <div className="mt-12">
-        {section.kind === "audit" ? (
+        {section.kind === "grids" ? (
+          <GridDefaultsStudio />
+        ) : section.kind === "analytics" ? (
+          <AnalyticsDashboard />
+        ) : section.kind === "audit" ? (
           <VisibilityAudit />
         ) : section.kind === "theme" ? (
           <ThemeStudio />
