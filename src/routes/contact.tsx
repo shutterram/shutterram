@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { budgetRanges, hourOptions, services, site, t } from "@/data/portfolio";
 import { submitForm } from "@/lib/submit-form";
 import { cn } from "@/lib/utils";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 type FormKind = "message" | "quote";
 type ContactSearch = { service?: string; form?: FormKind };
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/contact")({
     if (search["form"] === "quote" || search["form"] === "message") out.form = search["form"];
     return out;
   },
-  loader: () => getSeo({ data: { path: "/contact" } }),
+  loader: ({ location }) => loadSeo("/contact", tokenOf(location.search)),
   head: ({ loaderData }) =>
     buildSeoHead(loaderData, {
       path: "/contact",

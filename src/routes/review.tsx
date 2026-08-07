@@ -12,11 +12,10 @@ import { optimiseImage } from "@/lib/optimise-image";
 import { submitReview } from "@/lib/submit-review.functions";
 
 import { cn } from "@/lib/utils";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/review")({
-  loader: () => getSeo({ data: { path: "/review" } }),
+  loader: ({ location }) => loadSeo("/review", tokenOf(location.search)),
   head: ({ loaderData }) =>
     buildSeoHead(loaderData, {
       path: "/review",

@@ -1,0 +1,11 @@
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS show_view_label boolean NOT NULL DEFAULT true;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS show_in_hero boolean NOT NULL DEFAULT true;
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS country text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS region text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS city text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS browser text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS os text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS timezone text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS screen_size text NOT NULL DEFAULT '';
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS is_bot boolean NOT NULL DEFAULT false;

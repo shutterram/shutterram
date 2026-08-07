@@ -41,6 +41,7 @@ export type Database = {
           hero: string
           id: string
           label: string
+          show_in_hero: boolean
           slug: string
           sort_order: number
           tagline: string
@@ -52,6 +53,7 @@ export type Database = {
           hero?: string
           id?: string
           label: string
+          show_in_hero?: boolean
           slug: string
           sort_order?: number
           tagline?: string
@@ -63,6 +65,7 @@ export type Database = {
           hero?: string
           id?: string
           label?: string
+          show_in_hero?: boolean
           slug?: string
           sort_order?: number
           tagline?: string
@@ -167,16 +170,19 @@ export type Database = {
       image_settings: {
         Row: {
           indexable: boolean
+          is_private: boolean
           path: string
           updated_at: string
         }
         Insert: {
           indexable?: boolean
+          is_private?: boolean
           path: string
           updated_at?: string
         }
         Update: {
           indexable?: boolean
+          is_private?: boolean
           path?: string
           updated_at?: string
         }
@@ -221,6 +227,66 @@ export type Database = {
           section_key?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      page_views: {
+        Row: {
+          browser: string
+          city: string
+          country: string
+          created_at: string
+          device_type: string
+          duration_seconds: number
+          id: string
+          is_bot: boolean
+          language: string
+          os: string
+          path: string
+          referrer: string
+          region: string
+          screen_size: string
+          share_token: string
+          timezone: string
+          visitor_id: string
+        }
+        Insert: {
+          browser?: string
+          city?: string
+          country?: string
+          created_at?: string
+          device_type?: string
+          duration_seconds?: number
+          id?: string
+          is_bot?: boolean
+          language?: string
+          os?: string
+          path: string
+          referrer?: string
+          region?: string
+          screen_size?: string
+          share_token?: string
+          timezone?: string
+          visitor_id?: string
+        }
+        Update: {
+          browser?: string
+          city?: string
+          country?: string
+          created_at?: string
+          device_type?: string
+          duration_seconds?: number
+          id?: string
+          is_bot?: boolean
+          language?: string
+          os?: string
+          path?: string
+          referrer?: string
+          region?: string
+          screen_size?: string
+          share_token?: string
+          timezone?: string
+          visitor_id?: string
         }
         Relationships: []
       }
@@ -385,6 +451,7 @@ export type Database = {
       }
       settings: {
         Row: {
+          about_image: string
           about_long: string[]
           about_short: string
           budget_ranges: string[]
@@ -397,6 +464,15 @@ export type Database = {
           glow_blend: string
           glow_size: number
           glow_softness: number
+          grid_category_desktop: string
+          grid_category_mobile: string
+          grid_category_tablet: string
+          grid_gallery_desktop: string
+          grid_gallery_mobile: string
+          grid_gallery_tablet: string
+          grid_home_desktop: string
+          grid_home_mobile: string
+          grid_home_tablet: string
           hour_options: string[]
           id: boolean
           loader_fade: string
@@ -425,10 +501,12 @@ export type Database = {
           name: string
           og_image: string
           phone: string
+          show_view_label: boolean
           tagline: string
           updated_at: string
         }
         Insert: {
+          about_image?: string
           about_long?: string[]
           about_short?: string
           budget_ranges?: string[]
@@ -441,6 +519,15 @@ export type Database = {
           glow_blend?: string
           glow_size?: number
           glow_softness?: number
+          grid_category_desktop?: string
+          grid_category_mobile?: string
+          grid_category_tablet?: string
+          grid_gallery_desktop?: string
+          grid_gallery_mobile?: string
+          grid_gallery_tablet?: string
+          grid_home_desktop?: string
+          grid_home_mobile?: string
+          grid_home_tablet?: string
           hour_options?: string[]
           id?: boolean
           loader_fade?: string
@@ -469,10 +556,12 @@ export type Database = {
           name?: string
           og_image?: string
           phone?: string
+          show_view_label?: boolean
           tagline?: string
           updated_at?: string
         }
         Update: {
+          about_image?: string
           about_long?: string[]
           about_short?: string
           budget_ranges?: string[]
@@ -485,6 +574,15 @@ export type Database = {
           glow_blend?: string
           glow_size?: number
           glow_softness?: number
+          grid_category_desktop?: string
+          grid_category_mobile?: string
+          grid_category_tablet?: string
+          grid_gallery_desktop?: string
+          grid_gallery_mobile?: string
+          grid_gallery_tablet?: string
+          grid_home_desktop?: string
+          grid_home_mobile?: string
+          grid_home_tablet?: string
           hour_options?: string[]
           id?: boolean
           loader_fade?: string
@@ -513,7 +611,47 @@ export type Database = {
           name?: string
           og_image?: string
           phone?: string
+          show_view_label?: boolean
           tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      share_links: {
+        Row: {
+          category_slug: string
+          created_at: string
+          id: string
+          include_private: boolean
+          label: string
+          og_image: string
+          path: string
+          scope: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          category_slug?: string
+          created_at?: string
+          id?: string
+          include_private?: boolean
+          label?: string
+          og_image?: string
+          path?: string
+          scope?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string
+          id?: string
+          include_private?: boolean
+          label?: string
+          og_image?: string
+          path?: string
+          scope?: string
+          token?: string
           updated_at?: string
         }
         Relationships: []
@@ -643,6 +781,39 @@ export type Database = {
           sort_order?: number
           status?: string
           submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      text_inverts: {
+        Row: {
+          created_at: string
+          group_label: string
+          hint: string
+          inverted: boolean
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_label?: string
+          hint?: string
+          inverted?: boolean
+          key: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_label?: string
+          hint?: string
+          inverted?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
@@ -794,6 +965,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_view_duration: {
+        Args: { _id: string; _seconds: number }
+        Returns: undefined
+      }
+      resolve_share_link: {
+        Args: { _token: string }
+        Returns: {
+          category_slug: string
+          include_private: boolean
+          scope: string
+        }[]
+      }
+      share_link_og_image: { Args: { _token: string }; Returns: string }
     }
     Enums: {
       app_role: "admin"

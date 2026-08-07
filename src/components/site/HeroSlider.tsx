@@ -1,16 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { categories, site, t } from "@/data/portfolio";
+import { heroCategories, invertClass, site, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export function HeroSlider() {
+  const categories = heroCategories();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const go = useCallback((dir: number) => {
     setActive((i) => (i + dir + categories.length) % categories.length);
-  }, []);
+  }, [categories.length]);
 
   useEffect(() => {
     if (paused) return;
@@ -46,7 +47,7 @@ export function HeroSlider() {
       ))}
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
-        <div className="fade-up mb-8 flex flex-col items-center">
+        <div className={cn("fade-up mb-8 flex flex-col items-center", invertClass("hero.brand"))}>
           <span className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
             Shutter<span className="italic text-muted-foreground">Ram</span>
           </span>
@@ -57,17 +58,32 @@ export function HeroSlider() {
           </span>
         </div>
         <div key={active} className="fade-up max-w-3xl">
-          <p className="eyebrow">
+          <p className={cn("eyebrow", invertClass("hero.eyebrow"))}>
             {String(active + 1).padStart(2, "0")} — {categories[active]!.label}
           </p>
-          <h1 className="mt-5 font-display text-[clamp(1.75rem,4.5vw,3.25rem)] leading-[1.05]">
+          <h1
+            className={cn(
+              "mt-5 font-display text-[clamp(1.75rem,4.5vw,3.25rem)] leading-[1.05]",
+              invertClass("hero.title"),
+            )}
+          >
             {categories[active]!.title}
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+          <p
+            className={cn(
+              "mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base",
+              invertClass("hero.tagline"),
+            )}
+          >
             {categories[active]!.tagline}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <div
+            className={cn(
+              "mt-10 flex flex-wrap items-center justify-center gap-4",
+              invertClass("hero.buttons"),
+            )}
+          >
             <Link
               to="/gallery/$category"
               params={{ category: categories[active]!.slug }}

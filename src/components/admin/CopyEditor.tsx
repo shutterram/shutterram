@@ -40,9 +40,19 @@ export function CopyEditor() {
   async function save() {
     if (!rows) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("site_copy" as never)
-      .upsert(rows.map((r) => ({ id: r.id, value: r.value })) as never);
+    // Every column has to travel with the row: an upsert is an INSERT with an
+    // ON CONFLICT clause, so a partial payload trips the NOT NULL key column.
+    const { error } = await supabase.from("site_copy" as never).upsert(
+      rows.map((r) => ({
+        id: r.id,
+        key: r.key,
+        label: r.label,
+        group_label: r.group_label,
+        value: r.value,
+        sort_order: r.sort_order,
+      })) as never,
+      { onConflict: "id" },
+    );
     setSaving(false);
     if (error) toast.error(error.message);
     else toast.success("Wording saved");

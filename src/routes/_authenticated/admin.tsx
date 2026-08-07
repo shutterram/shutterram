@@ -7,9 +7,14 @@ import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
 import { SeoPageSync } from "@/components/admin/SeoPageSync";
+import { ShareLinks } from "@/components/admin/ShareLinks";
+import { TextContrastStudio } from "@/components/admin/TextContrastStudio";
+import { UserManagement } from "@/components/admin/UserManagement";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
+import { GridDefaultsStudio } from "@/components/admin/GridDefaultsStudio";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -33,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const SECTIONS = [
   {
     id: "site",
+    panel: "content",
     label: "Site & About",
     kind: "single" as const,
     table: "settings",
@@ -48,6 +54,7 @@ const SECTIONS = [
         type: "image",
       },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
+      { key: "about_image", label: "About page — photographer photo", type: "image" },
 
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
@@ -105,6 +112,7 @@ const SECTIONS = [
   },
   {
     id: "form-delivery",
+    panel: "forms",
     label: "Form delivery",
     kind: "single" as const,
     table: "admin_settings",
@@ -118,7 +126,24 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "grids",
+    panel: "content",
+    label: "Grid defaults",
+    kind: "grids" as const,
+    table: "settings",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "analytics",
+    panel: "stats",
+    label: "Statistics",
+    kind: "analytics" as const,
+    table: "page_views",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
     id: "logos",
+    panel: "content",
     label: "Logos",
     kind: "logos" as const,
     table: "settings",
@@ -126,6 +151,7 @@ const SECTIONS = [
   },
   {
     id: "colours",
+    panel: "content",
     label: "Colours",
     kind: "theme" as const,
     table: "theme_tokens",
@@ -133,6 +159,7 @@ const SECTIONS = [
   },
   {
     id: "fonts",
+    panel: "content",
     label: "Fonts",
     kind: "type" as const,
     table: "type_tokens",
@@ -140,6 +167,7 @@ const SECTIONS = [
   },
   {
     id: "copy",
+    panel: "content",
     label: "Wording",
     kind: "copy" as const,
     table: "site_copy",
@@ -147,6 +175,7 @@ const SECTIONS = [
   },
   {
     id: "seo",
+    panel: "seo",
     label: "SEO",
     kind: "list" as const,
     table: "seo_pages",
@@ -173,7 +202,32 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "contrast",
+    panel: "content",
+    label: "Text contrast",
+    kind: "contrast" as const,
+    table: "text_inverts",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "share",
+    panel: "links",
+    label: "Share links",
+    kind: "share" as const,
+    table: "share_links",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "users",
+    panel: "users",
+    label: "Users",
+    kind: "users" as const,
+    table: "user_roles",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
     id: "reviews",
+    panel: "reviews",
     label: "Client reviews",
     kind: "reviews" as const,
     table: "testimonials",
@@ -181,6 +235,7 @@ const SECTIONS = [
   },
   {
     id: "hero",
+    panel: "content",
     label: "Hero categories",
     kind: "list" as const,
     table: "categories",
@@ -193,10 +248,16 @@ const SECTIONS = [
       { key: "tagline", label: "Tagline", type: "textarea" },
       { key: "hero", label: "Hero image (home slider)", type: "image" },
       { key: "cover", label: "Category page cover (falls back to hero image)", type: "image" },
+      {
+        key: "show_in_hero",
+        label: "Show as a slide in the home page hero",
+        type: "bool",
+      },
     ] satisfies FieldSpec[],
   },
   {
     id: "photos",
+    panel: "gallery",
     label: "Photos",
     kind: "list" as const,
     table: "photos",
@@ -214,6 +275,7 @@ const SECTIONS = [
   },
   {
     id: "services",
+    panel: "content",
     label: "Services",
     kind: "list" as const,
     table: "services",
@@ -232,6 +294,7 @@ const SECTIONS = [
   },
   {
     id: "edits",
+    panel: "content",
     label: "Editing samples",
     kind: "list" as const,
     table: "edit_samples",
@@ -246,6 +309,7 @@ const SECTIONS = [
   },
   {
     id: "stats",
+    panel: "content",
     label: "Stats",
     kind: "list" as const,
     table: "stats",
@@ -257,21 +321,8 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
-    id: "experience",
-    label: "Experience",
-    kind: "list" as const,
-    table: "experience",
-    itemLabel: "entry",
-    titleKey: "role",
-    fields: [
-      { key: "period", label: "Period" },
-      { key: "role", label: "Role" },
-      { key: "place", label: "Place" },
-      { key: "detail", label: "Detail", type: "textarea" },
-    ] satisfies FieldSpec[],
-  },
-  {
     id: "testimonials",
+    panel: "reviews",
     label: "Testimonials",
     kind: "list" as const,
     table: "testimonials",
@@ -286,6 +337,7 @@ const SECTIONS = [
   },
   {
     id: "sections",
+    panel: "content",
     label: "Page sections",
     kind: "list" as const,
     table: "page_sections",
@@ -304,6 +356,7 @@ const SECTIONS = [
   },
   {
     id: "process",
+    panel: "content",
     label: "Process steps",
     kind: "list" as const,
     table: "process_steps",
@@ -326,6 +379,7 @@ const SECTIONS = [
   },
   {
     id: "socials",
+    panel: "content",
     label: "Social links",
     kind: "list" as const,
     table: "socials",
@@ -344,6 +398,7 @@ const SECTIONS = [
   },
   {
     id: "audit",
+    panel: "stats",
     label: "Image visibility",
     kind: "audit" as const,
     table: "photos",
@@ -351,7 +406,19 @@ const SECTIONS = [
   },
 ];
 
+const PANELS = [
+  { id: "content", label: "Content Studio", hint: "Wording, look and feel of every page" },
+  { id: "gallery", label: "Gallery Management", hint: "Photos, categories and privacy" },
+  { id: "links", label: "Link Generator", hint: "Shareable links with their own previews" },
+  { id: "users", label: "Admin & Users", hint: "Who can sign in to this studio" },
+  { id: "reviews", label: "Review Management", hint: "Client reviews and testimonials" },
+  { id: "seo", label: "SEO", hint: "Titles, descriptions and social previews" },
+  { id: "stats", label: "Statistics", hint: "Traffic, visitors and image visibility" },
+  { id: "forms", label: "Forms", hint: "Where enquiries are delivered" },
+] as const;
+
 function AdminPage() {
+  const [panel, setPanel] = useState<string>("content");
   const [active, setActive] = useState(SECTIONS[0]!.id);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const navigate = useNavigate();
@@ -374,7 +441,8 @@ function AdminPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const section = SECTIONS.find((s) => s.id === active)!;
+  const sectionsInPanel = SECTIONS.filter((s) => s.panel === panel);
+  const section = sectionsInPanel.find((s) => s.id === active) ?? sectionsInPanel[0]!;
 
   return (
     <div className="mx-auto max-w-6xl px-6 pb-28 pt-20">
@@ -419,24 +487,60 @@ function AdminPage() {
         </p>
       ) : null}
 
-      <nav className="mt-12 flex flex-wrap gap-x-6 gap-y-3 border-b border-hairline pb-4">
-        {SECTIONS.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setActive(s.id)}
-            className={
-              "text-[0.6875rem] tracking-[0.24em] uppercase transition-colors " +
-              (s.id === active ? "text-foreground" : "text-muted-foreground hover:text-foreground")
-            }
-          >
-            {s.label}
-          </button>
-        ))}
-      </nav>
+      <div className="mt-12 grid gap-10 lg:grid-cols-[15rem_1fr]">
+        <aside className="lg:sticky lg:top-8 lg:self-start">
+          <p className="eyebrow mb-4">Panels</p>
+          <div className="flex flex-wrap gap-2 lg:flex-col">
+            {PANELS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setPanel(p.id);
+                  const first = SECTIONS.find((s) => s.panel === p.id);
+                  if (first) setActive(first.id);
+                }}
+                className={
+                  "border px-4 py-3 text-left text-[0.6875rem] tracking-[0.18em] uppercase transition-colors " +
+                  (panel === p.id
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-hairline text-muted-foreground hover:border-foreground hover:text-foreground")
+                }
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-5 hidden text-xs leading-relaxed text-muted-foreground lg:block">
+            {PANELS.find((p) => p.id === panel)?.hint}
+          </p>
+        </aside>
+
+        <div className="min-w-0">
+          <nav className="flex flex-wrap gap-x-6 gap-y-3 border-b border-hairline pb-4">
+            {sectionsInPanel.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setActive(s.id)}
+                className={
+                  "text-[0.6875rem] tracking-[0.24em] uppercase transition-colors " +
+                  (s.id === active
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                {s.label}
+              </button>
+            ))}
+          </nav>
 
       <div className="mt-12">
-        {section.kind === "audit" ? (
+        {section.kind === "grids" ? (
+          <GridDefaultsStudio />
+        ) : section.kind === "analytics" ? (
+          <AnalyticsDashboard />
+        ) : section.kind === "audit" ? (
           <VisibilityAudit />
         ) : section.kind === "theme" ? (
           <ThemeStudio />
@@ -446,6 +550,12 @@ function AdminPage() {
           <LogoStudio />
         ) : section.kind === "copy" ? (
           <CopyEditor />
+        ) : section.kind === "contrast" ? (
+          <TextContrastStudio />
+        ) : section.kind === "share" ? (
+          <ShareLinks />
+        ) : section.kind === "users" ? (
+          <UserManagement />
         ) : section.kind === "reviews" ? (
           <ReviewModeration />
         ) : section.kind === "single" ? (
@@ -461,8 +571,8 @@ function AdminPage() {
             key={section.id}
             table={section.table}
             fields={section.fields}
-            itemLabel={section.itemLabel}
-            titleKey={section.titleKey}
+            itemLabel={(section as { itemLabel?: string }).itemLabel ?? "item"}
+            titleKey={(section as { titleKey?: string }).titleKey ?? "label"}
             allowAdd={(section as { allowAdd?: boolean }).allowAdd ?? true}
             note={(section as { note?: string }).note}
             columns={
@@ -473,7 +583,10 @@ function AdminPage() {
             />
           </>
         )}
+          </div>
+        </div>
       </div>
+
 
       <p className="mt-16 text-xs leading-relaxed text-muted-foreground">
         Changes are saved straight to your site. Use “Refresh site” (or reload a page) to see them

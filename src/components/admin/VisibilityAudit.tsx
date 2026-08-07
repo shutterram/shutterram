@@ -7,6 +7,7 @@ type Counts = { total: number; shown: number; hidden: number };
 type Audit = {
   internet: Counts;
   gallery: Counts;
+  privacy: Counts;
   bySource: { label: string; counts: Counts }[];
 };
 
@@ -19,7 +20,7 @@ export function VisibilityAudit() {
     void (async () => {
       try {
         const [flags, photos, categories, services, samples, settings, socials] = await Promise.all([
-          supabase.from("image_settings").select("path,indexable"),
+          supabase.from("image_settings").select("path,indexable,is_private"),
           supabase.from("photos").select("src,in_gallery"),
           supabase.from("categories").select("hero,cover"),
           supabase.from("services").select("image"),
@@ -27,6 +28,12 @@ export function VisibilityAudit() {
           supabase.from("settings").select("og_image,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon"),
           supabase.from("socials").select("icon_url"),
         ]);
+
+        const privateKeys = new Set(
+          (flags.data ?? [])
+            .filter((row) => (row as { is_private?: boolean }).is_private === true)
+            .map((row) => row.path),
+        );
 
         const hidden = new Set(
           (flags.data ?? [])
@@ -70,8 +77,23 @@ export function VisibilityAudit() {
         const galleryTotal = photoRows.length;
         const galleryShown = photoRows.filter((r) => r.in_gallery !== false).length;
 
+        const allKeys = new Set<string>();
+        for (const src of allSrcs) {
+          const key = src ? imageKeyOf(src) : null;
+          if (key) allKeys.add(key);
+        }
+        let privateCount = 0;
+        allKeys.forEach((key) => {
+          if (privateKeys.has(key)) privateCount += 1;
+        });
+
         setAudit({
           internet: count(allSrcs),
+          privacy: {
+            total: allKeys.size,
+            shown: allKeys.size - privateCount,
+            hidden: privateCount,
+          },
           gallery: {
             total: galleryTotal,
             shown: galleryShown,
@@ -93,10 +115,12 @@ export function VisibilityAudit() {
       <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
         A live count of what is publicly discoverable. Images hidden from the internet are still
         shown to visitors on your site, but they are kept out of the sitemap and served with
-        no-index headers, so search engines won’t surface them.
+        no-index headers, so search engines won’t surface them. Private images go a step further:
+        they never render on the site at all unless someone opens a share link you created with
+        “Show private images” ticked.
       </p>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           title="Show on internet"
           counts={audit.internet}
@@ -108,6 +132,12 @@ export function VisibilityAudit() {
           counts={audit.gallery}
           shownLabel="On /gallery"
           hiddenLabel="Category pages only"
+        />
+        <Card
+          title="Show on site"
+          counts={audit.privacy}
+          shownLabel="Visible to every visitor"
+          hiddenLabel="Private — share link only"
         />
       </div>
 

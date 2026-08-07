@@ -29,6 +29,7 @@ import {
 } from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
 import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
+import { recordViewDuration, trackPageView } from "@/lib/analytics.functions";
 
 function NotFoundComponent() {
   return (
@@ -112,7 +113,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
-  loader: () => getSiteContent(),
+  // `?k=<token>` unlocks private photos for visitors holding a share link.
+  loader: ({ location }) => {
+    const search = location.search as Record<string, unknown> | undefined;
+    const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
+    return getSiteContent({ data: { token } });
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -152,6 +158,69 @@ function RootComponent() {
     const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (link) link.href = favicon;
   }, [favicon]);
+
+  // Anonymous visit counter for the studio statistics dashboard.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
+    let id = "";
+    try {
+      id = window.localStorage.getItem("shutterram-visitor") ?? "";
+      if (!id) {
+        id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        window.localStorage.setItem("shutterram-visitor", id);
+      }
+    } catch {
+      id = "anonymous";
+    }
+    let shareToken = "";
+    try {
+      shareToken = new URLSearchParams(window.location.search).get("k") ?? "";
+    } catch {
+      shareToken = "";
+    }
+    const width = window.innerWidth;
+    const deviceType = width < 768 ? "mobile" : width < 1024 ? "tablet" : "desktop";
+    let timezone = "";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+    } catch {
+      timezone = "";
+    }
+    const screenSize = `${window.screen?.width ?? width}x${window.screen?.height ?? 0}`;
+    let viewId = "";
+    const startedAt = Date.now();
+    let sent = false;
+    const flush = () => {
+      if (sent || !viewId) return;
+      sent = true;
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      if (seconds <= 0) return;
+      void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
+    };
+    void trackPageView({
+      data: {
+        path: pathname,
+        visitorId: id,
+        referrer: document.referrer,
+        shareToken,
+        deviceType,
+        language: navigator.language ?? "",
+        timezone,
+        screenSize,
+        userAgent: navigator.userAgent ?? "",
+      },
+    })
+      .then((res) => {
+        viewId = (res as { id?: string } | undefined)?.id ?? "";
+      })
+      .catch(() => undefined);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, [pathname]);
 
   // The private studio pages render without the public site chrome.
   const isStudio =

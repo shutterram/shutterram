@@ -167,6 +167,7 @@ export const defaultCopy: Record<string, string> = {
   "testimonial.photos_button": "See photos",
   "testimonial.modal_photos": "Photos from this shoot",
   "testimonial.read_more": "Click to read",
+  "testimonial.swipe_hint": "Swipe or use the arrows to see more reviews",
   "footer.nav_heading": "Navigation",
   "footer.categories_heading": "Categories",
   "footer.contact_heading": "Get in touch",
@@ -192,6 +193,8 @@ export interface Category {
   hero: string;
   /** Optional cover photo for the category page header (falls back to `hero`). */
   cover?: string;
+  /** Show this category as a slide in the home page hero slider. */
+  showInHero?: boolean;
 }
 
 export const defaultCategories: Category[] = [

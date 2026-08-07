@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
 import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "@/hooks/use-theme";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 const navItems = [
   { key: "nav.home", to: "/" },
@@ -20,6 +22,19 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { theme } = useTheme();
+  const isMobile = useIsMobile();
+
+  /** Studio heights are tuned for desktop — clamp them so the mark never clips on phones. */
+  const headerLogoStyle = (() => {
+    const style = { ...logoStyle("header") };
+    if (isMobile) {
+      const h = typeof style.height === "string" ? parseFloat(style.height) : 0;
+      style.height = `${Math.min(h || (scrolled ? 40 : 52), scrolled ? 40 : 52)}px`;
+      style.transform = undefined;
+    }
+    return style;
+  })();
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -46,22 +61,22 @@ export function SiteHeader() {
         )}
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
-          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center md:flex md:justify-center">
-            <span className="md:hidden" aria-hidden="true" />
+          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-center">
+            <span className="size-6 md:hidden" aria-hidden="true" />
             <Link
               to="/"
-              className="group flex flex-col items-center"
+              className="group flex min-w-0 flex-col items-center"
               onClick={() => setOpen(false)}
             >
               <img
                 src={logos.header || logo.url}
                 alt="Shutter Ram"
                 className={cn(
-                  "w-auto shrink-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+                  "max-w-full w-auto object-contain transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   logos.invert && theme === "dark" && "invert",
-                  scrolled ? "h-12" : "h-16 md:h-24",
+                  scrolled ? "h-10 md:h-12" : "h-13 md:h-24",
                 )}
-                style={logoStyle("header")}
+                style={headerLogoStyle}
               />
               <span
                 className={cn(
@@ -121,8 +136,8 @@ export function SiteHeader() {
         aria-hidden={!open}
       >
         <div className="flex h-full flex-col">
-          <div className="relative flex items-start justify-center px-6 pt-8 pb-6">
-            <LogoLockup size="md" variant="mobile" />
+          <div className="relative flex items-start justify-center px-14 pt-8 pb-6">
+            <LogoLockup size="md" variant="mobile" className="w-full" />
             <button
               type="button"
               aria-label={t("nav.menu_close")}

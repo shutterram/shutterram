@@ -40,9 +40,18 @@ async function fetchDefaultOgImage(
 }
 
 /** Reads the studio-managed SEO record for a single page path. */
-export async function fetchSeo(path: string): Promise<SeoRow | null> {
+export async function fetchSeo(path: string, token = ""): Promise<SeoRow | null> {
   const supabase = client();
   if (!supabase) return null;
+
+  // A share link may carry its own preview image, which wins over the page's.
+  let linkImage = "";
+  if (token) {
+    // Share-link preview lookup is a server-only privileged helper.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: link } = await supabaseAdmin.rpc("share_link_og_image", { _token: token });
+    linkImage = String(link ?? "").trim();
+  }
 
   const [{ data, error }, defaultImage] = await Promise.all([
     supabase
@@ -58,9 +67,13 @@ export async function fetchSeo(path: string): Promise<SeoRow | null> {
     return null;
   }
   const row = (data as SeoRow | null) ?? null;
-  if (!row && !defaultImage) return null;
-  if (!row) return { og_image: defaultImage } as SeoRow;
-  return { ...row, og_image: row.og_image?.trim() ? row.og_image : defaultImage };
+  const fallbackImage = linkImage || defaultImage;
+  if (!row && !fallbackImage) return null;
+  if (!row) return { og_image: fallbackImage } as SeoRow;
+  return {
+    ...row,
+    og_image: linkImage || (row.og_image?.trim() ? row.og_image : defaultImage),
+  };
 }
 
 /** Reads every SEO record (used by the sitemap). */

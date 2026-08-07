@@ -102,6 +102,29 @@ export let themeTokens: ThemeToken[] = [];
 export let typeTokens: TypeToken[] = [];
 export let siteFonts: SiteFont[] = [];
 export let typography: Typography = defaultTypography;
+export let aboutImage: string =
+  "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80";
+/** Studio switches for text that sits on top of a photo. */
+export let textInverts: Record<string, boolean> = {};
+/** Default column counts per page and device, set in the studio. */
+export type GridPage = "home" | "gallery" | "category";
+export type GridDevice = "desktop" | "tablet" | "mobile";
+export type GridDefaults = Record<GridPage, Record<GridDevice, string>>;
+const blankGrid: GridDefaults = {
+  home: { desktop: "2", tablet: "2", mobile: "2" },
+  gallery: { desktop: "2", tablet: "2", mobile: "2" },
+  category: { desktop: "2", tablet: "2", mobile: "2" },
+};
+export let gridDefaults: GridDefaults = blankGrid;
+/** Studio switch: show the little "View" caption next to the grid pickers. */
+export let showViewLabel = true;
+/** Non-null when the visitor opened a private share link. */
+export let shareContext: { scope: string; category_slug: string } | null = null;
+
+/** Class that flips a text colour when the studio marks that text as inverted. */
+export function invertClass(key: string): string {
+  return textInverts[key] ? "text-flip" : "";
+}
 
 /** Editable label lookup — falls back to the built-in wording. */
 export function t(key: string, fallback?: string): string {
@@ -194,6 +217,29 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       scaleTablet: num(s["font_scale_tablet"], 1) || 1,
       scaleMobile: num(s["font_scale_mobile"], 1) || 1,
     };
+    aboutImage = str(s["about_image"], aboutImage) || aboutImage;
+    const col = (v: unknown) => {
+      const raw = str(v, "2");
+      return raw === "1" || raw === "2" || raw === "3" ? raw : "2";
+    };
+    gridDefaults = {
+      home: {
+        desktop: col(s["grid_home_desktop"]),
+        tablet: col(s["grid_home_tablet"]),
+        mobile: col(s["grid_home_mobile"]),
+      },
+      gallery: {
+        desktop: col(s["grid_gallery_desktop"]),
+        tablet: col(s["grid_gallery_tablet"]),
+        mobile: col(s["grid_gallery_mobile"]),
+      },
+      category: {
+        desktop: col(s["grid_category_desktop"]),
+        tablet: col(s["grid_category_tablet"]),
+        mobile: col(s["grid_category_mobile"]),
+      },
+    };
+    showViewLabel = s["show_view_label"] !== false;
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
     if (long.length) aboutLong = long;
@@ -221,6 +267,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       tagline: str(r["tagline"]),
       hero: str(r["hero"]),
       cover: str(r["cover"]),
+      showInHero: r["show_in_hero"] !== false,
     }));
   }
 
@@ -351,6 +398,11 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
     sampleText: str(r["sample_text"]),
   }));
 
+  textInverts = Object.fromEntries(
+    (payload.text_inverts ?? []).map((r: Row) => [str(r["key"]), r["inverted"] === true]),
+  );
+  shareContext = payload.share ?? null;
+
   siteFonts = (payload.custom_fonts ?? []).map((r: Row) => ({
     id: str(r["id"]),
     family: str(r["family"]),
@@ -370,4 +422,10 @@ export const sectionFor = (page: string, key: string) =>
 export const photoById = (id: string) => photos.find((p) => p.id === id);
 export const photosByCategory = (slug: CategorySlug) =>
   photos.filter((p) => p.category === slug);
+/** Categories that should appear as slides in the home hero. */
+export const heroCategories = () => {
+  const shown = categories.filter((c) => c.showInHero !== false);
+  return shown.length ? shown : categories;
+};
+
 export const categoryBySlug = (slug: string) => categories.find((c) => c.slug === slug);

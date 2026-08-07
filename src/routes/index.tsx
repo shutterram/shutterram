@@ -8,7 +8,7 @@ import {
   DESKTOP_COLUMN_CLASS,
   MOBILE_GRID_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { ServiceCard } from "@/components/site/ServiceCard";
@@ -34,11 +34,10 @@ import {
   t,
 } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead, SITE_URL } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  loader: () => getSeo({ data: { path: "/" } }),
+  loader: ({ location }) => loadSeo("/", tokenOf(location.search)),
   head: ({ loaderData }) => {
     const head = buildSeoHead(loaderData, {
       path: "/",
@@ -78,7 +77,7 @@ type Filter = "all" | CategorySlug;
 function Home() {
   const featured = useMemo(() => featuredIds.map(photoById).filter((p) => p !== undefined), []);
   const [filter, setFilter] = useState<Filter>("all");
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("home");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
   const [mobileCount, setMobileCount] = useState(4);
@@ -443,7 +442,7 @@ function Home() {
 
     experience: <ExperienceSection key="experience" section={sectionFor("home", "experience")} />,
 
-    testimonials: <Testimonials key="testimonials" />,
+    testimonials: <Testimonials key="testimonials" section={sectionFor("home", "testimonials")} />,
 
     connect: (
       <section key="connect" className="mx-auto max-w-7xl px-6 py-24 md:py-32">

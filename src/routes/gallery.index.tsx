@@ -5,16 +5,16 @@ import {
   DESKTOP_COLUMN_CLASS,
   MOBILE_GRID_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 import { Lightbox } from "@/components/site/Lightbox";
-import { categories, photos, type CategorySlug, t } from "@/data/portfolio";
+import { categories, invertClass, photos, type CategorySlug, t } from "@/data/portfolio";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getSeo } from "@/lib/seo.functions";
-import { buildSeoHead } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/")({
-  loader: () => getSeo({ data: { path: "/gallery" } }),
+  loader: ({ location }) => loadSeo("/gallery", tokenOf(location.search)),
   head: ({ loaderData }) =>
     buildSeoHead(loaderData, {
       path: "/gallery",
@@ -32,7 +32,7 @@ function Gallery() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [mobileCount, setMobileCount] = useState(4);
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("gallery");
   const isMobile = useIsMobile();
 
   // Photos flagged "hide from main gallery" still appear on their category page.
@@ -58,7 +58,7 @@ function Gallery() {
       </p>
 
       <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
-        <p className="eyebrow mr-2">{t("gallery.jump")}</p>
+        <h2 className="eyebrow mr-2">{t("gallery.jump")}</h2>
         {categories.map((c) => (
           <Link
             key={c.slug}
@@ -71,12 +71,9 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 flex justify-end">
-        <ViewSelector value={cols} onChange={setCols} />
-      </div>
-
+      <h2 className="mt-16 sr-only">Filter the portfolio by category</h2>
       <FilterPills
-        className="mt-6"
+        className="mt-12"
         value={filter}
         onChange={(v) => {
           setFilter(v);
@@ -92,7 +89,12 @@ function Gallery() {
         ]}
       />
 
-      <div className={`mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
+      <h2 className="sr-only">Photographs</h2>
+      <div className="mt-12 flex justify-center">
+        <ViewSelector value={cols} onChange={setCols} />
+      </div>
+
+      <div className={`mt-5 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
         {shown.map((p, i) => (
           <button
             key={p.id}
@@ -109,7 +111,12 @@ function Gallery() {
               className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03] md:aspect-auto"
             />
             <div className="absolute inset-0 bg-background/40 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <div className="absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+            <div
+              className={cn(
+                "absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100",
+                invertClass("gallery.caption"),
+              )}
+            >
               <p className="eyebrow">{p.category}</p>
               <p className="mt-1 font-display text-lg">{p.caption}</p>
             </div>

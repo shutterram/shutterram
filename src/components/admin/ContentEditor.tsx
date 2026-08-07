@@ -3,8 +3,24 @@ import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { optimiseImage, kb } from "@/lib/optimise-image";
-import { getImageIndexable, imageKeyOf, setImageIndexable } from "@/lib/image-index";
+import {
+  defaultImageFlags,
+  getImageFlags,
+  imageKeyOf,
+  setImageFlags,
+  type ImageFlags,
+} from "@/lib/image-index";
 
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
@@ -26,34 +42,40 @@ export async function uploadSiteImage(file: File): Promise<string> {
 }
 
 
-/** Checkbox controlling whether an image may appear anywhere on the public internet. */
+/**
+ * The two per-image switches that follow every upload:
+ * • Show on Internet — may search engines and link previews reach the file.
+ * • Private — hidden on the site itself unless opened through a share link.
+ */
 export function SearchVisibilityToggle({ src }: { src: string }) {
-  const [indexable, setIndexable] = useState(true);
+  const [flags, setFlags] = useState<ImageFlags>(defaultImageFlags);
   const [ready, setReady] = useState(true);
   const key = imageKeyOf(src);
-  const desired = useRef(true);
+  const desired = useRef<ImageFlags>(defaultImageFlags);
 
   useEffect(() => {
     let live = true;
     if (!key) {
-      setIndexable(desired.current);
+      setFlags(desired.current);
       setReady(true);
       return;
     }
     setReady(false);
-    void getImageIndexable(src).then(async (value) => {
+    void getImageFlags(src).then(async (value) => {
       if (!live) return;
-      // Apply a choice the user made before the file was uploaded.
-      if (!desired.current && value) {
+      // Apply a choice the user made before the file finished uploading.
+      const pending = desired.current;
+      const differs = pending.indexable !== value.indexable || pending.isPrivate !== value.isPrivate;
+      if (differs && value.indexable && !value.isPrivate) {
         try {
-          await setImageIndexable(src, false);
+          await setImageFlags(src, pending);
         } catch {
-          /* surfaced on next manual toggle */
+          /* surfaced on the next manual toggle */
         }
         if (!live) return;
-        setIndexable(false);
+        setFlags(pending);
       } else {
-        setIndexable(value);
+        setFlags(value);
         desired.current = value;
       }
       setReady(true);
@@ -63,31 +85,61 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
     };
   }, [src, key]);
 
-  async function toggle(next: boolean) {
+  async function toggle(patch: Partial<ImageFlags>, message: string) {
+    const previous = flags;
+    const next = { ...flags, ...patch };
     desired.current = next;
-    setIndexable(next);
+    setFlags(next);
     if (!key) return;
     try {
-      await setImageIndexable(src, next);
-      toast.success(next ? "Image can appear on the internet" : "Image hidden from the internet");
+      await setImageFlags(src, next);
+      toast.success(message);
     } catch (error) {
-      setIndexable(!next);
-      desired.current = !next;
+      setFlags(previous);
+      desired.current = previous;
       toast.error(error instanceof Error ? error.message : "Could not update visibility");
     }
   }
 
+  const row = "flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground";
+
   return (
-    <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-      <input
-        type="checkbox"
-        checked={indexable}
-        disabled={!ready}
-        onChange={(e) => void toggle(e.target.checked)}
-        className="size-3 accent-current"
-      />
-      Show on Internet
-    </label>
+    <div className="space-y-1.5">
+      <label className={row}>
+        <input
+          type="checkbox"
+          checked={flags.indexable}
+          disabled={!ready}
+          onChange={(e) =>
+            void toggle(
+              { indexable: e.target.checked },
+              e.target.checked
+                ? "Image can appear on the internet"
+                : "Image hidden from the internet",
+            )
+          }
+          className="size-3 accent-current"
+        />
+        Show on Internet
+      </label>
+      <label className={row}>
+        <input
+          type="checkbox"
+          checked={flags.isPrivate}
+          disabled={!ready}
+          onChange={(e) =>
+            void toggle(
+              { isPrivate: e.target.checked },
+              e.target.checked
+                ? "Image is private — share-link only"
+                : "Image visible on the site",
+            )
+          }
+          className="size-3 accent-current"
+        />
+        Private (share link only)
+      </label>
+    </div>
   );
 }
 
@@ -163,7 +215,7 @@ export function ImageField({
 }
 
 
-/** Dropdown of gallery categories, with inline add / remove. */
+/** Dropdown of gallery categories, with an inline "add new" row and remove. */
 export function CategoryField({
   value,
   onChange,
@@ -174,6 +226,11 @@ export function CategoryField({
   label?: string;
 }) {
   const [cats, setCats] = useState<{ id: string; slug: string; label: string }[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newHero, setNewHero] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function load() {
     const { data, error } = await supabase
@@ -188,42 +245,47 @@ export function CategoryField({
     void load();
   }, []);
 
-  async function addCategory() {
-    const name = prompt("New category name (e.g. Maternity)")?.trim();
-    if (!name) return;
+  async function createCategory() {
+    const name = newName.trim();
+    if (!name) {
+      toast.error("Give the category a name first");
+      return;
+    }
     const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    setSaving(true);
     const { error } = await supabase.from("categories" as never).insert({
       slug,
       title: `${name} Photography`,
       label: name,
       tagline: "",
       hero: "",
+      show_in_hero: newHero,
       sort_order: cats.length,
     } as never);
+    setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     await load();
     onChange(slug);
-    toast.success("Category added — add its hero image under “Hero categories”.");
+    setAdding(false);
+    setNewName("");
+    setNewHero(false);
+    toast.success(
+      newHero
+        ? "Category added — add its hero image under “Hero categories”."
+        : "Category added (gallery only) — it won't appear in the home hero.",
+    );
   }
 
   async function removeCategory() {
     const current = cats.find((c) => c.slug === value);
-    if (!current) {
-      toast.error("Pick a category first");
-      return;
-    }
-    if (
-      !confirm(
-        `Remove the “${current.label}” category? Photos keep their slug until you change it.`,
-      )
-    )
-      return;
+    setConfirmRemove(false);
+    if (!current) return;
     const { error } = await supabase
       .from("categories" as never)
       .delete()
@@ -237,13 +299,22 @@ export function CategoryField({
     toast.success("Category removed");
   }
 
+  const current = cats.find((c) => c.slug === value);
+
   return (
     <div>
       <span className="eyebrow">{label}</span>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={adding ? "__new__" : value}
+          onChange={(e) => {
+            if (e.target.value === "__new__") {
+              setAdding(true);
+              return;
+            }
+            setAdding(false);
+            onChange(e.target.value);
+          }}
           className="min-w-40 flex-1 border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
         >
           <option value="">— none —</option>
@@ -257,25 +328,85 @@ export function CategoryField({
               {value} (missing)
             </option>
           ) : null}
+          <option value="__new__" className="bg-background">
+            + Add new category…
+          </option>
         </select>
         <button
           type="button"
-          onClick={() => void addCategory()}
-          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
-        >
-          Add
-        </button>
-        <button
-          type="button"
-          onClick={() => void removeCategory()}
-          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+          onClick={() => setConfirmRemove(true)}
+          disabled={!current}
+          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground disabled:opacity-40"
         >
           Remove
         </button>
       </div>
+
+      {adding ? (
+        <div className="mt-4 space-y-3 border border-hairline p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="min-w-48 flex-1">
+              <span className="text-xs text-muted-foreground">New category name</span>
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="e.g. Maternity"
+                className="mt-1 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
+              />
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={newHero}
+                onChange={(e) => setNewHero(e.target.checked)}
+                className="size-4 accent-current"
+              />
+              Show as a home page hero slide
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void createCategory()}
+              className="border border-foreground bg-foreground px-4 py-2 text-[0.625rem] tracking-[0.2em] text-background uppercase disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Create category"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdding(false);
+                setNewName("");
+                setNewHero(false);
+              }}
+              className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <AlertDialog open={confirmRemove} onOpenChange={setConfirmRemove}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove “{current?.label}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deletes the category. Photos keep their slug until you change it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void removeCategory()}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 export type FieldType =
   "text" | "textarea" | "image" | "list" | "number" | "bool" | "category" | "select";
@@ -371,16 +502,22 @@ function FieldInput({
     );
   }
 
-  const multiline = type === "textarea" || type === "list";
+  // Lists keep their raw text while typing so a blank new line survives until
+  // the field is saved — trimming on every keystroke used to swallow it.
+  if (type === "list") {
+    return <ListField spec={spec} value={value} onChange={onChange} />;
+  }
+
+  const multiline = type === "textarea";
 
   return (
     <label className="block">
       <span className="eyebrow">{spec.label}</span>
       {multiline ? (
         <textarea
-          rows={type === "list" ? 4 : 4}
+          rows={4}
           value={toInput(value, type)}
-          placeholder={spec.placeholder ?? (type === "list" ? "One item per line" : "")}
+          placeholder={spec.placeholder ?? ""}
           onChange={(e) => onChange(fromInput(e.target.value, type))}
           className="mt-2 w-full resize-y border-b border-hairline bg-transparent py-2 text-sm leading-relaxed outline-none transition-colors focus:border-foreground"
         />
@@ -393,6 +530,48 @@ function FieldInput({
           className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
         />
       )}
+    </label>
+  );
+}
+
+/** One-item-per-line editor that lets you open an empty line and type into it. */
+function ListField({
+  spec,
+  value,
+  onChange,
+}: {
+  spec: FieldSpec;
+  value: unknown;
+  onChange: (next: unknown) => void;
+}) {
+  const incoming = Array.isArray(value) ? (value as string[]).join("\n") : "";
+  const [text, setText] = useState(incoming);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setText(incoming);
+  }, [incoming, editing]);
+
+  return (
+    <label className="block">
+      <span className="eyebrow">{spec.label}</span>
+      <textarea
+        rows={5}
+        value={text}
+        placeholder={spec.placeholder ?? "One item per line"}
+        onFocus={() => setEditing(true)}
+        onBlur={() => setEditing(false)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(
+            e.target.value
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean),
+          );
+        }}
+        className="mt-2 w-full resize-y border-b border-hairline bg-transparent py-2 text-sm leading-relaxed outline-none transition-colors focus:border-foreground"
+      />
     </label>
   );
 }
@@ -540,7 +719,8 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        draft[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
@@ -718,8 +898,9 @@ interface StagedFile {
   file: File;
   preview: string;
   attrs: Row;
-  /** Per-file search-engine visibility, applied right after the upload. */
+  /** Per-file visibility switches, applied right after the upload. */
   indexable: boolean;
+  isPrivate: boolean;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
@@ -746,6 +927,7 @@ function BulkUploader({
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [running, setRunning] = useState(false);
   const [bulkIndexable, setBulkIndexable] = useState(true);
+  const [bulkPrivate, setBulkPrivate] = useState(false);
 
   const attrFields = fields.filter((f) => f.key !== imageKey);
 
@@ -763,7 +945,8 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        attrs[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;
@@ -777,6 +960,7 @@ function BulkUploader({
       preview: URL.createObjectURL(file),
       attrs: blankAttrs(file),
       indexable: bulkIndexable,
+      isPrivate: bulkPrivate,
       status: "pending" as const,
     }));
     setStaged((prev) => [...prev, ...next]);
@@ -799,6 +983,7 @@ function BulkUploader({
           : {
               ...s,
               indexable: first.indexable,
+              isPrivate: first.isPrivate,
               attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] },
             },
       );
@@ -815,7 +1000,9 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
-        if (!item.indexable) await setImageIndexable(src, false);
+        if (!item.indexable || item.isPrivate) {
+          await setImageFlags(src, { indexable: item.indexable, isPrivate: item.isPrivate });
+        }
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
 
         if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
@@ -866,6 +1053,15 @@ function BulkUploader({
               className="size-3 accent-current"
             />
             Default for new files: show on Internet
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={bulkPrivate}
+              onChange={(e) => setBulkPrivate(e.target.checked)}
+              className="size-3 accent-current"
+            />
+            Default for new files: private (share link only)
           </label>
         </div>
 
@@ -944,6 +1140,19 @@ function BulkUploader({
                     className="size-3 accent-current"
                   />
                   Show on Internet
+                </label>
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={s.isPrivate}
+                    onChange={(e) =>
+                      setStaged((prev) =>
+                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: e.target.checked } : x)),
+                      )
+                    }
+                    className="size-3 accent-current"
+                  />
+                  Private (share link only)
                 </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
