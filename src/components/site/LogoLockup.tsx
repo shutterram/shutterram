@@ -22,18 +22,20 @@ export function LogoLockup({
   const logoSize = size === "sm" ? "h-14" : size === "lg" ? "h-28" : "h-20";
 
   return (
-    <span className={cn("flex flex-col items-center", className)}>
+    <span className={cn("flex min-w-0 max-w-full flex-col items-center", className)}>
       <img
         src={logos[variant] || logo.url}
         alt="Shutter Ram"
         className={cn(
-          "w-auto shrink-0 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "w-auto max-w-full shrink-0 object-contain transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
           logoSize,
           logos.invert && theme === "dark" && "invert",
         )}
         style={logoStyle(variant)}
       />
-      {showTagline ? <span className="eyebrow mt-3">{site.tagline}</span> : null}
+      {showTagline ? (
+        <span className="eyebrow mt-3 max-w-full text-center">{site.tagline}</span>
+      ) : null}
     </span>
   );
 }

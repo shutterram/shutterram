@@ -136,8 +136,8 @@ export function SiteHeader() {
         aria-hidden={!open}
       >
         <div className="flex h-full flex-col">
-          <div className="relative flex items-start justify-center px-6 pt-8 pb-6">
-            <LogoLockup size="md" variant="mobile" />
+          <div className="relative flex items-start justify-center px-14 pt-8 pb-6">
+            <LogoLockup size="md" variant="mobile" className="w-full" />
             <button
               type="button"
               aria-label={t("nav.menu_close")}
