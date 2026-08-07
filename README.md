@@ -136,35 +136,51 @@ supabase/config.toml               project config
 
 Press **Refresh site** after saving to reload public pages with the new content.
 
-### Tabs
+### Panels and tabs
+
+The studio is grouped into **panels**, chosen from the left-hand navigation (a dropdown on mobile).
+Each panel opens its own set of tabs.
+
+| Panel | Tabs |
+| --- | --- |
+| **Content Studio** | Site & About · Grid defaults · Logos · Colours · Fonts · Wording · Text contrast · Hero categories · Services · Editing samples · Stats · Page sections · Process steps · Social links |
+| **Gallery management** | Photos |
+| **Link generator** | Share links |
+| **Admin / user management** | Users |
+| **Review management** | Client reviews · Testimonials |
+| **SEO** | SEO |
+| **Statistics** | Traffic · Image visibility |
+| **Form** | Form delivery |
 
 | Tab | What it controls |
 | --- | --- |
 | **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
-| **Grid defaults** | Default column count (1/2/3) for the Home, Gallery and Category grids, chosen separately for desktop, tablet and mobile |
-| **Statistics** | Visitor / page-view dashboard: totals, chart over 30 days / 12 months / all time, top pages and traffic sources |
-| **Form delivery** | The private form endpoint URL (never sent to the browser) |
+| **Grid defaults** | Default column count (1/2/3) for the Home, Gallery and Category grids, chosen separately for desktop, tablet and mobile — plus the switch that shows or hides the **VIEW** label next to the grid selector |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
 | **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
-| **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text |
+| **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text, plus the **Font library** for registering new Google/CSS fonts with their weights and styles |
 | **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
 | **Text contrast** | A switch per piece of text that sits on top of a photograph (hero title/tagline/buttons, category covers, gallery captions, service cards, Before/After labels) — flip it to make that text the opposite colour so it stays readable |
-| **Share links** | Create unlisted links to a category (or the whole gallery), each with its own **Show private images** choice; copy or revoke them at any time |
-| **Users** | Add maintainers, grant or remove Content Studio (admin) access, reset a password, remove an account |
-| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
-| **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
-| **Hero categories** | Slug, title, label, tagline, hero image and **category cover image** per category |
-| **Photos** | Caption, category, image, featured flag + position, the three visibility switches, internal key |
+| **Hero categories** | Slug, title, label, tagline, hero image, **category cover image** and the **Show as a home page hero slide** toggle (a category can live in the gallery only) |
 | **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
 | **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
-| **Stats** | Value + label pairs |
-| **Testimonials** | Name, role, quote, rating (placeholder/manual entries) |
+| **Stats** | Value + label pairs shown in the site's numbers strip |
 | **Page sections** | Order, visibility, eyebrow, heading, italic second line and intro of every section on every page |
 | **Process steps** | The Experience milestones, assigned to *Home & Services* or *About Me* |
 | **Social links** | Name, URL, built-in icon name, or a custom uploaded icon |
+| **Photos** | Caption, category (with inline **+ Add new category…**), image, featured flag + position, the three visibility switches, internal key |
+| **Share links** | Unlisted links to any page or category, each with its own **Show private images** choice and optional custom social preview image; copy the full link or revoke it at any time |
+| **Users** | Add maintainers, grant or remove Content Studio (admin) access, reset a password, remove an account |
+| **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
+| **Testimonials** | Name, role, quote, rating (placeholder/manual entries) |
+| **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
+| **Traffic** | The full visitor dashboard (see [Site statistics](#site-statistics)) |
+| **Image visibility** | An audit of every image and where it is allowed to appear |
+| **Form delivery** | The private form endpoint URL (never sent to the browser) |
 
 Every list supports add, edit, reorder (↑ ↓) and delete. **New entries — single or bulk — are
 inserted at the top of the list**, right under the Add controls, so you never scroll to fill them in.
+
 
 ### Saving your edits
 Long tabs (Fonts, Colours, Wording, Photos…) never make you hunt for the Save button: as soon as any
@@ -606,12 +622,26 @@ using the on-page **View** selector; your setting is what they land on. Handled 
 hook in `src/components/site/ViewSelector.tsx`, and read from the `settings` table's `grid_*` columns.
 
 ### Site statistics
-Studio → **Statistics**. Every non-studio page view is recorded anonymously in the `page_views`
-table (path, a random per-browser id kept in `localStorage`, referrer, timestamp — no cookies, no
-personal data). The dashboard shows totals, a views/visitors chart over the last 30 days, 12 months
-or all time, the top pages as a bar chart, a full list of every page (new pages appear automatically)
-and where visitors came from. Only admins can read it: `getSiteAnalytics` in
-`src/lib/analytics.functions.ts` re-checks `has_role(auth.uid(), 'admin')` server-side.
+Studio → **Statistics → Traffic**. Every non-studio page view is recorded anonymously in the
+`page_views` table — path, a random per-browser id kept in `localStorage`, referrer, share-link token,
+device type, browser, OS, screen size, language, time zone, coarse country/region/city, and how long
+the visit lasted. **No cookies and no personal data**; the browser id is a random string you cannot
+trace back to a person.
+
+The dashboard is laid out like a creator studio:
+- **Ranges** — last 5 hours, 24 hours, 7 days, 30 days, 12 months or all time, with hourly buckets on
+  the short ranges.
+- **Headline metrics** — views, unique visitors, new vs returning, avg time on page, avg time per
+  visitor, total time on site. *Unique* = distinct browsers seen in the period; *new* = never seen
+  before it; *returning* = seen before it.
+- **Breakdowns** — pages, traffic sources, share links (views and visitors per generated link),
+  devices, browsers, operating systems, screen sizes, languages, time zones, countries (full names),
+  regions and cities. Each block has its own filter box.
+- **Bots** are detected and reported separately so they do not skew the numbers.
+
+Only admins can read it: `getSiteAnalytics` in `src/lib/analytics.functions.ts` re-checks
+`has_role(auth.uid(), 'admin')` server-side.
+
 
 
 ### Users & roles
