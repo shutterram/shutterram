@@ -14,6 +14,16 @@ export function HeroSlider() {
     setHydrated(true);
   }, []);
 
+  const go = useCallback((dir: number) => {
+    setActive((i) => (i + dir + categories.length) % categories.length);
+  }, [categories.length]);
+
+  useEffect(() => {
+    if (paused) return;
+    const t = setInterval(() => go(1), 6500);
+    return () => clearInterval(t);
+  }, [paused, go]);
+
   // Portfolio content is hydrated from the root loader into a shared content
   // store. Render a data-independent first frame on both server and browser so
   // a concurrent content refresh can never change the initial DOM shape.
@@ -27,16 +37,6 @@ export function HeroSlider() {
   }
 
   const current = categories[active] ?? categories[0];
-
-  const go = useCallback((dir: number) => {
-    setActive((i) => (i + dir + categories.length) % categories.length);
-  }, [categories.length]);
-
-  useEffect(() => {
-    if (paused) return;
-    const t = setInterval(() => go(1), 6500);
-    return () => clearInterval(t);
-  }, [paused, go]);
 
   return (
     <section
