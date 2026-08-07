@@ -7,6 +7,9 @@ import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
 import { SeoPageSync } from "@/components/admin/SeoPageSync";
+import { ShareLinks } from "@/components/admin/ShareLinks";
+import { TextContrastStudio } from "@/components/admin/TextContrastStudio";
+import { UserManagement } from "@/components/admin/UserManagement";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
@@ -549,6 +552,12 @@ function AdminPage() {
           <LogoStudio />
         ) : section.kind === "copy" ? (
           <CopyEditor />
+        ) : section.kind === "contrast" ? (
+          <TextContrastStudio />
+        ) : section.kind === "share" ? (
+          <ShareLinks />
+        ) : section.kind === "users" ? (
+          <UserManagement />
         ) : section.kind === "reviews" ? (
           <ReviewModeration />
         ) : section.kind === "single" ? (
