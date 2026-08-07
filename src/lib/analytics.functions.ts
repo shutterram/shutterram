@@ -172,10 +172,12 @@ export const recordViewDuration = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }) => {
     if (!data.id || data.seconds <= 0) return { ok: false };
-    if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
+    if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
       return { ok: false };
     }
-    const { error } = await publicClient().rpc("record_view_duration" as never, {
+    // The helper is server-only: visitors and signed-in users cannot execute it.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("record_view_duration" as never, {
       _id: data.id,
       _seconds: data.seconds,
     } as never);
