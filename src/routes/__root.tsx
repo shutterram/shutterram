@@ -29,7 +29,7 @@ import {
 } from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
 import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
-import { trackPageView } from "@/lib/analytics.functions";
+import { recordViewDuration, trackPageView } from "@/lib/analytics.functions";
 
 function NotFoundComponent() {
   return (
@@ -188,6 +188,16 @@ function RootComponent() {
       timezone = "";
     }
     const screenSize = `${window.screen?.width ?? width}x${window.screen?.height ?? 0}`;
+    let viewId = "";
+    const startedAt = Date.now();
+    let sent = false;
+    const flush = () => {
+      if (sent || !viewId) return;
+      sent = true;
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      if (seconds <= 0) return;
+      void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
+    };
     void trackPageView({
       data: {
         path: pathname,
@@ -200,7 +210,16 @@ function RootComponent() {
         screenSize,
         userAgent: navigator.userAgent ?? "",
       },
-    }).catch(() => undefined);
+    })
+      .then((res) => {
+        viewId = (res as { id?: string } | undefined)?.id ?? "";
+      })
+      .catch(() => undefined);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
   }, [pathname]);
 
   // The private studio pages render without the public site chrome.

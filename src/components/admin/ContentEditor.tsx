@@ -3,6 +3,16 @@ import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { optimiseImage, kb } from "@/lib/optimise-image";
 import {
   defaultImageFlags,
@@ -205,7 +215,7 @@ export function ImageField({
 }
 
 
-/** Dropdown of gallery categories, with inline add / remove. */
+/** Dropdown of gallery categories, with an inline "add new" row and remove. */
 export function CategoryField({
   value,
   onChange,
@@ -216,6 +226,11 @@ export function CategoryField({
   label?: string;
 }) {
   const [cats, setCats] = useState<{ id: string; slug: string; label: string }[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newHero, setNewHero] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   async function load() {
     const { data, error } = await supabase
@@ -230,53 +245,47 @@ export function CategoryField({
     void load();
   }, []);
 
-  async function addCategory() {
-    const name = prompt("New category name (e.g. Maternity)")?.trim();
-    if (!name) return;
+  async function createCategory() {
+    const name = newName.trim();
+    if (!name) {
+      toast.error("Give the category a name first");
+      return;
+    }
     const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
-    // Ask up front whether this category should also become a home page hero
-    // slide — some categories belong in the gallery only.
-    const showInHero = confirm(
-      `Show “${name}” as a slide in the home page hero slider?\n\nOK = yes, show it on the home page.\nCancel = gallery and featured work only.`,
-    );
+    setSaving(true);
     const { error } = await supabase.from("categories" as never).insert({
       slug,
       title: `${name} Photography`,
       label: name,
       tagline: "",
       hero: "",
-      show_in_hero: showInHero,
+      show_in_hero: newHero,
       sort_order: cats.length,
     } as never);
+    setSaving(false);
     if (error) {
       toast.error(error.message);
       return;
     }
     await load();
     onChange(slug);
+    setAdding(false);
+    setNewName("");
+    setNewHero(false);
     toast.success(
-      showInHero
+      newHero
         ? "Category added — add its hero image under “Hero categories”."
         : "Category added (gallery only) — it won't appear in the home hero.",
     );
-
   }
 
   async function removeCategory() {
     const current = cats.find((c) => c.slug === value);
-    if (!current) {
-      toast.error("Pick a category first");
-      return;
-    }
-    if (
-      !confirm(
-        `Remove the “${current.label}” category? Photos keep their slug until you change it.`,
-      )
-    )
-      return;
+    setConfirmRemove(false);
+    if (!current) return;
     const { error } = await supabase
       .from("categories" as never)
       .delete()
@@ -290,13 +299,22 @@ export function CategoryField({
     toast.success("Category removed");
   }
 
+  const current = cats.find((c) => c.slug === value);
+
   return (
     <div>
       <span className="eyebrow">{label}</span>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={adding ? "__new__" : value}
+          onChange={(e) => {
+            if (e.target.value === "__new__") {
+              setAdding(true);
+              return;
+            }
+            setAdding(false);
+            onChange(e.target.value);
+          }}
           className="min-w-40 flex-1 border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
         >
           <option value="">— none —</option>
@@ -310,25 +328,85 @@ export function CategoryField({
               {value} (missing)
             </option>
           ) : null}
+          <option value="__new__" className="bg-background">
+            + Add new category…
+          </option>
         </select>
         <button
           type="button"
-          onClick={() => void addCategory()}
-          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
-        >
-          Add
-        </button>
-        <button
-          type="button"
-          onClick={() => void removeCategory()}
-          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+          onClick={() => setConfirmRemove(true)}
+          disabled={!current}
+          className="border border-hairline px-3 py-1.5 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground disabled:opacity-40"
         >
           Remove
         </button>
       </div>
+
+      {adding ? (
+        <div className="mt-4 space-y-3 border border-hairline p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="min-w-48 flex-1">
+              <span className="text-xs text-muted-foreground">New category name</span>
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="e.g. Maternity"
+                className="mt-1 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
+              />
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={newHero}
+                onChange={(e) => setNewHero(e.target.checked)}
+                className="size-4 accent-current"
+              />
+              Show as a home page hero slide
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void createCategory()}
+              className="border border-foreground bg-foreground px-4 py-2 text-[0.625rem] tracking-[0.2em] text-background uppercase disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Create category"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdding(false);
+                setNewName("");
+                setNewHero(false);
+              }}
+              className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <AlertDialog open={confirmRemove} onOpenChange={setConfirmRemove}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove “{current?.label}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This deletes the category. Photos keep their slug until you change it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void removeCategory()}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
 
 export type FieldType =
   "text" | "textarea" | "image" | "list" | "number" | "bool" | "category" | "select";

@@ -309,7 +309,7 @@ const SECTIONS = [
   },
   {
     id: "stats",
-    panel: "stats",
+    panel: "content",
     label: "Stats",
     kind: "list" as const,
     table: "stats",
@@ -413,7 +413,7 @@ const PANELS = [
   { id: "users", label: "Admin & Users", hint: "Who can sign in to this studio" },
   { id: "reviews", label: "Review Management", hint: "Client reviews and testimonials" },
   { id: "seo", label: "SEO", hint: "Titles, descriptions and social previews" },
-  { id: "stats", label: "Statistics", hint: "Traffic, numbers on the site, image visibility" },
+  { id: "stats", label: "Statistics", hint: "Traffic, visitors and image visibility" },
   { id: "forms", label: "Forms", hint: "Where enquiries are delivered" },
 ] as const;
 
