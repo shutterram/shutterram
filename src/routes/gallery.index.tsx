@@ -72,7 +72,7 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 flex justify-start">
+      <div className="mt-10 flex justify-center">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
 
