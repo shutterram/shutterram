@@ -71,6 +71,7 @@ function Gallery() {
         ))}
       </div>
 
+      <h2 className="mt-16 sr-only">Filter the portfolio by category</h2>
       <FilterPills
         className="mt-12"
         value={filter}
