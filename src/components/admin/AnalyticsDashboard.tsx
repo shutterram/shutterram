@@ -91,9 +91,11 @@ export function AnalyticsDashboard() {
         </div>
       ) : !data ? null : (
         <>
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3 lg:grid-cols-5">
             <Metric value={data.totalViews} label="Page views" />
-            <Metric value={data.totalVisitors} label="Visitors" />
+            <Metric value={data.totalVisitors} label="Unique visitors" />
+            <Metric value={data.newVisitors} label="New visitors" />
+            <Metric value={data.returningVisitors} label="Returning visitors" />
             <Metric value={data.pages.length} label="Pages visited" />
           </div>
 
