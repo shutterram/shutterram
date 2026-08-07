@@ -11,10 +11,10 @@ import { Lightbox } from "@/components/site/Lightbox";
 import { categories, invertClass, photos, type CategorySlug, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { buildSeoHead, loadSeo } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/")({
-  loader: () => loadSeo("/gallery"),
+  loader: ({ location }) => loadSeo("/gallery", tokenOf(location.search)),
   head: ({ loaderData }) =>
     buildSeoHead(loaderData, {
       path: "/gallery",

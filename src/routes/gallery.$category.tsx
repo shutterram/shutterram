@@ -10,13 +10,13 @@ import {
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, categoryBySlug, invertClass, photosByCategory, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
-import { buildSeoHead, loadSeo } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/$category")({
   loader: async ({ params }) => {
     const category = categoryBySlug(params.category);
     if (!category) throw notFound();
-    const seo = await loadSeo(`/gallery/${category.slug}`);
+    const seo = await loadSeo(`/gallery/${category.slug}`, tokenOf(location.search));
     return { category, seo };
   },
   head: ({ loaderData }) => {

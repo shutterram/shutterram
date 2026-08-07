@@ -34,10 +34,10 @@ import {
   t,
 } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
-import { buildSeoHead, loadSeo, SITE_URL } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  loader: () => loadSeo("/"),
+  loader: ({ location }) => loadSeo("/", tokenOf(location.search)),
   head: ({ loaderData }) => {
     const head = buildSeoHead(loaderData, {
       path: "/",

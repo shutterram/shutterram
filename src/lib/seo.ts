@@ -65,3 +65,9 @@ export async function loadSeo(path: string, token = ""): Promise<SeoRow | null> 
     return null;
   }
 }
+
+/** Reads the `?k=` share token out of a route's parsed search params. */
+export function tokenOf(search: unknown): string {
+  const value = (search as Record<string, unknown> | undefined)?.["k"];
+  return typeof value === "string" ? value : "";
+}

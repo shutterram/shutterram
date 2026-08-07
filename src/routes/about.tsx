@@ -13,10 +13,10 @@ import { SocialLinks } from "@/components/site/SocialLinks";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
 import { StatValue } from "@/components/site/StatsStrip";
-import { buildSeoHead, loadSeo } from "@/lib/seo";
+import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
-  loader: () => loadSeo("/about"),
+  loader: ({ location }) => loadSeo("/about", tokenOf(location.search)),
   head: ({ loaderData }) => ({
     ...buildSeoHead(loaderData, {
       path: "/about",
