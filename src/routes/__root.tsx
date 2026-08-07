@@ -9,7 +9,8 @@ import {
   Scripts,
   ScriptOnce,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -113,20 +114,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
-  // `?k=<token>` unlocks private photos for visitors holding a share link.
-  loader: async ({ location }) => {
-    const search = location.search as Record<string, unknown> | undefined;
-    const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
-    // Content is optional enhancement data. A backend/network interruption must
-    // not reject the root loader because that turns every route into an SSR 500.
-    // The live content module already contains complete built-in fallbacks.
-    try {
-      return await getSiteContent({ data: { token } });
-    } catch (error) {
-      console.error("[content] root loader fell back to built-in content", error);
-      return null;
-    }
-  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -152,9 +139,30 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const content = Route.useLoaderData();
-  applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const searchString = useRouterState({ select: (s) => s.location.searchStr });
+  const fetchSiteContent = useServerFn(getSiteContent);
+  const [, setContentRevision] = useState(0);
+
+  // Keep the full CMS query out of the SSR request. The site has complete
+  // built-in content, so the first response can render immediately instead of
+  // becoming a 500 when preview reload/HMR closes a slow database-backed SSR
+  // socket. Hydrate editable content after mount and trigger one safe rerender.
+  useEffect(() => {
+    let cancelled = false;
+    const token = new URLSearchParams(searchString).get("k") ?? "";
+    void fetchSiteContent({ data: { token } })
+      .then((content) => {
+        if (cancelled) return;
+        applyContent(content);
+        setContentRevision((revision) => revision + 1);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchSiteContent, searchString]);
+
   const paletteCss = themeCss(themeTokens);
   const typeCss = typographyCss(typeTokens, typography);
   const fontHrefs = fontStylesheetHrefs(siteFonts, typography);
