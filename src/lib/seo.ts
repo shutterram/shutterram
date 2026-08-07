@@ -1,4 +1,5 @@
 import type { SeoRow } from "./seo.server";
+import { getSeo } from "./seo.functions";
 
 export const SITE_URL = "https://shutterram.lovable.app";
 
@@ -58,7 +59,6 @@ export function buildSeoHead(row: SeoRow | null | undefined, fallback: SeoFallba
  * offline preview should fall back to the built-in defaults, not a blank screen.
  */
 export async function loadSeo(path: string): Promise<SeoRow | null> {
-  const { getSeo } = await import("./seo.functions");
   try {
     return (await getSeo({ data: { path } })) ?? null;
   } catch {
