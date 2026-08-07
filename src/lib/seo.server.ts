@@ -47,12 +47,8 @@ export async function fetchSeo(path: string, token = ""): Promise<SeoRow | null>
   // A share link may carry its own preview image, which wins over the page's.
   let linkImage = "";
   if (token) {
-    const { data: link } = await supabase
-      .from("share_links")
-      .select("og_image")
-      .eq("token", token)
-      .maybeSingle();
-    linkImage = ((link as { og_image?: string } | null)?.og_image ?? "").trim();
+    const { data: link } = await supabase.rpc("share_link_og_image", { _token: token });
+    linkImage = String(link ?? "").trim();
   }
 
   const [{ data, error }, defaultImage] = await Promise.all([
