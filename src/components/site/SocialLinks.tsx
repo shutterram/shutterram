@@ -10,6 +10,18 @@ const icons: Record<string, LucideIcon> = {
   flickr: Camera,
 };
 
+/**
+ * Turns whatever was typed in the studio into a real absolute URL, so
+ * "instagram.com/me", "www.instagram.com/me" and the full https:// form all
+ * work. Anything already carrying a scheme (or mailto:/tel:) is left alone.
+ */
+export function normaliseHref(href: string): string {
+  const value = href.trim();
+  if (!value) return "#";
+  if (/^(https?:|mailto:|tel:|\/)/i.test(value)) return value;
+  return `https://${value.replace(/^\/+/, "")}`;
+}
+
 export function SocialLinks({
   className,
   size = "sm",
@@ -25,7 +37,7 @@ export function SocialLinks({
         return (
           <a
             key={s.name}
-            href={s.href}
+            href={normaliseHref(s.href)}
             target="_blank"
             rel="noreferrer noopener"
             aria-label={s.name}

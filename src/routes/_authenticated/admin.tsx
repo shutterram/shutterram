@@ -7,6 +7,9 @@ import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
 import { ReviewModeration } from "@/components/admin/ReviewModeration";
 import { SeoPageSync } from "@/components/admin/SeoPageSync";
+import { ShareLinks } from "@/components/admin/ShareLinks";
+import { TextContrastStudio } from "@/components/admin/TextContrastStudio";
+import { UserManagement } from "@/components/admin/UserManagement";
 import { ThemeStudio } from "@/components/admin/ThemeStudio";
 import { TypographyStudio } from "@/components/admin/TypographyStudio";
 import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
@@ -48,8 +51,99 @@ const SECTIONS = [
         type: "image",
       },
       { key: "about_short", label: "About — short paragraph", type: "textarea" },
+      { key: "about_image", label: "About page — photographer photo", type: "image" },
 
       { key: "about_long", label: "About — long (one paragraph per line)", type: "list" },
+      {
+        key: "grid_home_desktop",
+        label: "Home — featured work — default columns on desktop",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_home_tablet",
+        label: "Home — featured work — default columns on tablet",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_home_mobile",
+        label: "Home — featured work — default columns on mobile",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_gallery_desktop",
+        label: "Gallery — all work — default columns on desktop",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_gallery_tablet",
+        label: "Gallery — all work — default columns on tablet",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_gallery_mobile",
+        label: "Gallery — all work — default columns on mobile",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_category_desktop",
+        label: "Category pages — default columns on desktop",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_category_tablet",
+        label: "Category pages — default columns on tablet",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
+      {
+        key: "grid_category_mobile",
+        label: "Category pages — default columns on mobile",
+        type: "select",
+        options: [
+          { value: "1", label: "1 column" },
+          { value: "2", label: "2 columns" },
+          { value: "3", label: "3 columns" },
+        ],
+      },
       { key: "budget_ranges", label: "Quote form: budget options", type: "list" },
       { key: "hour_options", label: "Quote form: hours options", type: "list" },
       {
@@ -173,6 +267,27 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "contrast",
+    label: "Text contrast",
+    kind: "contrast" as const,
+    table: "text_inverts",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "share",
+    label: "Share links",
+    kind: "share" as const,
+    table: "share_links",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "users",
+    label: "Users",
+    kind: "users" as const,
+    table: "user_roles",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
     id: "reviews",
     label: "Client reviews",
     kind: "reviews" as const,
@@ -208,6 +323,11 @@ const SECTIONS = [
       { key: "src", label: "Photo", type: "image" },
       { key: "featured", label: "Show in Featured Work", type: "bool" },
       { key: "in_gallery", label: "Show on main gallery page", type: "bool" },
+      {
+        key: "is_private",
+        label: "Private (hidden on the site unless opened through a share link)",
+        type: "bool",
+      },
       { key: "featured_order", label: "Featured position", type: "number" },
       { key: "photo_key", label: "Internal key" },
     ] satisfies FieldSpec[],
@@ -254,20 +374,6 @@ const SECTIONS = [
     fields: [
       { key: "value", label: "Value" },
       { key: "label", label: "Label" },
-    ] satisfies FieldSpec[],
-  },
-  {
-    id: "experience",
-    label: "Experience",
-    kind: "list" as const,
-    table: "experience",
-    itemLabel: "entry",
-    titleKey: "role",
-    fields: [
-      { key: "period", label: "Period" },
-      { key: "role", label: "Role" },
-      { key: "place", label: "Place" },
-      { key: "detail", label: "Detail", type: "textarea" },
     ] satisfies FieldSpec[],
   },
   {
@@ -446,6 +552,12 @@ function AdminPage() {
           <LogoStudio />
         ) : section.kind === "copy" ? (
           <CopyEditor />
+        ) : section.kind === "contrast" ? (
+          <TextContrastStudio />
+        ) : section.kind === "share" ? (
+          <ShareLinks />
+        ) : section.kind === "users" ? (
+          <UserManagement />
         ) : section.kind === "reviews" ? (
           <ReviewModeration />
         ) : section.kind === "single" ? (
@@ -461,8 +573,8 @@ function AdminPage() {
             key={section.id}
             table={section.table}
             fields={section.fields}
-            itemLabel={section.itemLabel}
-            titleKey={section.titleKey}
+            itemLabel={(section as { itemLabel?: string }).itemLabel ?? "item"}
+            titleKey={(section as { titleKey?: string }).titleKey ?? "label"}
             allowAdd={(section as { allowAdd?: boolean }).allowAdd ?? true}
             note={(section as { note?: string }).note}
             columns={

@@ -140,20 +140,22 @@ Press **Refresh site** after saving to reload public pages with the new content.
 
 | Tab | What it controls |
 | --- | --- |
-| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, **default grid columns per page per device**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
 | **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
 | **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text |
 | **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
+| **Text contrast** | A switch per piece of text that sits on top of a photograph (hero title/tagline/buttons, category covers, gallery captions, service cards, Before/After labels) — flip it to make that text the opposite colour so it stays readable |
+| **Share links** | Create unlisted links to a category (or the whole gallery), each with its own **Show private images** choice; copy or revoke them at any time |
+| **Users** | Add maintainers, grant or remove Content Studio (admin) access, reset a password, remove an account |
 | **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
 | **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
 | **Hero categories** | Slug, title, label, tagline, hero image and **category cover image** per category |
-| **Photos** | Caption, category, image, featured flag + position, internal key |
+| **Photos** | Caption, category, image, featured flag + position, the three visibility switches, internal key |
 | **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
 | **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
 | **Stats** | Value + label pairs |
-| **Experience** | Period, role, place, detail |
 | **Testimonials** | Name, role, quote, rating (placeholder/manual entries) |
 | **Page sections** | Order, visibility, eyebrow, heading, italic second line and intro of every section on every page |
 | **Process steps** | The Experience milestones, assigned to *Home & Services* or *About Me* |
@@ -284,22 +286,27 @@ explicit columns — `select("*")` will fail with a permission error.**
 | `settings` | Singleton row: name, tagline, contact, about copy, loader, glow, logos, default OG image |
 | `admin_settings` | Singleton row: the private `form_endpoint` (admin-only, never public) |
 | `categories` | Gallery categories + hero image and tagline |
-| `photos` | Gallery photos, category, featured flag/order |
+| `photos` | Gallery photos, category, featured flag/order, `in_gallery`, `is_private` |
 | `services` | Service cards |
 | `edit_samples` | Before/after comparison pairs |
 | `stats` | Number + label strip |
-| `experience` | Experience/CV entries |
 | `process_steps` | Experience milestones (`section_key` = `default` or `about`) |
 | `testimonials` | Reviews (`status` = `pending` / `approved`), optional images + email |
 | `page_sections` | Per-page section order, visibility and wording |
 | `site_copy` | Every standalone string (`key` → `value`) behind `t()` |
 | `socials` | Social links + custom icon URLs |
 | `theme_tokens` | Colour tokens with dark/light values and opacity |
+| `type_tokens` | Typography per section per device |
+| `custom_fonts` | Extra font families registered in the Fonts tab |
+| `image_settings` | Per-image `indexable` + `is_private` switches |
+| `text_inverts` | Per-text contrast switches for text over photos |
+| `share_links` | Unlisted category/gallery links, each with `include_private` |
 | `seo_pages` | Per-path SEO metadata |
 | `user_roles` | `user_id` + `app_role` — the **only** place roles are stored |
 
-Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function, `touch_updated_at()`
-trigger on every content table.
+Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function,
+`resolve_share_link(text)` security-definer function (turns a `?k=` token into a scope), and
+`touch_updated_at()` triggers on every content table.
 
 ### RLS rules that must be preserved
 - Public `SELECT` on content tables for `anon` + `authenticated`.
@@ -545,28 +552,62 @@ Sanity check any time: open `/sitemap.xml` in a browser. Every page you expect s
 no image you hid should appear.
 
 
-### Image visibility — two independent switches
+### Image visibility — three independent switches
 Every image uploaded anywhere in the studio (single field or bulk uploader) carries its own choices:
 
-| Toggle | Where it applies | Effect when unticked |
+| Toggle | Where it applies | Effect when unticked / ticked |
 | --- | --- | --- |
-| **Show on Internet** | Every image field: hero, category covers, gallery photos, services, before/after pairs, logos, OG images | Still visible to people browsing the site; served with `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet` so it never appears in Google/Bing image results or link previews |
-| **Show on main gallery page** | Gallery photos | Hidden from `/gallery` and its filter counts, still shown on its category page `/gallery/<category>` |
+| **Show on Internet** | Every image field: hero, category covers, gallery photos, services, before/after pairs, logos, OG images | Unticked: still visible to people browsing the site, but served with `X-Robots-Tag: noindex, noimageindex, noarchive, nosnippet` so it never appears in Google/Bing image results or link previews |
+| **Show on main gallery page** | Gallery photos | Unticked: hidden from `/gallery` and its filter counts, still shown on its category page `/gallery/<category>` |
+| **Private (share link only)** | Every image field | Ticked: the image does not render on the site at all — not on the gallery, not on a category page, not in the sitemap. It only appears to someone opening a share link you created with **Show private images** ticked |
 
-Both default to *ticked* (visible) for new uploads.
+The first two default to *ticked* (visible), **Private** defaults to *unticked*, for new uploads.
 
-**Per file, never grouped.** In the bulk uploader each staged file has its own pair of checkboxes; the
-checkbox in the panel header only sets the default for files you add next, and **Apply first to all**
+**Per file, never grouped.** In the bulk uploader each staged file has its own set of checkboxes; the
+checkboxes in the panel header only set the default for files you add next, and **Apply first to all**
 copies the choices down the list. Single-image fields show the same checkboxes, and you can set them
 before the file is even uploaded — the choice is applied at upload time.
 
+The **Image visibility** tab counts all three at a glance, plus a per-area breakdown.
+
+#### Share links (the Flickr-style private folder link)
+Studio → **Share links** → pick a category (or the whole gallery), tick or untick **Show private
+images**, then **Create link**. You get a URL like `https://yoursite.com/gallery/weddings?k=<token>`.
+
+- Anyone with the link sees that page, including the private photos when you allowed them.
+- Ordinary visitors, search engines and the sitemap never see private photos.
+- **Revoke** kills the link immediately; existing links keep working until you do.
+- Tokens are random 128-bit values and are resolved server-side by the `resolve_share_link` database
+  function, so a guessed token gets nothing.
+
 Where it lives:
-- `image_settings` table (keyed by stored file name) → enforced in `src/routes/api/public/img.$.ts`;
-  helpers in `src/lib/image-index.ts`.
-- `photos.in_gallery` column → filtered in `src/routes/gallery.index.tsx`.
+- `image_settings` table (keyed by stored file name, columns `indexable` and `is_private`) → enforced
+  in `src/routes/api/public/img.$.ts`; helpers in `src/lib/image-index.ts`.
+- `photos.in_gallery` and `photos.is_private` columns → filtered in `src/lib/site-content.functions.ts`
+  and `src/routes/gallery.index.tsx`.
+- `share_links` table + `resolve_share_link()` → read from the `?k=` query parameter in
+  `src/routes/__root.tsx`.
 - Hidden images are also skipped by the sitemap, so nothing links to them from outside the site.
 - Flag changes take effect on the next crawl; already-indexed images can take a few weeks to drop out
   (use Search Console **Removals** to speed it up).
+
+### Text contrast over photos
+Text laid over a photograph can vanish when the picture behind it is the same tone. Studio → **Text
+contrast** lists every such piece of text with a switch; flipping one adds the `.text-flip` utility
+(defined in `src/styles.css`) which paints that text in the opposite colour. Stored in the
+`text_inverts` table, read through `invertClass()` in `src/data/portfolio.ts`.
+
+### Default grid columns per device
+Studio → **Site & About** has nine selects: Home (featured work), Gallery (all work) and Category
+pages, each with a desktop / tablet / mobile default of 1, 2 or 3 columns. Visitors can still switch
+using the on-page **View** selector; your setting is what they land on. Handled by the `useGridView`
+hook in `src/components/site/ViewSelector.tsx`.
+
+### Users & roles
+Studio → **Users**. Admin accounts can open the Content Studio; non-admin accounts can sign in but
+see nothing. Actions run through admin-only server functions in `src/lib/users.functions.ts`, which
+re-check `has_role(auth.uid(), 'admin')` on the server for every call. You cannot demote or delete
+your own account (so the studio can never be locked out).
 
 ### Google Search Console (on your own host)
 1. Add a **Domain** property (DNS TXT) or **URL prefix** property at

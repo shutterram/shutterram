@@ -4,11 +4,12 @@ import { useState } from "react";
 import {
   COLUMN_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 
 import { Lightbox } from "@/components/site/Lightbox";
-import { categories, categoryBySlug, photosByCategory, t } from "@/data/portfolio";
+import { categories, categoryBySlug, invertClass, photosByCategory, t } from "@/data/portfolio";
+import { cn } from "@/lib/utils";
 import { getSeo } from "@/lib/seo.functions";
 import { buildSeoHead } from "@/lib/seo";
 
@@ -58,7 +59,7 @@ function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("category");
 
 
   return (
@@ -70,7 +71,12 @@ function CategoryGallery() {
           className="size-full object-cover"
         />
         <div className="hero-scrim absolute inset-0" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+        <div
+          className={cn(
+            "absolute inset-0 flex flex-col items-center justify-center px-6 text-center",
+            invertClass("category.cover"),
+          )}
+        >
           <p className="eyebrow">{t("gallery.eyebrow")}</p>
           <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
             {category.title}
@@ -110,7 +116,12 @@ function CategoryGallery() {
                 loading="lazy"
                 className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03]"
               />
-              <div className="absolute inset-x-0 bottom-0 translate-y-3 bg-gradient-to-t from-background/85 to-transparent p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+              <div
+                className={cn(
+                  "absolute inset-x-0 bottom-0 translate-y-3 bg-gradient-to-t from-background/85 to-transparent p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100",
+                  invertClass("gallery.caption"),
+                )}
+              >
                 <p className="font-display text-lg">{p.caption}</p>
               </div>
             </button>

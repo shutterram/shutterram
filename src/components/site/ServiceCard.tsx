@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { t, type Service } from "@/data/portfolio";
+import { invertClass, t, type Service } from "@/data/portfolio";
+import { cn } from "@/lib/utils";
 
 export function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
   return (
@@ -22,7 +23,7 @@ export function ServiceCard({ service, index = 0 }: { service: Service; index?: 
         <span className="h-px w-8 bg-foreground/40 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-14" />
       </div>
 
-      <div className="p-6">
+      <div className={cn("p-6", invertClass("service.card"))}>
         <p className="eyebrow">{service.subtitle}</p>
         <h3 className="mt-2 font-display text-2xl leading-tight">{service.title}</h3>
 

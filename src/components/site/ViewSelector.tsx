@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { gridDefaults, type GridDevice, type GridPage } from "@/data/portfolio";
 
 export type ColumnCount = "1" | "2" | "3";
 
@@ -32,6 +33,32 @@ const VIEW_OPTIONS: { value: ColumnCount; cells: number; label: string }[] = [
 /** Shared state hook so every gallery defaults to the two-column view. */
 export function useColumnView(initial: ColumnCount = "2") {
   return useState<ColumnCount>(initial);
+}
+
+function readDevice(): GridDevice {
+  if (typeof window === "undefined") return "desktop";
+  if (window.innerWidth < 768) return "mobile";
+  if (window.innerWidth < 1024) return "tablet";
+  return "desktop";
+}
+
+/**
+ * Column state that starts from the studio default for the current page and
+ * device, and switches to the visitor's own choice as soon as they pick one.
+ */
+export function useGridView(page: GridPage) {
+  const [device, setDevice] = useState<GridDevice>("desktop");
+  const [choice, setChoice] = useState<ColumnCount | null>(null);
+
+  useEffect(() => {
+    const read = () => setDevice(readDevice());
+    read();
+    window.addEventListener("resize", read);
+    return () => window.removeEventListener("resize", read);
+  }, []);
+
+  const fallback = (gridDefaults[page]?.[device] ?? "2") as ColumnCount;
+  return [choice ?? fallback, setChoice as (v: ColumnCount) => void] as const;
 }
 
 function ViewGlyph({ cells }: { cells: number }) {
