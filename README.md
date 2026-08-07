@@ -140,7 +140,9 @@ Press **Refresh site** after saving to reload public pages with the new content.
 
 | Tab | What it controls |
 | --- | --- |
-| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, **default grid columns per page per device**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Grid defaults** | Default column count (1/2/3) for the Home, Gallery and Category grids, chosen separately for desktop, tablet and mobile |
+| **Statistics** | Visitor / page-view dashboard: totals, chart over 30 days / 12 months / all time, top pages and traffic sources |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
 | **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
