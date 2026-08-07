@@ -51,7 +51,7 @@ export const Route = createFileRoute("/gallery/$category")({
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: category.title,
-            description: category.tagline,
+            description,
             url: head.links[0]!.href,
           }),
         },
