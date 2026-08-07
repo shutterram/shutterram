@@ -63,10 +63,20 @@ export function BeforeAfterSlider({
         />
       </div>
 
-      <span className="pointer-events-none absolute left-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm">
+      <span
+        className={cn(
+          "pointer-events-none absolute left-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm",
+          invertClass("beforeafter.labels"),
+        )}
+      >
         Before
       </span>
-      <span className="pointer-events-none absolute right-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm">
+      <span
+        className={cn(
+          "pointer-events-none absolute right-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm",
+          invertClass("beforeafter.labels"),
+        )}
+      >
         After
       </span>
 
