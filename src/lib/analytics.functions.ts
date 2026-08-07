@@ -19,6 +19,7 @@ export interface AnalyticsPage {
 export interface AnalyticsShareLink {
   token: string;
   label: string;
+  url: string;
   views: number;
   visitors: number;
 }
@@ -28,9 +29,11 @@ export interface AnalyticsPayload {
   totalVisitors: number;
   newVisitors: number;
   returningVisitors: number;
+  viewsPerVisitor: number;
   buckets: AnalyticsBucket[];
   pages: AnalyticsPage[];
   referrers: { source: string; views: number }[];
+  devices: { device: string; views: number; visitors: number }[];
   shareLinks: AnalyticsShareLink[];
 }
 
