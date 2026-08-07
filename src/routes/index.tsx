@@ -34,7 +34,7 @@ import {
   t,
 } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
-import { buildSeoHead, SITE_URL } from "@/lib/seo";
+import { buildSeoHead, loadSeo, SITE_URL } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   loader: () => loadSeo("/"),
