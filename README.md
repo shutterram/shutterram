@@ -622,12 +622,26 @@ using the on-page **View** selector; your setting is what they land on. Handled 
 hook in `src/components/site/ViewSelector.tsx`, and read from the `settings` table's `grid_*` columns.
 
 ### Site statistics
-Studio → **Statistics**. Every non-studio page view is recorded anonymously in the `page_views`
-table (path, a random per-browser id kept in `localStorage`, referrer, timestamp — no cookies, no
-personal data). The dashboard shows totals, a views/visitors chart over the last 30 days, 12 months
-or all time, the top pages as a bar chart, a full list of every page (new pages appear automatically)
-and where visitors came from. Only admins can read it: `getSiteAnalytics` in
-`src/lib/analytics.functions.ts` re-checks `has_role(auth.uid(), 'admin')` server-side.
+Studio → **Statistics → Traffic**. Every non-studio page view is recorded anonymously in the
+`page_views` table — path, a random per-browser id kept in `localStorage`, referrer, share-link token,
+device type, browser, OS, screen size, language, time zone, coarse country/region/city, and how long
+the visit lasted. **No cookies and no personal data**; the browser id is a random string you cannot
+trace back to a person.
+
+The dashboard is laid out like a creator studio:
+- **Ranges** — last 5 hours, 24 hours, 7 days, 30 days, 12 months or all time, with hourly buckets on
+  the short ranges.
+- **Headline metrics** — views, unique visitors, new vs returning, avg time on page, avg time per
+  visitor, total time on site. *Unique* = distinct browsers seen in the period; *new* = never seen
+  before it; *returning* = seen before it.
+- **Breakdowns** — pages, traffic sources, share links (views and visitors per generated link),
+  devices, browsers, operating systems, screen sizes, languages, time zones, countries (full names),
+  regions and cities. Each block has its own filter box.
+- **Bots** are detected and reported separately so they do not skew the numbers.
+
+Only admins can read it: `getSiteAnalytics` in `src/lib/analytics.functions.ts` re-checks
+`has_role(auth.uid(), 'admin')` server-side.
+
 
 
 ### Users & roles
