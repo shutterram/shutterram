@@ -16,6 +16,9 @@ import {
 import { getSiteAnalytics, type AnalyticsPayload } from "@/lib/analytics.functions";
 
 const RANGES = [
+  { id: "5h", label: "Last 5 hours" },
+  { id: "24h", label: "Last 24 hours" },
+  { id: "7d", label: "Last 7 days" },
   { id: "month", label: "Last 30 days" },
   { id: "year", label: "Last 12 months" },
   { id: "all", label: "All time" },
@@ -23,11 +26,20 @@ const RANGES = [
 
 type Range = (typeof RANGES)[number]["id"];
 
-function Metric({ value, label }: { value: number | string; label: string }) {
+function Metric({
+  value,
+  label,
+  hint,
+}: {
+  value: number | string;
+  label: string;
+  hint?: string;
+}) {
   return (
     <div className="border border-hairline p-6">
       <p className="font-display text-4xl leading-none">{value}</p>
       <p className="eyebrow mt-3">{label}</p>
+      {hint ? <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -63,8 +75,16 @@ export function AnalyticsDashboard() {
     <div className="space-y-10 pb-20">
       <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
         Anonymous visit counts for every page on the site, including pages you add later. No
-        cookies, no personal data — just a random id per browser so repeat visits aren't counted
-        twice.
+        cookies, no personal data — just a random id per browser and the device type (mobile,
+        tablet or desktop) so repeat visits aren't counted twice.
+        <br />
+        <strong className="text-foreground">Unique visitors</strong> is how many different browsers
+        opened the site in the selected period. Each of those is either{" "}
+        <strong className="text-foreground">new</strong> (never seen before this period) or{" "}
+        <strong className="text-foreground">returning</strong> (seen earlier too) — so new +
+        returning always equals unique. Your own visits from every browser, phone and preview
+        window count too, as do search-engine crawlers, which is usually why the number is higher
+        than the people you shared links with.
       </p>
 
       <div className="flex flex-wrap gap-3">
@@ -97,6 +117,7 @@ export function AnalyticsDashboard() {
             <Metric value={data.newVisitors} label="New visitors" />
             <Metric value={data.returningVisitors} label="Returning visitors" />
             <Metric value={data.pages.length} label="Pages visited" />
+            <Metric value={data.viewsPerVisitor} label="Views per visitor" />
           </div>
 
           <section>
@@ -159,6 +180,23 @@ export function AnalyticsDashboard() {
             </div>
           </section>
 
+          <section>
+            <p className="eyebrow">Devices</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              {data.devices.map((d) => (
+                <div key={d.device} className="border border-hairline p-5">
+                  <p className="font-display text-2xl capitalize leading-none">{d.device}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {d.views} views · {d.visitors} visitors
+                  </p>
+                </div>
+              ))}
+              {data.devices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No visits recorded yet.</p>
+              ) : null}
+            </div>
+          </section>
+
           <section className="grid gap-10 md:grid-cols-2">
             <div>
               <p className="eyebrow">Every page</p>
@@ -196,8 +234,13 @@ export function AnalyticsDashboard() {
             <p className="eyebrow">Share links</p>
             <div className="mt-4 divide-y divide-hairline border-y border-hairline text-sm">
               {data.shareLinks.map((l) => (
-                <div key={l.token} className="flex items-center justify-between gap-4 py-3">
-                  <span className="truncate">{l.label}</span>
+                <div key={l.token} className="flex items-start justify-between gap-4 py-3">
+                  <span className="min-w-0">
+                    <span className="block truncate">{l.label}</span>
+                    <span className="mt-1 block truncate text-xs text-muted-foreground">
+                      {l.url}
+                    </span>
+                  </span>
                   <span className="shrink-0 text-muted-foreground">
                     {l.views} views · {l.visitors} visitors
                   </span>

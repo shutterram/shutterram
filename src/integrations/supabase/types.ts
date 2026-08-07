@@ -230,6 +230,7 @@ export type Database = {
       page_views: {
         Row: {
           created_at: string
+          device_type: string
           id: string
           path: string
           referrer: string
@@ -238,6 +239,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          device_type?: string
           id?: string
           path: string
           referrer?: string
@@ -246,6 +248,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          device_type?: string
           id?: string
           path?: string
           referrer?: string
@@ -585,6 +588,8 @@ export type Database = {
           id: string
           include_private: boolean
           label: string
+          og_image: string
+          path: string
           scope: string
           token: string
           updated_at: string
@@ -595,6 +600,8 @@ export type Database = {
           id?: string
           include_private?: boolean
           label?: string
+          og_image?: string
+          path?: string
           scope?: string
           token: string
           updated_at?: string
@@ -605,6 +612,8 @@ export type Database = {
           id?: string
           include_private?: boolean
           label?: string
+          og_image?: string
+          path?: string
           scope?: string
           token?: string
           updated_at?: string
@@ -928,6 +937,7 @@ export type Database = {
           scope: string
         }[]
       }
+      share_link_og_image: { Args: { _token: string }; Returns: string }
     }
     Enums: {
       app_role: "admin"

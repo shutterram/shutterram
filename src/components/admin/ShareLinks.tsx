@@ -3,6 +3,16 @@ import { Copy, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { categories } from "@/data/portfolio";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageField } from "@/components/admin/ContentEditor";
+
+/** Every page a link can point at, beyond the gallery and its categories. */
+const SITE_PAGES = [
+  { path: "/", label: "Home" },
+  { path: "/about", label: "About" },
+  { path: "/services", label: "Services" },
+  { path: "/contact", label: "Contact" },
+  { path: "/review", label: "Leave a review" },
+];
 
 interface ShareRow {
   id: string;
@@ -12,6 +22,8 @@ interface ShareRow {
   include_private: boolean;
   token: string;
   created_at: string;
+  path: string;
+  og_image: string;
 }
 
 function makeToken() {
@@ -23,7 +35,12 @@ function makeToken() {
 /** Full visitor URL for a link, e.g. https://site.com/gallery/weddings?k=<token> */
 function linkUrl(row: ShareRow) {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const path = row.scope === "category" ? `/gallery/${row.category_slug}` : "/gallery";
+  const path =
+    row.scope === "category"
+      ? `/gallery/${row.category_slug}`
+      : row.scope === "page"
+        ? row.path || "/"
+        : "/gallery";
   return `${origin}${path}?k=${row.token}`;
 }
 
@@ -36,7 +53,9 @@ export function ShareLinks() {
   const [rows, setRows] = useState<ShareRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("");
-  const [scope, setScope] = useState<"category" | "gallery">("category");
+  const [scope, setScope] = useState<"category" | "gallery" | "page">("category");
+  const [pagePath, setPagePath] = useState(SITE_PAGES[0]!.path);
+  const [ogImage, setOgImage] = useState("");
   const [slug, setSlug] = useState(categories[0]?.slug ?? "");
   const [includePrivate, setIncludePrivate] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -44,7 +63,7 @@ export function ShareLinks() {
   const load = async () => {
     const { data, error } = await supabase
       .from("share_links")
-      .select("id,label,scope,category_slug,include_private,token,created_at")
+      .select("id,label,scope,category_slug,include_private,token,created_at,path,og_image")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setRows((data ?? []) as ShareRow[]);
@@ -62,9 +81,13 @@ export function ShareLinks() {
     }
     setCreating(true);
     const { error } = await supabase.from("share_links").insert({
-      label: label.trim() || (scope === "gallery" ? "Full gallery" : slug),
+      label:
+        label.trim() ||
+        (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
       scope,
       category_slug: scope === "category" ? slug : "",
+      path: scope === "page" ? pagePath : "",
+      og_image: ogImage,
       include_private: includePrivate,
       token: makeToken(),
     });
@@ -74,6 +97,7 @@ export function ShareLinks() {
       return;
     }
     setLabel("");
+    setOgImage("");
     toast.success("Share link created.");
     await load();
   };
@@ -122,11 +146,12 @@ export function ShareLinks() {
             <span className="eyebrow">Covers</span>
             <select
               value={scope}
-              onChange={(e) => setScope(e.target.value as "category" | "gallery")}
+              onChange={(e) => setScope(e.target.value as "category" | "gallery" | "page")}
               className={`mt-3 ${field}`}
             >
               <option value="category">One category</option>
               <option value="gallery">The whole gallery</option>
+              <option value="page">Any other page</option>
             </select>
           </label>
 
@@ -146,6 +171,31 @@ export function ShareLinks() {
               </select>
             </label>
           ) : null}
+
+          {scope === "page" ? (
+            <label className="block">
+              <span className="eyebrow">Page</span>
+              <select
+                value={pagePath}
+                onChange={(e) => setPagePath(e.target.value)}
+                className={`mt-3 ${field}`}
+              >
+                {SITE_PAGES.map((p) => (
+                  <option key={p.path} value={p.path}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          <div className="md:col-span-2">
+            <ImageField
+              value={ogImage}
+              onChange={setOgImage}
+              label="Link preview image (optional — falls back to the page's own)"
+            />
+          </div>
 
           <label className="flex items-center gap-3 self-end pb-1">
             <input
@@ -182,7 +232,12 @@ export function ShareLinks() {
                   <p className="truncate text-sm">{r.label}</p>
                   <p className="mt-1 truncate text-xs text-muted-foreground">{linkUrl(r)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {r.scope === "gallery" ? "Whole gallery" : `Category: ${r.category_slug}`} ·{" "}
+                    {r.scope === "gallery"
+                      ? "Whole gallery"
+                      : r.scope === "page"
+                        ? `Page: ${r.path || "/"}`
+                        : `Category: ${r.category_slug}`}{" "}
+                    · {r.og_image ? "Custom preview image" : "Default preview image"} ·{" "}
                     {r.include_private ? "Private images shown" : "Private images hidden"}
                   </p>
                 </div>

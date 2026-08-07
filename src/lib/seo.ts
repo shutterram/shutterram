@@ -58,10 +58,16 @@ export function buildSeoHead(row: SeoRow | null | undefined, fallback: SeoFallba
  * Loads the studio SEO row without ever failing the route: a network hiccup or
  * offline preview should fall back to the built-in defaults, not a blank screen.
  */
-export async function loadSeo(path: string): Promise<SeoRow | null> {
+export async function loadSeo(path: string, token = ""): Promise<SeoRow | null> {
   try {
-    return (await getSeo({ data: { path } })) ?? null;
+    return (await getSeo({ data: { path, token } })) ?? null;
   } catch {
     return null;
   }
+}
+
+/** Reads the `?k=` share token out of a route's parsed search params. */
+export function tokenOf(search: unknown): string {
+  const value = (search as Record<string, unknown> | undefined)?.["k"];
+  return typeof value === "string" ? value : "";
 }
