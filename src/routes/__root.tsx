@@ -9,8 +9,7 @@ import {
   Scripts,
   ScriptOnce,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -114,6 +113,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
+  // `?k=<token>` unlocks private photos for visitors holding a share link.
+  loader: ({ location }) => {
+    const search = location.search as Record<string, unknown> | undefined;
+    const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
+    return getSiteContent({ data: { token } });
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -139,30 +144,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const content = Route.useLoaderData();
+  applyContent(content);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const searchString = useRouterState({ select: (s) => s.location.searchStr });
-  const fetchSiteContent = useServerFn(getSiteContent);
-  const [, setContentRevision] = useState(0);
-
-  // Keep the full CMS query out of the SSR request. The site has complete
-  // built-in content, so the first response can render immediately instead of
-  // becoming a 500 when preview reload/HMR closes a slow database-backed SSR
-  // socket. Hydrate editable content after mount and trigger one safe rerender.
-  useEffect(() => {
-    let cancelled = false;
-    const token = new URLSearchParams(searchString).get("k") ?? "";
-    void fetchSiteContent({ data: { token } })
-      .then((content) => {
-        if (cancelled) return;
-        applyContent(content);
-        setContentRevision((revision) => revision + 1);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchSiteContent, searchString]);
-
   const paletteCss = themeCss(themeTokens);
   const typeCss = typographyCss(typeTokens, typography);
   const fontHrefs = fontStylesheetHrefs(siteFonts, typography);
@@ -178,12 +162,6 @@ function RootComponent() {
   // Anonymous visit counter for the studio statistics dashboard.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Development/preview reloads are frequent, abort in-flight RPC requests,
-    // and are not real audience traffic. Keeping analytics production-only
-    // prevents socket disconnects from surfacing as blank-screen SSR failures
-    // while also keeping the studio's visitor totals accurate.
-    const analyticsHosts = new Set(["shutterram.lovable.app", "www.shutterram.lovable.app"]);
-    if (import.meta.env.DEV || !analyticsHosts.has(window.location.hostname)) return;
     if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
     let id = "";
     try {
@@ -212,62 +190,36 @@ function RootComponent() {
     const screenSize = `${window.screen?.width ?? width}x${window.screen?.height ?? 0}`;
     let viewId = "";
     const startedAt = Date.now();
-    let lastRecordedSeconds = 0;
-    let stopped = false;
-    const recordElapsedTime = () => {
-      if (stopped || !viewId) return;
+    let sent = false;
+    const flush = () => {
+      if (sent || !viewId) return;
+      sent = true;
       const seconds = Math.round((Date.now() - startedAt) / 1000);
-      if (seconds <= lastRecordedSeconds) return;
-      lastRecordedSeconds = seconds;
+      if (seconds <= 0) return;
       void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
     };
-
-    // Delay the tracking call so it is never in flight during hydration or an
-    // immediate reload/navigation — cancelled in-flight requests surface as
-    // Node's `abortIncoming` error and a spurious 500 in development.
-    const trackTimeout = window.setTimeout(() => {
-      if (stopped) return;
-      void trackPageView({
-        data: {
-          path: pathname,
-          visitorId: id,
-          referrer: document.referrer,
-          shareToken,
-          deviceType,
-          language: navigator.language ?? "",
-          timezone,
-          screenSize,
-          userAgent: navigator.userAgent ?? "",
-        },
+    void trackPageView({
+      data: {
+        path: pathname,
+        visitorId: id,
+        referrer: document.referrer,
+        shareToken,
+        deviceType,
+        language: navigator.language ?? "",
+        timezone,
+        screenSize,
+        userAgent: navigator.userAgent ?? "",
+      },
+    })
+      .then((res) => {
+        viewId = (res as { id?: string } | undefined)?.id ?? "";
       })
-        .then((res) => {
-          if (stopped) return;
-          viewId = (res as { id?: string } | undefined)?.id ?? "";
-        })
-        .catch(() => undefined);
-    }, 1200);
-
-    // Persist elapsed time while the document is active instead of starting a
-    // request during pagehide/unload. Unload requests are routinely cancelled
-    // by browsers and surface as Node's `abortIncoming` error in development.
-    const durationInterval = window.setInterval(recordElapsedTime, 10_000);
-    const stopTracking = () => {
-      stopped = true;
-      window.clearTimeout(trackTimeout);
-      window.clearInterval(durationInterval);
-    };
-    // React cleanup runs only when the next document commits. `beforeunload`
-    // runs as soon as navigation starts, which prevents the delayed analytics
-    // request from opening while a slow SSR response is still in flight.
-    window.addEventListener("beforeunload", stopTracking);
-    window.addEventListener("pagehide", stopTracking);
+      .catch(() => undefined);
+    window.addEventListener("pagehide", flush);
     return () => {
-      stopTracking();
-      window.removeEventListener("beforeunload", stopTracking);
-      window.removeEventListener("pagehide", stopTracking);
+      window.removeEventListener("pagehide", flush);
+      flush();
     };
-
-
   }, [pathname]);
 
   // The private studio pages render without the public site chrome.

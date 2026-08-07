@@ -8,11 +8,6 @@ export function HeroSlider() {
   const categories = heroCategories();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
 
   const go = useCallback((dir: number) => {
     setActive((i) => (i + dir + categories.length) % categories.length);
@@ -24,20 +19,6 @@ export function HeroSlider() {
     return () => clearInterval(t);
   }, [paused, go]);
 
-  // Portfolio content is hydrated from the root loader into a shared content
-  // store. Render a data-independent first frame on both server and browser so
-  // a concurrent content refresh can never change the initial DOM shape.
-  if (!hydrated) {
-    return (
-      <section
-        className="relative h-[100svh] w-full overflow-hidden bg-background"
-        aria-label="Photography categories"
-      />
-    );
-  }
-
-  const current = categories[active] ?? categories[0];
-
   return (
     <section
       className="relative h-[100svh] w-full overflow-hidden"
@@ -46,20 +27,24 @@ export function HeroSlider() {
       aria-roledescription="carousel"
       aria-label="Photography categories"
     >
-      {current ? (
+      {categories.map((c, i) => (
         <div
-          key={current.slug}
-          className="absolute inset-0 animate-in fade-in duration-1000"
+          key={c.slug}
+          className={cn(
+            "absolute inset-0 transition-opacity duration-[1400ms] ease-out",
+            i === active ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          aria-hidden={i !== active}
         >
           <img
-            src={current.hero}
-            alt={current.title}
-            fetchPriority="high"
-            className="slow-zoom size-full object-cover"
+            src={c.hero}
+            alt={c.title}
+            fetchPriority={i === 0 ? "high" : "low"}
+            className={cn("size-full object-cover", i === active && "slow-zoom")}
           />
           <div className="hero-scrim absolute inset-0" />
         </div>
-      ) : null}
+      ))}
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
         <div className={cn("fade-up mb-8 flex flex-col items-center", invertClass("hero.brand"))}>
@@ -72,9 +57,9 @@ export function HeroSlider() {
             <span className="h-px w-10 bg-foreground/30 md:w-16" />
           </span>
         </div>
-        {current ? <div key={active} className="fade-up max-w-3xl">
+        <div key={active} className="fade-up max-w-3xl">
           <p className={cn("eyebrow", invertClass("hero.eyebrow"))}>
-            {String(active + 1).padStart(2, "0")} — {current.label}
+            {String(active + 1).padStart(2, "0")} — {categories[active]!.label}
           </p>
           <h1
             className={cn(
@@ -82,7 +67,7 @@ export function HeroSlider() {
               invertClass("hero.title"),
             )}
           >
-            {current.title}
+            {categories[active]!.title}
           </h1>
           <p
             className={cn(
@@ -90,7 +75,7 @@ export function HeroSlider() {
               invertClass("hero.tagline"),
             )}
           >
-            {current.tagline}
+            {categories[active]!.tagline}
           </p>
 
           <div
@@ -101,20 +86,20 @@ export function HeroSlider() {
           >
             <Link
               to="/gallery/$category"
-              params={{ category: current.slug }}
+              params={{ category: categories[active]!.slug }}
               className="glow-hover inline-flex items-center border border-foreground/60 px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase transition-colors hover:bg-foreground hover:text-background"
             >
               {t("btn.view_more")}
             </Link>
             <Link
               to="/contact"
-              search={{ form: "quote" as const, service: current.slug }}
+              search={{ form: "quote" as const, service: categories[active]!.slug }}
               className="glow-hover inline-flex items-center border border-foreground bg-foreground px-9 py-3.5 text-[0.6875rem] tracking-[0.28em] uppercase text-background hover:bg-transparent hover:text-foreground"
             >
               {t("btn.book_date")}
             </Link>
           </div>
-        </div> : null}
+        </div>
       </div>
 
       <button

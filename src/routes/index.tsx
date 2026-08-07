@@ -39,14 +39,12 @@ import { buildSeoHead, loadSeo, tokenOf, SITE_URL } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   loader: ({ location }) => loadSeo("/", tokenOf(location.search)),
   head: ({ loaderData }) => {
-    const fallbackDescription =
-      "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Clicking today, for a memory that lives forever.";
-    const heroImage = categories[0]?.hero;
     const head = buildSeoHead(loaderData, {
       path: "/",
       title: "Shutter Ram — Wedding, Portrait & Corporate Photography",
-      description: fallbackDescription,
-      ...(heroImage ? { image: heroImage } : {}),
+      description:
+        "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Clicking today, for a memory that lives forever.",
+      image: categories[0]!.hero,
     });
     return {
       ...head,
@@ -58,9 +56,9 @@ export const Route = createFileRoute("/")({
             "@type": "LocalBusiness",
             "@id": `${SITE_URL}/#studio`,
             name: site.name,
-            description: head.meta[1]?.["content"] ?? fallbackDescription,
+            description: head.meta[1]!["content"],
             url: SITE_URL,
-            ...(heroImage ? { image: heroImage } : {}),
+            image: categories[0]!.hero,
             email: site.email,
             telephone: site.phone,
             address: { "@type": "PostalAddress", addressLocality: site.location },
