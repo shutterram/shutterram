@@ -46,7 +46,7 @@ export const Route = createFileRoute("/")({
       path: "/",
       title: "Shutter Ram — Wedding, Portrait & Corporate Photography",
       description: fallbackDescription,
-      image: heroImage,
+      ...(heroImage ? { image: heroImage } : {}),
     });
     return {
       ...head,
