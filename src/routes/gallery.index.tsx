@@ -72,12 +72,8 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 flex justify-center">
-        <ViewSelector value={cols} onChange={setCols} />
-      </div>
-
       <FilterPills
-        className="mt-6"
+        className="mt-10"
         value={filter}
         onChange={(v) => {
           setFilter(v);
@@ -92,6 +88,10 @@ function Gallery() {
           })),
         ]}
       />
+
+      <div className="mt-6 flex justify-start">
+        <ViewSelector value={cols} onChange={setCols} />
+      </div>
 
       <div className={`mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
         {shown.map((p, i) => (
