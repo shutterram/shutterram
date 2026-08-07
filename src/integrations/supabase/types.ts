@@ -41,6 +41,7 @@ export type Database = {
           hero: string
           id: string
           label: string
+          show_in_hero: boolean
           slug: string
           sort_order: number
           tagline: string
@@ -52,6 +53,7 @@ export type Database = {
           hero?: string
           id?: string
           label: string
+          show_in_hero?: boolean
           slug: string
           sort_order?: number
           tagline?: string
@@ -63,6 +65,7 @@ export type Database = {
           hero?: string
           id?: string
           label?: string
+          show_in_hero?: boolean
           slug?: string
           sort_order?: number
           tagline?: string
@@ -229,30 +232,57 @@ export type Database = {
       }
       page_views: {
         Row: {
+          browser: string
+          city: string
+          country: string
           created_at: string
           device_type: string
           id: string
+          is_bot: boolean
+          language: string
+          os: string
           path: string
           referrer: string
+          region: string
+          screen_size: string
           share_token: string
+          timezone: string
           visitor_id: string
         }
         Insert: {
+          browser?: string
+          city?: string
+          country?: string
           created_at?: string
           device_type?: string
           id?: string
+          is_bot?: boolean
+          language?: string
+          os?: string
           path: string
           referrer?: string
+          region?: string
+          screen_size?: string
           share_token?: string
+          timezone?: string
           visitor_id?: string
         }
         Update: {
+          browser?: string
+          city?: string
+          country?: string
           created_at?: string
           device_type?: string
           id?: string
+          is_bot?: boolean
+          language?: string
+          os?: string
           path?: string
           referrer?: string
+          region?: string
+          screen_size?: string
           share_token?: string
+          timezone?: string
           visitor_id?: string
         }
         Relationships: []
@@ -468,6 +498,7 @@ export type Database = {
           name: string
           og_image: string
           phone: string
+          show_view_label: boolean
           tagline: string
           updated_at: string
         }
@@ -522,6 +553,7 @@ export type Database = {
           name?: string
           og_image?: string
           phone?: string
+          show_view_label?: boolean
           tagline?: string
           updated_at?: string
         }
@@ -576,6 +608,7 @@ export type Database = {
           name?: string
           og_image?: string
           phone?: string
+          show_view_label?: boolean
           tagline?: string
           updated_at?: string
         }

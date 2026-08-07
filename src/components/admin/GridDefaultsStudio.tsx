@@ -65,6 +65,8 @@ export function GridDefaultsStudio() {
         const k = keyOf(p.id, d.id);
         patch[k] = typeof row[k] === "string" ? row[k] : "2";
       }
+    patch["show_view_label"] = row["show_view_label"] !== false;
+
     const { error } = await supabase
       .from("settings" as never)
       .update(patch as never)
@@ -101,6 +103,24 @@ export function GridDefaultsStudio() {
       <p className="-mt-6 text-xs text-muted-foreground">
         {DEVICES.find((d) => d.id === device)?.hint}
       </p>
+
+      <div className="border border-hairline p-6">
+        <p className="eyebrow">The word “View”</p>
+        <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
+          Shows or hides the small “View” caption that sits next to the grid pickers on the home
+          and gallery pages. Category pages never show it.
+        </p>
+        <label className="mt-5 inline-flex cursor-pointer items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={row["show_view_label"] !== false}
+            onChange={(e) => setRow({ ...row, show_view_label: e.target.checked })}
+            className="size-4 accent-current"
+          />
+          Show the “View” label
+        </label>
+      </div>
+
 
       <div className="grid gap-8 md:grid-cols-3">
         {PAGES.map((p) => (

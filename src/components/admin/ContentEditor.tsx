@@ -237,12 +237,18 @@ export function CategoryField({
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    // Ask up front whether this category should also become a home page hero
+    // slide — some categories belong in the gallery only.
+    const showInHero = confirm(
+      `Show “${name}” as a slide in the home page hero slider?\n\nOK = yes, show it on the home page.\nCancel = gallery and featured work only.`,
+    );
     const { error } = await supabase.from("categories" as never).insert({
       slug,
       title: `${name} Photography`,
       label: name,
       tagline: "",
       hero: "",
+      show_in_hero: showInHero,
       sort_order: cats.length,
     } as never);
     if (error) {
@@ -251,7 +257,12 @@ export function CategoryField({
     }
     await load();
     onChange(slug);
-    toast.success("Category added — add its hero image under “Hero categories”.");
+    toast.success(
+      showInHero
+        ? "Category added — add its hero image under “Hero categories”."
+        : "Category added (gallery only) — it won't appear in the home hero.",
+    );
+
   }
 
   async function removeCategory() {
@@ -630,7 +641,8 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        draft[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
@@ -855,7 +867,8 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        attrs[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;

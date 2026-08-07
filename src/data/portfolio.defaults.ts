@@ -193,6 +193,8 @@ export interface Category {
   hero: string;
   /** Optional cover photo for the category page header (falls back to `hero`). */
   cover?: string;
+  /** Show this category as a slide in the home page hero slider. */
+  showInHero?: boolean;
 }
 
 export const defaultCategories: Category[] = [

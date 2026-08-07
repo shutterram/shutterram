@@ -181,8 +181,25 @@ function RootComponent() {
     }
     const width = window.innerWidth;
     const deviceType = width < 768 ? "mobile" : width < 1024 ? "tablet" : "desktop";
+    let timezone = "";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? "";
+    } catch {
+      timezone = "";
+    }
+    const screenSize = `${window.screen?.width ?? width}x${window.screen?.height ?? 0}`;
     void trackPageView({
-      data: { path: pathname, visitorId: id, referrer: document.referrer, shareToken, deviceType },
+      data: {
+        path: pathname,
+        visitorId: id,
+        referrer: document.referrer,
+        shareToken,
+        deviceType,
+        language: navigator.language ?? "",
+        timezone,
+        screenSize,
+        userAgent: navigator.userAgent ?? "",
+      },
     }).catch(() => undefined);
   }, [pathname]);
 
