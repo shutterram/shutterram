@@ -162,6 +162,12 @@ function RootComponent() {
   // Anonymous visit counter for the studio statistics dashboard.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Development/preview reloads are frequent, abort in-flight RPC requests,
+    // and are not real audience traffic. Keeping analytics production-only
+    // prevents socket disconnects from surfacing as blank-screen SSR failures
+    // while also keeping the studio's visitor totals accurate.
+    const analyticsHosts = new Set(["shutterram.lovable.app", "www.shutterram.lovable.app"]);
+    if (import.meta.env.DEV || !analyticsHosts.has(window.location.hostname)) return;
     if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
     let id = "";
     try {
@@ -191,8 +197,9 @@ function RootComponent() {
     let viewId = "";
     const startedAt = Date.now();
     let lastRecordedSeconds = 0;
+    let stopped = false;
     const recordElapsedTime = () => {
-      if (!viewId) return;
+      if (stopped || !viewId) return;
       const seconds = Math.round((Date.now() - startedAt) / 1000);
       if (seconds <= lastRecordedSeconds) return;
       lastRecordedSeconds = seconds;
@@ -203,6 +210,7 @@ function RootComponent() {
     // immediate reload/navigation — cancelled in-flight requests surface as
     // Node's `abortIncoming` error and a spurious 500 in development.
     const trackTimeout = window.setTimeout(() => {
+      if (stopped) return;
       void trackPageView({
         data: {
           path: pathname,
@@ -217,6 +225,7 @@ function RootComponent() {
         },
       })
         .then((res) => {
+          if (stopped) return;
           viewId = (res as { id?: string } | undefined)?.id ?? "";
         })
         .catch(() => undefined);
@@ -226,9 +235,20 @@ function RootComponent() {
     // request during pagehide/unload. Unload requests are routinely cancelled
     // by browsers and surface as Node's `abortIncoming` error in development.
     const durationInterval = window.setInterval(recordElapsedTime, 10_000);
-    return () => {
+    const stopTracking = () => {
+      stopped = true;
       window.clearTimeout(trackTimeout);
       window.clearInterval(durationInterval);
+    };
+    // React cleanup runs only when the next document commits. `beforeunload`
+    // runs as soon as navigation starts, which prevents the delayed analytics
+    // request from opening while a slow SSR response is still in flight.
+    window.addEventListener("beforeunload", stopTracking);
+    window.addEventListener("pagehide", stopTracking);
+    return () => {
+      stopTracking();
+      window.removeEventListener("beforeunload", stopTracking);
+      window.removeEventListener("pagehide", stopTracking);
     };
 
 
