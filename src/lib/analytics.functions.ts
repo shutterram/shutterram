@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
@@ -24,7 +25,14 @@ export interface AnalyticsShareLink {
   visitors: number;
 }
 
+export interface AnalyticsSlice {
+  key: string;
+  views: number;
+  visitors: number;
+}
+
 export interface AnalyticsPayload {
+  botViews: number;
   totalViews: number;
   totalVisitors: number;
   newVisitors: number;
@@ -35,6 +43,16 @@ export interface AnalyticsPayload {
   referrers: { source: string; views: number }[];
   devices: { device: string; views: number; visitors: number }[];
   shareLinks: AnalyticsShareLink[];
+  countries: AnalyticsSlice[];
+  regions: AnalyticsSlice[];
+  cities: AnalyticsSlice[];
+  browsers: AnalyticsSlice[];
+  operatingSystems: AnalyticsSlice[];
+  languages: AnalyticsSlice[];
+  timezones: AnalyticsSlice[];
+  screens: AnalyticsSlice[];
+  hourOfDay: AnalyticsSlice[];
+  dayOfWeek: AnalyticsSlice[];
 }
 
 /** Publishable-key client for the anonymous insert. */
@@ -67,6 +85,10 @@ export const trackPageView = createServerFn({ method: "POST" })
             referrer?: string;
             shareToken?: string;
             deviceType?: string;
+            language?: string;
+            timezone?: string;
+            screenSize?: string;
+            userAgent?: string;
           }
         | undefined,
     ) => ({
@@ -77,6 +99,10 @@ export const trackPageView = createServerFn({ method: "POST" })
       deviceType: ["mobile", "tablet", "desktop"].includes(String(input?.deviceType))
         ? String(input?.deviceType)
         : "",
+      language: String(input?.language ?? "").slice(0, 16),
+      timezone: String(input?.timezone ?? "").slice(0, 64),
+      screenSize: String(input?.screenSize ?? "").slice(0, 24),
+      userAgent: String(input?.userAgent ?? "").slice(0, 300),
     }),
   )
   .handler(async ({ data }) => {
@@ -84,6 +110,33 @@ export const trackPageView = createServerFn({ method: "POST" })
     if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
       return { ok: false };
     }
+    // Geography comes from the edge network's request headers, which are
+    // derived from the connecting IP. We never store the IP itself and we set
+    // no cookies — the visitor id is a random string kept by the browser.
+    let country = "";
+    let region = "";
+    let city = "";
+    let headerAgent = "";
+    try {
+      const headers = getRequest().headers;
+      const pick = (...names: string[]) => {
+        for (const n of names) {
+          const v = headers.get(n);
+          if (v) return v.slice(0, 64);
+        }
+        return "";
+      };
+      country = pick("cf-ipcountry", "x-vercel-ip-country", "x-geo-country", "x-country-code");
+      region = decodeURIComponent(
+        pick("x-vercel-ip-country-region", "cf-region", "x-geo-region") || "",
+      );
+      city = decodeURIComponent(pick("x-vercel-ip-city", "cf-ipcity", "x-geo-city") || "");
+      headerAgent = headers.get("user-agent") ?? "";
+    } catch {
+      /* geography is best-effort only */
+    }
+
+    const agent = data.userAgent || headerAgent;
     const { error } = await publicClient()
       .from("page_views" as never)
       .insert({
@@ -92,10 +145,46 @@ export const trackPageView = createServerFn({ method: "POST" })
         referrer: data.referrer,
         share_token: data.shareToken,
         device_type: data.deviceType,
+        country,
+        region,
+        city,
+        browser: browserOf(agent),
+        os: osOf(agent),
+        language: data.language,
+        timezone: data.timezone,
+        screen_size: data.screenSize,
+        is_bot: BOT_RE.test(agent),
       } as never);
     if (error) console.error("[analytics] insert failed", error.message);
     return { ok: !error };
   });
+
+const BOT_RE =
+  /bot|crawler|spider|crawling|preview|facebookexternalhit|slurp|bingpreview|headless|lighthouse|pingdom|monitor/i;
+
+/** Best-effort browser name from a user-agent string. No IP, no fingerprint. */
+function browserOf(ua: string): string {
+  if (!ua) return "Unknown";
+  if (BOT_RE.test(ua)) return "Bot / crawler";
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/OPR\/|Opera/.test(ua)) return "Opera";
+  if (/SamsungBrowser/.test(ua)) return "Samsung Internet";
+  if (/Firefox\//.test(ua)) return "Firefox";
+  if (/Chrome\//.test(ua)) return "Chrome";
+  if (/Safari\//.test(ua)) return "Safari";
+  return "Other";
+}
+
+/** Best-effort operating system from a user-agent string. */
+function osOf(ua: string): string {
+  if (!ua) return "Unknown";
+  if (/Windows/.test(ua)) return "Windows";
+  if (/Android/.test(ua)) return "Android";
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Mac OS X|Macintosh/.test(ua)) return "macOS";
+  if (/Linux/.test(ua)) return "Linux";
+  return "Other";
+}
 
 const RANGE_HOURS: Record<string, number> = {
   "5h": 5,
@@ -124,7 +213,9 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await context.supabase
       .from("page_views")
-      .select("path,visitor_id,referrer,created_at,share_token,device_type")
+      .select(
+        "path,visitor_id,referrer,created_at,share_token,device_type,country,region,city,browser,os,language,timezone,screen_size,is_bot",
+      )
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: true })
       .limit(50000);
@@ -167,6 +258,27 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
     const devices = new Map<string, { views: number; visitors: Set<string> }>();
     const links = new Map<string, { views: number; visitors: Set<string> }>();
     const allVisitors = new Set<string>();
+    const slices: Record<string, Map<string, { views: number; visitors: Set<string> }>> = {
+      countries: new Map(),
+      regions: new Map(),
+      cities: new Map(),
+      browsers: new Map(),
+      operatingSystems: new Map(),
+      languages: new Map(),
+      timezones: new Map(),
+      screens: new Map(),
+      hourOfDay: new Map(),
+      dayOfWeek: new Map(),
+    };
+    const addSlice = (name: string, key: string, visitor: string) => {
+      const map = slices[name]!;
+      const entry = map.get(key) ?? { views: 0, visitors: new Set<string>() };
+      entry.views += 1;
+      entry.visitors.add(visitor);
+      map.set(key, entry);
+    };
+    const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    let botViews = 0;
 
     for (const row of rows ?? []) {
       const iso = String(row.created_at);
@@ -204,6 +316,19 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
         links.set(token, l);
       }
 
+      const r = row as Record<string, unknown>;
+      if (r["is_bot"] === true) botViews += 1;
+      addSlice("countries", String(r["country"] || "") || "Unknown", visitor);
+      addSlice("regions", String(r["region"] || "") || "Unknown", visitor);
+      addSlice("cities", String(r["city"] || "") || "Unknown", visitor);
+      addSlice("browsers", String(r["browser"] || "") || "Unknown", visitor);
+      addSlice("operatingSystems", String(r["os"] || "") || "Unknown", visitor);
+      addSlice("languages", String(r["language"] || "") || "Unknown", visitor);
+      addSlice("timezones", String(r["timezone"] || "") || "Unknown", visitor);
+      addSlice("screens", String(r["screen_size"] || "") || "Unknown", visitor);
+      addSlice("hourOfDay", `${iso.slice(11, 13)}:00`, visitor);
+      addSlice("dayOfWeek", DAYS[new Date(iso).getUTCDay()] ?? "Unknown", visitor);
+
       const ref = String(row.referrer || "");
       let source = "Direct";
       if (ref) {
@@ -222,7 +347,13 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
 
     const totalViews = rows?.length ?? 0;
 
+    const sliceOut = (name: string, sortByKey = false): AnalyticsSlice[] =>
+      [...slices[name]!.entries()]
+        .map(([key, v]) => ({ key, views: v.views, visitors: v.visitors.size }))
+        .sort((a, b) => (sortByKey ? a.key.localeCompare(b.key) : b.views - a.views));
+
     return {
+      botViews,
       totalViews,
       totalVisitors: allVisitors.size,
       newVisitors: allVisitors.size - returningVisitors,
@@ -250,5 +381,15 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
           visitors: v.visitors.size,
         }))
         .sort((a, b) => b.views - a.views),
+      countries: sliceOut("countries"),
+      regions: sliceOut("regions"),
+      cities: sliceOut("cities"),
+      browsers: sliceOut("browsers"),
+      operatingSystems: sliceOut("operatingSystems"),
+      languages: sliceOut("languages"),
+      timezones: sliceOut("timezones"),
+      screens: sliceOut("screens"),
+      hourOfDay: sliceOut("hourOfDay", true),
+      dayOfWeek: sliceOut("dayOfWeek"),
     };
   });

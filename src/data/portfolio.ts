@@ -116,6 +116,8 @@ const blankGrid: GridDefaults = {
   category: { desktop: "2", tablet: "2", mobile: "2" },
 };
 export let gridDefaults: GridDefaults = blankGrid;
+/** Studio switch: show the little "View" caption next to the grid pickers. */
+export let showViewLabel = true;
 /** Non-null when the visitor opened a private share link. */
 export let shareContext: { scope: string; category_slug: string } | null = null;
 
@@ -237,6 +239,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
         mobile: col(s["grid_category_mobile"]),
       },
     };
+    showViewLabel = s["show_view_label"] !== false;
     aboutShort = str(s["about_short"], defaultAboutShort);
     const long = list(s["about_long"]);
     if (long.length) aboutLong = long;
@@ -264,6 +267,7 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
       tagline: str(r["tagline"]),
       hero: str(r["hero"]),
       cover: str(r["cover"]),
+      showInHero: r["show_in_hero"] !== false,
     }));
   }
 
@@ -418,4 +422,10 @@ export const sectionFor = (page: string, key: string) =>
 export const photoById = (id: string) => photos.find((p) => p.id === id);
 export const photosByCategory = (slug: CategorySlug) =>
   photos.filter((p) => p.category === slug);
+/** Categories that should appear as slides in the home hero. */
+export const heroCategories = () => {
+  const shown = categories.filter((c) => c.showInHero !== false);
+  return shown.length ? shown : categories;
+};
+
 export const categoryBySlug = (slug: string) => categories.find((c) => c.slug === slug);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { gridDefaults, type GridDevice, type GridPage } from "@/data/portfolio";
+import { gridDefaults, showViewLabel, type GridDevice, type GridPage } from "@/data/portfolio";
 
 export type ColumnCount = "1" | "2" | "3";
 
@@ -85,7 +85,7 @@ export function ViewSelector({
 }) {
   return (
     <div className={`flex shrink-0 items-center gap-2 ${className}`}>
-      <span className="eyebrow hidden sm:inline">View</span>
+      {showViewLabel ? <span className="eyebrow hidden sm:inline">View</span> : null}
       {VIEW_OPTIONS.map((o) => (
         <button
           key={o.value}

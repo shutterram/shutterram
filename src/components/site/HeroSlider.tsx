@@ -1,16 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { categories, invertClass, site, t } from "@/data/portfolio";
+import { heroCategories, invertClass, site, t } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export function HeroSlider() {
+  const categories = heroCategories();
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const go = useCallback((dir: number) => {
     setActive((i) => (i + dir + categories.length) % categories.length);
-  }, []);
+  }, [categories.length]);
 
   useEffect(() => {
     if (paused) return;

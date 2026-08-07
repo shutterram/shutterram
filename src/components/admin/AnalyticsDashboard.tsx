@@ -44,6 +44,49 @@ function Metric({
   );
 }
 
+const tooltipStyle = {
+  background: "var(--color-background)",
+  border: "1px solid var(--color-hairline, rgba(128,128,128,.3))",
+  fontSize: 12,
+} as const;
+
+/** A ranked breakdown with a proportional bar behind each row. */
+function SliceList({
+  title,
+  rows,
+  limit = 10,
+}: {
+  title: string;
+  rows: { key: string; views: number; visitors: number }[];
+  limit?: number;
+}) {
+  const top = rows.slice(0, limit);
+  const max = top[0]?.views ?? 1;
+  return (
+    <div>
+      <p className="eyebrow">{title}</p>
+      <div className="mt-4 space-y-2 text-sm">
+        {top.map((r) => (
+          <div key={r.key} className="relative border border-hairline px-3 py-2">
+            <span
+              className="absolute inset-y-0 left-0 bg-foreground/10"
+              style={{ width: `${Math.max(4, (r.views / max) * 100)}%` }}
+              aria-hidden
+            />
+            <span className="relative flex items-center justify-between gap-3">
+              <span className="truncate">{r.key}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">
+                {r.views} · {r.visitors}
+              </span>
+            </span>
+          </div>
+        ))}
+        {top.length === 0 ? <p className="text-muted-foreground">Nothing yet.</p> : null}
+      </div>
+    </div>
+  );
+}
+
 /** Overview dashboard: visits, visitors, per-page counts and traffic sources. */
 export function AnalyticsDashboard() {
   const fetchStats = useServerFn(getSiteAnalytics);
@@ -118,6 +161,8 @@ export function AnalyticsDashboard() {
             <Metric value={data.returningVisitors} label="Returning visitors" />
             <Metric value={data.pages.length} label="Pages visited" />
             <Metric value={data.viewsPerVisitor} label="Views per visitor" />
+            <Metric value={data.countries.length} label="Countries" />
+            <Metric value={data.botViews} label="Bot / preview views" />
           </div>
 
           <section>
@@ -196,6 +241,75 @@ export function AnalyticsDashboard() {
               ) : null}
             </div>
           </section>
+
+          <section>
+            <p className="eyebrow">Where in the world</p>
+            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+              Approximate location supplied by the hosting network from the connection itself — no
+              cookies, no stored addresses. Cities are only as accurate as the visitor's network.
+            </p>
+            <div className="mt-6 grid gap-8 md:grid-cols-3">
+              <SliceList title="Countries" rows={data.countries} />
+              <SliceList title="Regions / states" rows={data.regions} />
+              <SliceList title="Cities" rows={data.cities} />
+            </div>
+          </section>
+
+          <section>
+            <p className="eyebrow">Browsers, systems & screens</p>
+            <div className="mt-6 grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+              <SliceList title="Browsers" rows={data.browsers} />
+              <SliceList title="Operating systems" rows={data.operatingSystems} />
+              <SliceList title="Screen sizes" rows={data.screens} />
+              <SliceList title="Languages" rows={data.languages} />
+            </div>
+          </section>
+
+          <section>
+            <p className="eyebrow">When people visit</p>
+            <div className="mt-6 grid gap-10 lg:grid-cols-2">
+              <div>
+                <p className="mb-3 text-xs text-muted-foreground">By hour (UTC)</p>
+                <div className="h-56 w-full text-muted-foreground">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.hourOfDay}>
+                      <CartesianGrid strokeOpacity={0.12} vertical={false} />
+                      <XAxis dataKey="key" {...axis} tickLine={false} interval={1} />
+                      <YAxis allowDecimals={false} {...axis} tickLine={false} width={32} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="views" fill="currentColor" fillOpacity={0.6} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              <div>
+                <p className="mb-3 text-xs text-muted-foreground">By day of the week</p>
+                <div className="h-56 w-full text-muted-foreground">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.dayOfWeek} layout="vertical">
+                      <CartesianGrid strokeOpacity={0.12} horizontal={false} />
+                      <XAxis type="number" allowDecimals={false} {...axis} tickLine={false} />
+                      <YAxis type="category" dataKey="key" width={90} {...axis} tickLine={false} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="views" fill="currentColor" fillOpacity={0.6} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              <SliceList title="Visitor time zones" rows={data.timezones} />
+              <div>
+                <p className="eyebrow">Automated traffic</p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {data.botViews} of {data.totalViews} views in this period look like search-engine
+                  crawlers or link previews rather than people.
+                </p>
+              </div>
+            </div>
+          </section>
+
+
 
           <section className="grid gap-10 md:grid-cols-2">
             <div>
