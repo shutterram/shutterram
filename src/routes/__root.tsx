@@ -114,10 +114,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
   }),
   // `?k=<token>` unlocks private photos for visitors holding a share link.
-  loader: ({ location }) => {
+  loader: async ({ location }) => {
     const search = location.search as Record<string, unknown> | undefined;
     const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
-    return getSiteContent({ data: { token } });
+    // Content is optional enhancement data. A backend/network interruption must
+    // not reject the root loader because that turns every route into an SSR 500.
+    // The live content module already contains complete built-in fallbacks.
+    try {
+      return await getSiteContent({ data: { token } });
+    } catch (error) {
+      console.error("[content] root loader fell back to built-in content", error);
+      return null;
+    }
   },
   shellComponent: RootShell,
   component: RootComponent,

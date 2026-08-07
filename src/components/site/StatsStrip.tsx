@@ -102,7 +102,7 @@ export function StatValue({ value, className }: { value: string; className?: str
   }, [value]);
 
   return (
-    <span ref={ref} className={className}>
+    <span ref={ref} className={className} suppressHydrationWarning>
       {display}
     </span>
   );
