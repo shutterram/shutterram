@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/$category")({
-  loader: async ({ params }) => {
+  loader: async ({ params, location }) => {
     const category = categoryBySlug(params.category);
     if (!category) throw notFound();
     const seo = await loadSeo(`/gallery/${category.slug}`, tokenOf(location.search));
