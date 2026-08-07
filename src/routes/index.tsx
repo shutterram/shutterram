@@ -443,7 +443,7 @@ function Home() {
 
     experience: <ExperienceSection key="experience" section={sectionFor("home", "experience")} />,
 
-    testimonials: <Testimonials key="testimonials" />,
+    testimonials: <Testimonials key="testimonials" section={sectionFor("home", "testimonials")} />,
 
     connect: (
       <section key="connect" className="mx-auto max-w-7xl px-6 py-24 md:py-32">

@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Images, Star, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { t, testimonials, type Photo, type Testimonial } from "@/data/portfolio";
+import { t, testimonials, type Photo, type SectionConfig, type Testimonial } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { Lightbox } from "./Lightbox";
 import { Reveal } from "./Reveal";
@@ -110,7 +110,13 @@ function ReviewDialog({ review, onClose }: { review: Testimonial; onClose: () =>
  * Continuously drifting testimonial marquee. Transform-based so it never
  * fights the browser's scroll anchoring — arrows nudge the drift along.
  */
-export function Testimonials({ className }: { className?: string }) {
+export function Testimonials({
+  className,
+  section,
+}: {
+  className?: string;
+  section?: SectionConfig | null;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
   const posRef = useRef(0);
@@ -186,15 +192,23 @@ export function Testimonials({ className }: { className?: string }) {
       <div className="mx-auto max-w-7xl px-6">
         <Reveal className="flex flex-col items-center">
           <SectionHeading
-            eyebrow="Testimonials"
-            title="What people say afterwards."
-            intro="A few words from the couples, founders and teams I've photographed."
+            eyebrow={section?.eyebrow || "Testimonials"}
+            title={section?.heading || "What people say afterwards."}
+            intro={
+              section?.intro ||
+              "A few words from the couples, founders and teams I've photographed."
+            }
             align="center"
           />
+          {section?.headingAccent ? (
+            <p className="mt-3 text-center font-display text-[clamp(1.25rem,2.5vw,1.75rem)] italic leading-snug text-muted-foreground">
+              {section.headingAccent}
+            </p>
+          ) : null}
         </Reveal>
 
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4">
-          <p className="eyebrow">Swipe or use the arrows to see more reviews</p>
+          <p className="eyebrow">{t("testimonial.swipe_hint")}</p>
           <div className="flex items-center gap-6">
             <button
               type="button"
