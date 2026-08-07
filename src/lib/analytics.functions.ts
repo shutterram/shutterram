@@ -61,13 +61,22 @@ export const trackPageView = createServerFn({ method: "POST" })
   .inputValidator(
     (
       input:
-        | { path?: string; visitorId?: string; referrer?: string; shareToken?: string }
+        | {
+            path?: string;
+            visitorId?: string;
+            referrer?: string;
+            shareToken?: string;
+            deviceType?: string;
+          }
         | undefined,
     ) => ({
       path: String(input?.path ?? "/").slice(0, 200),
       visitorId: String(input?.visitorId ?? "").slice(0, 64),
       referrer: String(input?.referrer ?? "").slice(0, 200),
       shareToken: String(input?.shareToken ?? "").slice(0, 64),
+      deviceType: ["mobile", "tablet", "desktop"].includes(String(input?.deviceType))
+        ? String(input?.deviceType)
+        : "",
     }),
   )
   .handler(async ({ data }) => {
@@ -82,17 +91,27 @@ export const trackPageView = createServerFn({ method: "POST" })
         visitor_id: data.visitorId,
         referrer: data.referrer,
         share_token: data.shareToken,
+        device_type: data.deviceType,
       } as never);
     if (error) console.error("[analytics] insert failed", error.message);
     return { ok: !error };
   });
 
+const RANGE_HOURS: Record<string, number> = {
+  "5h": 5,
+  "24h": 24,
+  "7d": 24 * 7,
+  month: 24 * 30,
+  year: 24 * 365,
+  all: 24 * 365 * 20,
+};
+
 /** Admin-only statistics for the studio dashboard. */
 export const getSiteAnalytics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { range?: string } | undefined) =>
-    input?.range === "year" || input?.range === "all" ? { range: input.range } : { range: "month" },
-  )
+  .inputValidator((input: { range?: string } | undefined) => ({
+    range: input?.range && input.range in RANGE_HOURS ? input.range : "month",
+  }))
   .handler(async ({ data, context }): Promise<AnalyticsPayload> => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
