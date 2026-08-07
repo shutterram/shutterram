@@ -231,11 +231,13 @@ function RootComponent() {
         viewId = (res as { id?: string } | undefined)?.id ?? "";
       })
       .catch(() => undefined);
-    window.addEventListener("pagehide", flush);
+    const onPageHide = () => flush(true);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
-      window.removeEventListener("pagehide", flush);
-      flush();
+      window.removeEventListener("pagehide", onPageHide);
+      flush(false);
     };
+
   }, [pathname]);
 
   // The private studio pages render without the public site chrome.
