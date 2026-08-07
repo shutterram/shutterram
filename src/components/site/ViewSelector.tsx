@@ -47,7 +47,7 @@ function readDevice(): GridDevice {
  * device, and switches to the visitor's own choice as soon as they pick one.
  */
 export function useGridView(page: GridPage) {
-  const [device, setDevice] = useState<GridDevice>("desktop");
+  const [device, setDevice] = useState<GridDevice | null>(null);
   const [choice, setChoice] = useState<ColumnCount | null>(null);
 
   useEffect(() => {
@@ -57,7 +57,9 @@ export function useGridView(page: GridPage) {
     return () => window.removeEventListener("resize", read);
   }, []);
 
-  const fallback = (gridDefaults[page]?.[device] ?? "2") as ColumnCount;
+  // Until the browser has measured itself, both server and client render the
+  // same neutral default so hydration stays in step.
+  const fallback = device ? ((gridDefaults[page]?.[device] ?? "2") as ColumnCount) : "2";
   return [choice ?? fallback, setChoice as (v: ColumnCount) => void] as const;
 }
 
