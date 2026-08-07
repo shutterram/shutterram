@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   COLUMN_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 
 import { Lightbox } from "@/components/site/Lightbox";
@@ -58,7 +58,7 @@ function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("category");
 
 
   return (

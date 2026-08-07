@@ -8,7 +8,7 @@ import {
   DESKTOP_COLUMN_CLASS,
   MOBILE_GRID_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { ServiceCard } from "@/components/site/ServiceCard";
@@ -78,7 +78,7 @@ type Filter = "all" | CategorySlug;
 function Home() {
   const featured = useMemo(() => featuredIds.map(photoById).filter((p) => p !== undefined), []);
   const [filter, setFilter] = useState<Filter>("all");
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("home");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [edit, setEdit] = useState(0);
   const [mobileCount, setMobileCount] = useState(4);

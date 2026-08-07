@@ -5,7 +5,7 @@ import {
   DESKTOP_COLUMN_CLASS,
   MOBILE_GRID_CLASS,
   ViewSelector,
-  useColumnView,
+  useGridView,
 } from "@/components/site/ViewSelector";
 import { Lightbox } from "@/components/site/Lightbox";
 import { categories, photos, type CategorySlug, t } from "@/data/portfolio";
@@ -32,7 +32,7 @@ function Gallery() {
   const [filter, setFilter] = useState<Filter>("all");
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [mobileCount, setMobileCount] = useState(4);
-  const [cols, setCols] = useColumnView();
+  const [cols, setCols] = useGridView("gallery");
   const isMobile = useIsMobile();
 
   // Photos flagged "hide from main gallery" still appear on their category page.
@@ -71,7 +71,7 @@ function Gallery() {
         ))}
       </div>
 
-      <div className="mt-10 flex justify-end">
+      <div className="mt-10 flex justify-start">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
 
