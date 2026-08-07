@@ -112,7 +112,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
-  loader: () => getSiteContent(),
+  // `?k=<token>` unlocks private photos for visitors holding a share link.
+  loader: ({ location }) => {
+    const search = location.search as Record<string, unknown> | undefined;
+    const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
+    return getSiteContent({ data: { token } });
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
