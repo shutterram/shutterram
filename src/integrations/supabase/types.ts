@@ -233,6 +233,7 @@ export type Database = {
           id: string
           path: string
           referrer: string
+          share_token: string
           visitor_id: string
         }
         Insert: {
@@ -240,6 +241,7 @@ export type Database = {
           id?: string
           path: string
           referrer?: string
+          share_token?: string
           visitor_id?: string
         }
         Update: {
@@ -247,6 +249,7 @@ export type Database = {
           id?: string
           path?: string
           referrer?: string
+          share_token?: string
           visitor_id?: string
         }
         Relationships: []

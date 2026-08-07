@@ -1,0 +1,2 @@
+ALTER TABLE public.page_views ADD COLUMN IF NOT EXISTS share_token text NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS page_views_share_token_idx ON public.page_views (share_token) WHERE share_token <> '';
