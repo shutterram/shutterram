@@ -29,7 +29,7 @@ import {
 } from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
 import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
-import { trackPageView } from "@/lib/analytics.functions";
+import { recordViewDuration, trackPageView } from "@/lib/analytics.functions";
 
 function NotFoundComponent() {
   return (
