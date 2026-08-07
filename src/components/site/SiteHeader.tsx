@@ -24,13 +24,19 @@ export function SiteHeader() {
   const { theme } = useTheme();
   const isMobile = useIsMobile();
 
-  /** Studio heights are tuned for desktop — clamp them so the mark never clips on phones. */
+  /**
+   * Studio heights are tuned for desktop — clamp them so the mark never clips on
+   * phones, and shrink them on scroll (an inline height would otherwise pin the
+   * logo and override the responsive classes below).
+   */
   const headerLogoStyle = (() => {
     const style = { ...logoStyle("header") };
+    const h = typeof style.height === "string" ? parseFloat(style.height) : 0;
     if (isMobile) {
-      const h = typeof style.height === "string" ? parseFloat(style.height) : 0;
       style.height = `${Math.min(h || (scrolled ? 40 : 52), scrolled ? 40 : 52)}px`;
       style.transform = undefined;
+    } else if (h > 0 && scrolled) {
+      style.height = `${Math.max(32, Math.round(h * 0.5))}px`;
     }
     return style;
   })();
