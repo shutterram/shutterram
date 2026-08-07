@@ -89,6 +89,7 @@ function Gallery() {
         ]}
       />
 
+      <h2 className="sr-only">Photographs</h2>
       <div className="mt-12 flex justify-center">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
