@@ -199,31 +199,38 @@ function RootComponent() {
       void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
     };
 
-    void trackPageView({
-      data: {
-        path: pathname,
-        visitorId: id,
-        referrer: document.referrer,
-        shareToken,
-        deviceType,
-        language: navigator.language ?? "",
-        timezone,
-        screenSize,
-        userAgent: navigator.userAgent ?? "",
-      },
-    })
-      .then((res) => {
-        viewId = (res as { id?: string } | undefined)?.id ?? "";
+    // Delay the tracking call so it is never in flight during hydration or an
+    // immediate reload/navigation — cancelled in-flight requests surface as
+    // Node's `abortIncoming` error and a spurious 500 in development.
+    const trackTimeout = window.setTimeout(() => {
+      void trackPageView({
+        data: {
+          path: pathname,
+          visitorId: id,
+          referrer: document.referrer,
+          shareToken,
+          deviceType,
+          language: navigator.language ?? "",
+          timezone,
+          screenSize,
+          userAgent: navigator.userAgent ?? "",
+        },
       })
-      .catch(() => undefined);
+        .then((res) => {
+          viewId = (res as { id?: string } | undefined)?.id ?? "";
+        })
+        .catch(() => undefined);
+    }, 1200);
 
     // Persist elapsed time while the document is active instead of starting a
     // request during pagehide/unload. Unload requests are routinely cancelled
     // by browsers and surface as Node's `abortIncoming` error in development.
     const durationInterval = window.setInterval(recordElapsedTime, 10_000);
     return () => {
+      window.clearTimeout(trackTimeout);
       window.clearInterval(durationInterval);
     };
+
 
   }, [pathname]);
 
