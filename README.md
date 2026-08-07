@@ -286,22 +286,27 @@ explicit columns — `select("*")` will fail with a permission error.**
 | `settings` | Singleton row: name, tagline, contact, about copy, loader, glow, logos, default OG image |
 | `admin_settings` | Singleton row: the private `form_endpoint` (admin-only, never public) |
 | `categories` | Gallery categories + hero image and tagline |
-| `photos` | Gallery photos, category, featured flag/order |
+| `photos` | Gallery photos, category, featured flag/order, `in_gallery`, `is_private` |
 | `services` | Service cards |
 | `edit_samples` | Before/after comparison pairs |
 | `stats` | Number + label strip |
-| `experience` | Experience/CV entries |
 | `process_steps` | Experience milestones (`section_key` = `default` or `about`) |
 | `testimonials` | Reviews (`status` = `pending` / `approved`), optional images + email |
 | `page_sections` | Per-page section order, visibility and wording |
 | `site_copy` | Every standalone string (`key` → `value`) behind `t()` |
 | `socials` | Social links + custom icon URLs |
 | `theme_tokens` | Colour tokens with dark/light values and opacity |
+| `type_tokens` | Typography per section per device |
+| `custom_fonts` | Extra font families registered in the Fonts tab |
+| `image_settings` | Per-image `indexable` + `is_private` switches |
+| `text_inverts` | Per-text contrast switches for text over photos |
+| `share_links` | Unlisted category/gallery links, each with `include_private` |
 | `seo_pages` | Per-path SEO metadata |
 | `user_roles` | `user_id` + `app_role` — the **only** place roles are stored |
 
-Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function, `touch_updated_at()`
-trigger on every content table.
+Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function,
+`resolve_share_link(text)` security-definer function (turns a `?k=` token into a scope), and
+`touch_updated_at()` triggers on every content table.
 
 ### RLS rules that must be preserved
 - Public `SELECT` on content tables for `anon` + `authenticated`.
