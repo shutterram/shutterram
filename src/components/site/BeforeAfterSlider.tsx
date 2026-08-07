@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { invertClass } from "@/data/portfolio";
+import { cn } from "@/lib/utils";
 
 export function BeforeAfterSlider({
   before,
