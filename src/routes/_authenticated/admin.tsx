@@ -564,8 +564,8 @@ function AdminPage() {
             key={section.id}
             table={section.table}
             fields={section.fields}
-            itemLabel={section.itemLabel}
-            titleKey={section.titleKey}
+            itemLabel={(section as { itemLabel?: string }).itemLabel ?? "item"}
+            titleKey={(section as { titleKey?: string }).titleKey ?? "label"}
             allowAdd={(section as { allowAdd?: boolean }).allowAdd ?? true}
             note={(section as { note?: string }).note}
             columns={

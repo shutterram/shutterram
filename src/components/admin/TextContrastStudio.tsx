@@ -102,7 +102,9 @@ export function TextContrastStudio() {
         </section>
       ))}
 
-      <FloatingSaveBar dirty={dirty} saving={saving} onSave={save} label="Save text contrast" />
+      {dirty ? (
+        <FloatingSaveBar saving={saving} onClick={() => void save()} label="Save text contrast" />
+      ) : null}
     </div>
   );
 }
