@@ -49,11 +49,35 @@ function isErrorLike(value: unknown): value is Error {
   return value instanceof Error;
 }
 
+// A client that navigates away or reloads mid-request closes the socket; Node
+// then emits `Error: aborted` from abortIncoming. That is normal client
+// behaviour, not an application failure, so it must never be recorded or
+// logged as one.
+export function isClientAbort(value: unknown): boolean {
+  let current: unknown = value;
+  for (let depth = 0; depth < CAUSE_DEPTH_LIMIT && current != null; depth++) {
+    if (current instanceof Error) {
+      const code = (current as { code?: unknown }).code;
+      if (current.name === "AbortError" || code === "ECONNRESET" || code === "ECONNABORTED") {
+        return true;
+      }
+      if (current.message === "aborted" || /at abortIncoming/.test(current.stack ?? "")) {
+        return true;
+      }
+      current = current.cause;
+      continue;
+    }
+    return false;
+  }
+  return false;
+}
+
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  if (args.some((arg) => isClientAbort(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
@@ -63,11 +87,16 @@ console.error = (...args: unknown[]) => {
 };
 
 if (typeof globalThis.addEventListener === "function") {
-  globalThis.addEventListener("error", (event) => record((event as ErrorEvent).error ?? event));
-  globalThis.addEventListener("unhandledrejection", (event) =>
-    record((event as PromiseRejectionEvent).reason),
-  );
+  globalThis.addEventListener("error", (event) => {
+    const error = (event as ErrorEvent).error ?? event;
+    if (!isClientAbort(error)) record(error);
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    const reason = (event as PromiseRejectionEvent).reason;
+    if (!isClientAbort(reason)) record(reason);
+  });
 }
+
 
 export function consumeLastCapturedError(): unknown {
   if (!lastCapturedError) return undefined;
