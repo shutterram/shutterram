@@ -55,11 +55,18 @@ function publicClient() {
 
 /** Records one page view. Anonymous, no personal data — just path + a random id. */
 export const trackPageView = createServerFn({ method: "POST" })
-  .inputValidator((input: { path?: string; visitorId?: string; referrer?: string } | undefined) => ({
-    path: String(input?.path ?? "/").slice(0, 200),
-    visitorId: String(input?.visitorId ?? "").slice(0, 64),
-    referrer: String(input?.referrer ?? "").slice(0, 200),
-  }))
+  .inputValidator(
+    (
+      input:
+        | { path?: string; visitorId?: string; referrer?: string; shareToken?: string }
+        | undefined,
+    ) => ({
+      path: String(input?.path ?? "/").slice(0, 200),
+      visitorId: String(input?.visitorId ?? "").slice(0, 64),
+      referrer: String(input?.referrer ?? "").slice(0, 200),
+      shareToken: String(input?.shareToken ?? "").slice(0, 64),
+    }),
+  )
   .handler(async ({ data }) => {
     if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true };
     if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
@@ -71,6 +78,7 @@ export const trackPageView = createServerFn({ method: "POST" })
         path: data.path,
         visitor_id: data.visitorId,
         referrer: data.referrer,
+        share_token: data.shareToken,
       } as never);
     if (error) console.error("[analytics] insert failed", error.message);
     return { ok: !error };
