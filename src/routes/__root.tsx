@@ -190,28 +190,13 @@ function RootComponent() {
     const screenSize = `${window.screen?.width ?? width}x${window.screen?.height ?? 0}`;
     let viewId = "";
     const startedAt = Date.now();
-    let sent = false;
-    const flush = (viaBeacon: boolean) => {
-      if (sent || !viewId) return;
-      sent = true;
+    let lastRecordedSeconds = 0;
+    const recordElapsedTime = () => {
+      if (!viewId) return;
       const seconds = Math.round((Date.now() - startedAt) / 1000);
-      if (seconds <= 0) return;
-      const payload = { id: viewId, seconds };
-      // On unload a normal fetch is torn down with the page, which surfaces as
-      // an "aborted" socket error. sendBeacon survives the unload cleanly.
-      const url = (recordViewDuration as unknown as { url?: string }).url;
-      if (viaBeacon && url && typeof navigator.sendBeacon === "function") {
-        try {
-          navigator.sendBeacon(
-            url,
-            new Blob([JSON.stringify({ data: payload })], { type: "application/json" }),
-          );
-          return;
-        } catch {
-          /* fall through to fetch */
-        }
-      }
-      void recordViewDuration({ data: payload }).catch(() => undefined);
+      if (seconds <= lastRecordedSeconds) return;
+      lastRecordedSeconds = seconds;
+      void recordViewDuration({ data: { id: viewId, seconds } }).catch(() => undefined);
     };
 
     void trackPageView({
@@ -231,11 +216,13 @@ function RootComponent() {
         viewId = (res as { id?: string } | undefined)?.id ?? "";
       })
       .catch(() => undefined);
-    const onPageHide = () => flush(true);
-    window.addEventListener("pagehide", onPageHide);
+
+    // Persist elapsed time while the document is active instead of starting a
+    // request during pagehide/unload. Unload requests are routinely cancelled
+    // by browsers and surface as Node's `abortIncoming` error in development.
+    const durationInterval = window.setInterval(recordElapsedTime, 10_000);
     return () => {
-      window.removeEventListener("pagehide", onPageHide);
-      flush(false);
+      window.clearInterval(durationInterval);
     };
 
   }, [pathname]);
