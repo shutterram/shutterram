@@ -760,8 +760,9 @@ interface StagedFile {
   file: File;
   preview: string;
   attrs: Row;
-  /** Per-file search-engine visibility, applied right after the upload. */
+  /** Per-file visibility switches, applied right after the upload. */
   indexable: boolean;
+  isPrivate: boolean;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
@@ -788,6 +789,7 @@ function BulkUploader({
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [running, setRunning] = useState(false);
   const [bulkIndexable, setBulkIndexable] = useState(true);
+  const [bulkPrivate, setBulkPrivate] = useState(false);
 
   const attrFields = fields.filter((f) => f.key !== imageKey);
 
@@ -819,6 +821,7 @@ function BulkUploader({
       preview: URL.createObjectURL(file),
       attrs: blankAttrs(file),
       indexable: bulkIndexable,
+      isPrivate: bulkPrivate,
       status: "pending" as const,
     }));
     setStaged((prev) => [...prev, ...next]);
@@ -841,6 +844,7 @@ function BulkUploader({
           : {
               ...s,
               indexable: first.indexable,
+              isPrivate: first.isPrivate,
               attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] },
             },
       );
@@ -857,7 +861,9 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
-        if (!item.indexable) await setImageIndexable(src, false);
+        if (!item.indexable || item.isPrivate) {
+          await setImageFlags(src, { indexable: item.indexable, isPrivate: item.isPrivate });
+        }
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
 
         if (fields.some((f) => f.key === "photo_key") || "photo_key" in draft) {
@@ -908,6 +914,15 @@ function BulkUploader({
               className="size-3 accent-current"
             />
             Default for new files: show on Internet
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={bulkPrivate}
+              onChange={(e) => setBulkPrivate(e.target.checked)}
+              className="size-3 accent-current"
+            />
+            Default for new files: private (share link only)
           </label>
         </div>
 
@@ -986,6 +1001,19 @@ function BulkUploader({
                     className="size-3 accent-current"
                   />
                   Show on Internet
+                </label>
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={s.isPrivate}
+                    onChange={(e) =>
+                      setStaged((prev) =>
+                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: e.target.checked } : x)),
+                      )
+                    }
+                    className="size-3 accent-current"
+                  />
+                  Private (share link only)
                 </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">
