@@ -237,6 +237,7 @@ export type Database = {
           country: string
           created_at: string
           device_type: string
+          duration_seconds: number
           id: string
           is_bot: boolean
           language: string
@@ -255,6 +256,7 @@ export type Database = {
           country?: string
           created_at?: string
           device_type?: string
+          duration_seconds?: number
           id?: string
           is_bot?: boolean
           language?: string
@@ -273,6 +275,7 @@ export type Database = {
           country?: string
           created_at?: string
           device_type?: string
+          duration_seconds?: number
           id?: string
           is_bot?: boolean
           language?: string
@@ -961,6 +964,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_view_duration: {
+        Args: { _id: string; _seconds: number }
+        Returns: undefined
       }
       resolve_share_link: {
         Args: { _token: string }
