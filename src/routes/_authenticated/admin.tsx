@@ -309,7 +309,7 @@ const SECTIONS = [
   },
   {
     id: "stats",
-    panel: "stats",
+    panel: "content",
     label: "Stats",
     kind: "list" as const,
     table: "stats",
