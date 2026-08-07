@@ -26,34 +26,40 @@ export async function uploadSiteImage(file: File): Promise<string> {
 }
 
 
-/** Checkbox controlling whether an image may appear anywhere on the public internet. */
+/**
+ * The two per-image switches that follow every upload:
+ * • Show on Internet — may search engines and link previews reach the file.
+ * • Private — hidden on the site itself unless opened through a share link.
+ */
 export function SearchVisibilityToggle({ src }: { src: string }) {
-  const [indexable, setIndexable] = useState(true);
+  const [flags, setFlags] = useState<ImageFlags>(defaultImageFlags);
   const [ready, setReady] = useState(true);
   const key = imageKeyOf(src);
-  const desired = useRef(true);
+  const desired = useRef<ImageFlags>(defaultImageFlags);
 
   useEffect(() => {
     let live = true;
     if (!key) {
-      setIndexable(desired.current);
+      setFlags(desired.current);
       setReady(true);
       return;
     }
     setReady(false);
-    void getImageIndexable(src).then(async (value) => {
+    void getImageFlags(src).then(async (value) => {
       if (!live) return;
-      // Apply a choice the user made before the file was uploaded.
-      if (!desired.current && value) {
+      // Apply a choice the user made before the file finished uploading.
+      const pending = desired.current;
+      const differs = pending.indexable !== value.indexable || pending.isPrivate !== value.isPrivate;
+      if (differs && value.indexable && !value.isPrivate) {
         try {
-          await setImageIndexable(src, false);
+          await setImageFlags(src, pending);
         } catch {
-          /* surfaced on next manual toggle */
+          /* surfaced on the next manual toggle */
         }
         if (!live) return;
-        setIndexable(false);
+        setFlags(pending);
       } else {
-        setIndexable(value);
+        setFlags(value);
         desired.current = value;
       }
       setReady(true);
@@ -63,31 +69,61 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
     };
   }, [src, key]);
 
-  async function toggle(next: boolean) {
+  async function toggle(patch: Partial<ImageFlags>, message: string) {
+    const previous = flags;
+    const next = { ...flags, ...patch };
     desired.current = next;
-    setIndexable(next);
+    setFlags(next);
     if (!key) return;
     try {
-      await setImageIndexable(src, next);
-      toast.success(next ? "Image can appear on the internet" : "Image hidden from the internet");
+      await setImageFlags(src, next);
+      toast.success(message);
     } catch (error) {
-      setIndexable(!next);
-      desired.current = !next;
+      setFlags(previous);
+      desired.current = previous;
       toast.error(error instanceof Error ? error.message : "Could not update visibility");
     }
   }
 
+  const row = "flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground";
+
   return (
-    <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-      <input
-        type="checkbox"
-        checked={indexable}
-        disabled={!ready}
-        onChange={(e) => void toggle(e.target.checked)}
-        className="size-3 accent-current"
-      />
-      Show on Internet
-    </label>
+    <div className="space-y-1.5">
+      <label className={row}>
+        <input
+          type="checkbox"
+          checked={flags.indexable}
+          disabled={!ready}
+          onChange={(e) =>
+            void toggle(
+              { indexable: e.target.checked },
+              e.target.checked
+                ? "Image can appear on the internet"
+                : "Image hidden from the internet",
+            )
+          }
+          className="size-3 accent-current"
+        />
+        Show on Internet
+      </label>
+      <label className={row}>
+        <input
+          type="checkbox"
+          checked={flags.isPrivate}
+          disabled={!ready}
+          onChange={(e) =>
+            void toggle(
+              { isPrivate: e.target.checked },
+              e.target.checked
+                ? "Image is private — share-link only"
+                : "Image visible on the site",
+            )
+          }
+          className="size-3 accent-current"
+        />
+        Private (share link only)
+      </label>
+    </div>
   );
 }
 
