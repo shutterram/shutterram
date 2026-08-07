@@ -29,10 +29,17 @@ export const Route = createFileRoute("/gallery/$category")({
       };
     }
     const { category, seo } = loaderData;
+    // Keep meta descriptions in the useful 50–160 character range even when a
+    // studio-created category has a very short tagline.
+    const tagline = category.tagline.trim();
+    const description =
+      tagline.length >= 50
+        ? tagline
+        : `${tagline}${tagline ? " " : ""}Browse the Shutter Ram ${category.title.toLowerCase()} portfolio — recent sessions, full-frame previews and booking details.`;
     const head = buildSeoHead(seo, {
       path: `/gallery/${category.slug}`,
       title: `${category.title} | Shutter Ram`,
-      description: category.tagline,
+      description,
       image: category.hero,
     });
     return {
@@ -44,7 +51,7 @@ export const Route = createFileRoute("/gallery/$category")({
             "@context": "https://schema.org",
             "@type": "CollectionPage",
             name: category.title,
-            description: category.tagline,
+            description,
             url: head.links[0]!.href,
           }),
         },

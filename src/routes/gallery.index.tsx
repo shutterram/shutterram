@@ -58,7 +58,7 @@ function Gallery() {
       </p>
 
       <div className="mt-12 flex flex-wrap items-center gap-3 border-t border-hairline pt-10">
-        <p className="eyebrow mr-2">{t("gallery.jump")}</p>
+        <h2 className="eyebrow mr-2">{t("gallery.jump")}</h2>
         {categories.map((c) => (
           <Link
             key={c.slug}
@@ -71,6 +71,7 @@ function Gallery() {
         ))}
       </div>
 
+      <h2 className="mt-16 sr-only">Filter the portfolio by category</h2>
       <FilterPills
         className="mt-12"
         value={filter}
@@ -88,6 +89,7 @@ function Gallery() {
         ]}
       />
 
+      <h2 className="sr-only">Photographs</h2>
       <div className="mt-12 flex justify-center">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
