@@ -641,7 +641,8 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        draft[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
@@ -866,7 +867,8 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery";
+      else if (f.type === "bool")
+        attrs[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;
