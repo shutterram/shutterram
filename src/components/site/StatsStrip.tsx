@@ -30,13 +30,22 @@ function markCounted() {
 export function StatValue({ value, className }: { value: string; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const match = value.match(/^(\D*)([\d.,]+)(.*)$/);
-  const [display, setDisplay] = useState(value);
+  // Content is studio-managed and may refresh between SSR and hydration.
+  // Start with request-independent text, then reveal the current value after
+  // mount so concurrent visitors can never hydrate different stat values.
+  const [display, setDisplay] = useState("");
 
   useEffect(() => {
-    if (!match) return;
+    if (!match) {
+      setDisplay(value);
+      return;
+    }
     const digits = match[2]!;
     const target = Number(digits.replace(/,/g, ""));
-    if (!Number.isFinite(target) || target <= 0) return;
+    if (!Number.isFinite(target) || target <= 0) {
+      setDisplay(value);
+      return;
+    }
 
     const grouped = digits.includes(",");
     const decimals = digits.includes(".") ? (digits.split(".")[1]?.length ?? 0) : 0;
@@ -51,7 +60,10 @@ export function StatValue({ value, className }: { value: string; className?: str
       return `${match[1]}${body}${match[3]}`;
     };
 
-    if (hasCounted()) return;
+    if (hasCounted()) {
+      setDisplay(value);
+      return;
+    }
 
     const node = ref.current;
     if (!node) return;
