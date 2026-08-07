@@ -148,7 +148,9 @@ export const getSiteContent = createServerFn({ method: "GET" })
       // A share link (?k=token) may reveal private photos for one category.
       let share: { scope: string; category_slug: string; include_private: boolean } | null = null;
       if (data.token) {
-        const { data: resolved } = await supabase.rpc("resolve_share_link" as never, {
+        // Share-link resolution runs through the trusted server client only.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: resolved } = await supabaseAdmin.rpc("resolve_share_link" as never, {
           _token: data.token,
         } as never);
         const row = (resolved as unknown as
