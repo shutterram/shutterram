@@ -16,12 +16,22 @@ export interface AnalyticsPage {
   visitors: number;
 }
 
+export interface AnalyticsShareLink {
+  token: string;
+  label: string;
+  views: number;
+  visitors: number;
+}
+
 export interface AnalyticsPayload {
   totalViews: number;
   totalVisitors: number;
+  newVisitors: number;
+  returningVisitors: number;
   buckets: AnalyticsBucket[];
   pages: AnalyticsPage[];
   referrers: { source: string; views: number }[];
+  shareLinks: AnalyticsShareLink[];
 }
 
 /** Publishable-key client for the anonymous insert. */
