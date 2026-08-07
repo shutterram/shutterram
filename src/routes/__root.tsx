@@ -179,8 +179,10 @@ function RootComponent() {
     } catch {
       shareToken = "";
     }
+    const width = window.innerWidth;
+    const deviceType = width < 768 ? "mobile" : width < 1024 ? "tablet" : "desktop";
     void trackPageView({
-      data: { path: pathname, visitorId: id, referrer: document.referrer, shareToken },
+      data: { path: pathname, visitorId: id, referrer: document.referrer, shareToken, deviceType },
     }).catch(() => undefined);
   }, [pathname]);
 
