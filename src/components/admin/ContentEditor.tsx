@@ -413,16 +413,22 @@ function FieldInput({
     );
   }
 
-  const multiline = type === "textarea" || type === "list";
+  // Lists keep their raw text while typing so a blank new line survives until
+  // the field is saved — trimming on every keystroke used to swallow it.
+  if (type === "list") {
+    return <ListField spec={spec} value={value} onChange={onChange} />;
+  }
+
+  const multiline = type === "textarea";
 
   return (
     <label className="block">
       <span className="eyebrow">{spec.label}</span>
       {multiline ? (
         <textarea
-          rows={type === "list" ? 4 : 4}
+          rows={4}
           value={toInput(value, type)}
-          placeholder={spec.placeholder ?? (type === "list" ? "One item per line" : "")}
+          placeholder={spec.placeholder ?? ""}
           onChange={(e) => onChange(fromInput(e.target.value, type))}
           className="mt-2 w-full resize-y border-b border-hairline bg-transparent py-2 text-sm leading-relaxed outline-none transition-colors focus:border-foreground"
         />
@@ -435,6 +441,48 @@ function FieldInput({
           className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
         />
       )}
+    </label>
+  );
+}
+
+/** One-item-per-line editor that lets you open an empty line and type into it. */
+function ListField({
+  spec,
+  value,
+  onChange,
+}: {
+  spec: FieldSpec;
+  value: unknown;
+  onChange: (next: unknown) => void;
+}) {
+  const incoming = Array.isArray(value) ? (value as string[]).join("\n") : "";
+  const [text, setText] = useState(incoming);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setText(incoming);
+  }, [incoming, editing]);
+
+  return (
+    <label className="block">
+      <span className="eyebrow">{spec.label}</span>
+      <textarea
+        rows={5}
+        value={text}
+        placeholder={spec.placeholder ?? "One item per line"}
+        onFocus={() => setEditing(true)}
+        onBlur={() => setEditing(false)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(
+            e.target.value
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean),
+          );
+        }}
+        className="mt-2 w-full resize-y border-b border-hairline bg-transparent py-2 text-sm leading-relaxed outline-none transition-colors focus:border-foreground"
+      />
     </label>
   );
 }

@@ -29,6 +29,7 @@ import {
 } from "@/data/portfolio";
 import { themeCss } from "@/lib/theme-css";
 import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
+import { trackPageView } from "@/lib/analytics.functions";
 
 function NotFoundComponent() {
   return (
@@ -157,6 +158,25 @@ function RootComponent() {
     const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (link) link.href = favicon;
   }, [favicon]);
+
+  // Anonymous visit counter for the studio statistics dashboard.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (pathname.startsWith("/admin") || pathname.startsWith("/auth")) return;
+    let id = "";
+    try {
+      id = window.localStorage.getItem("shutterram-visitor") ?? "";
+      if (!id) {
+        id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        window.localStorage.setItem("shutterram-visitor", id);
+      }
+    } catch {
+      id = "anonymous";
+    }
+    void trackPageView({
+      data: { path: pathname, visitorId: id, referrer: document.referrer },
+    }).catch(() => undefined);
+  }, [pathname]);
 
   // The private studio pages render without the public site chrome.
   const isStudio =

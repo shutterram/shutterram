@@ -140,7 +140,9 @@ Press **Refresh site** after saving to reload public pages with the new content.
 
 | Tab | What it controls |
 | --- | --- |
-| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, **default grid columns per page per device**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Site & About** | Studio name, tagline, email, phone, location, default social share image, about copy (short + long), **the About page photographer photo**, quote-form budget/hours options, loading-screen shape/size/pulse/fade, cursor-glow size/softness/blend mode |
+| **Grid defaults** | Default column count (1/2/3) for the Home, Gallery and Category grids, chosen separately for desktop, tablet and mobile |
+| **Statistics** | Visitor / page-view dashboard: totals, chart over 30 days / 12 months / all time, top pages and traffic sources |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 | **Logos** | A different logo per slot, with a live preview and height / X / Y nudge sliders |
 | **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
@@ -598,10 +600,19 @@ contrast** lists every such piece of text with a switch; flipping one adds the `
 `text_inverts` table, read through `invertClass()` in `src/data/portfolio.ts`.
 
 ### Default grid columns per device
-Studio → **Site & About** has nine selects: Home (featured work), Gallery (all work) and Category
-pages, each with a desktop / tablet / mobile default of 1, 2 or 3 columns. Visitors can still switch
+Studio → **Grid defaults**. Pick a device (Desktop / Tablet / Mobile) at the top, then set 1, 2 or 3
+columns for Home (featured work), Gallery (all work) and Category pages. Visitors can still switch
 using the on-page **View** selector; your setting is what they land on. Handled by the `useGridView`
-hook in `src/components/site/ViewSelector.tsx`.
+hook in `src/components/site/ViewSelector.tsx`, and read from the `settings` table's `grid_*` columns.
+
+### Site statistics
+Studio → **Statistics**. Every non-studio page view is recorded anonymously in the `page_views`
+table (path, a random per-browser id kept in `localStorage`, referrer, timestamp — no cookies, no
+personal data). The dashboard shows totals, a views/visitors chart over the last 30 days, 12 months
+or all time, the top pages as a bar chart, a full list of every page (new pages appear automatically)
+and where visitors came from. Only admins can read it: `getSiteAnalytics` in
+`src/lib/analytics.functions.ts` re-checks `has_role(auth.uid(), 'admin')` server-side.
+
 
 ### Users & roles
 Studio → **Users**. Admin accounts can open the Content Studio; non-admin accounts can sign in but
