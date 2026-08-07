@@ -356,3 +356,11 @@ html {
     color-mix(in oklab, var(--background) 62%, transparent) 100%
   );
 }
+
+/* Studio-controlled contrast flip for text that sits on top of a photo.
+   Swaps the text to the opposite end of the palette so it stays readable
+   when the photo behind it is the same tone as the normal text colour. */
+.text-flip,
+.text-flip * {
+  color: var(--background) !important;
+}
