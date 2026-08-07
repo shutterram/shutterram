@@ -72,7 +72,7 @@ function Gallery() {
       </div>
 
       <FilterPills
-        className="mt-10"
+        className="mt-12"
         value={filter}
         onChange={(v) => {
           setFilter(v);
@@ -88,11 +88,11 @@ function Gallery() {
         ]}
       />
 
-      <div className="mt-6 flex justify-start">
+      <div className="mt-12 flex justify-center">
         <ViewSelector value={cols} onChange={setCols} />
       </div>
 
-      <div className={`mt-12 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
+      <div className={`mt-5 grid gap-3 md:block md:gap-5 md:[&>*]:mb-5 ${MOBILE_GRID_CLASS[cols]} ${DESKTOP_COLUMN_CLASS[cols]}`}>
         {shown.map((p, i) => (
           <button
             key={p.id}
