@@ -109,7 +109,7 @@ export const getSiteContent = createServerFn({ method: "GET" })
           .from("settings" as never)
           // The form endpoint now lives in the admin-only admin_settings table.
           .select(
-            "id,name,tagline,email,phone,location,og_image,about_short,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,glow_size,glow_blend,glow_softness,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,font_heading,font_body,font_scale_desktop,font_scale_tablet,font_scale_mobile,updated_at",
+            "id,name,tagline,email,phone,location,og_image,about_short,about_image,about_long,budget_ranges,hour_options,loader_shape,loader_size,loader_pulse_scale,loader_fade,glow_size,glow_blend,glow_softness,logo_header,logo_footer,logo_mobile,logo_loader,logo_favicon,logo_invert,logo_header_height,logo_header_offset_x,logo_header_offset_y,logo_mobile_height,logo_mobile_offset_x,logo_mobile_offset_y,logo_footer_height,logo_footer_offset_x,logo_footer_offset_y,logo_loader_height,logo_loader_offset_x,logo_loader_offset_y,font_heading,font_body,font_scale_desktop,font_scale_tablet,font_scale_mobile,grid_home_desktop,grid_home_tablet,grid_home_mobile,grid_gallery_desktop,grid_gallery_tablet,grid_gallery_mobile,grid_category_desktop,grid_category_tablet,grid_category_mobile,updated_at",
           )
           .limit(1)
           .then((r) => (r.data ?? []) as unknown as Row[]),
