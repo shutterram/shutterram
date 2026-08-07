@@ -16,7 +16,7 @@ export const Route = createFileRoute("/gallery/$category")({
   loader: async ({ params }) => {
     const category = categoryBySlug(params.category);
     if (!category) throw notFound();
-    const seo = await getSeo({ data: { path: `/gallery/${category.slug}` } });
+    const seo = await loadSeo(`/gallery/${category.slug}`);
     return { category, seo };
   },
   head: ({ loaderData }) => {
