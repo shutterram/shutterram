@@ -274,27 +274,28 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       .limit(50000);
     const priorVisitors = new Set((earlier ?? []).map((r) => String(r.visitor_id || "")));
 
-    const { data: linkRows } = await context.supabase
-      .from("share_links")
-      .select("token,label,scope,category_slug,path");
-    const linkInfo = new Map(
-      ((linkRows ?? []) as Record<string, unknown>[]).map((r) => {
-        const scope = String(r["scope"] ?? "");
-        const url =
-          scope === "category"
-            ? `/gallery/${String(r["category_slug"] ?? "")}`
-            : scope === "page"
-              ? String(r["path"] ?? "/")
-              : "/gallery";
-        return [
-          String(r["token"]),
-          {
-            label: String(r["label"] || "Untitled link"),
-            url: `${url}?k=${String(r["token"])}`,
-          },
-        ] as const;
-      }),
-    );
+    const [{ data: linkRows }, { data: shortRows }] = await Promise.all([
+      context.supabase.from("share_links").select("token,label,scope,category_slug,path,code"),
+      context.supabase.from("short_links").select("code,label,target_url"),
+    ]);
+    // Share links are counted under their access token, plain short links
+    // under their own code — both show up in the same table.
+    const linkInfo = new Map<string, { label: string; url: string }>();
+    for (const r of (linkRows ?? []) as Record<string, unknown>[]) {
+      const code = String(r["code"] ?? "");
+      linkInfo.set(String(r["token"]), {
+        label: String(r["label"] || "Untitled link"),
+        url: code ? `/${code}` : "",
+      });
+    }
+    for (const r of (shortRows ?? []) as Record<string, unknown>[]) {
+      const code = String(r["code"] ?? "");
+      if (!code) continue;
+      linkInfo.set(code, {
+        label: String(r["label"] || r["target_url"] || "Short link"),
+        url: `/${code}`,
+      });
+    }
 
     const grain = hours <= 24 ? "hour" : hours <= 24 * 60 ? "day" : "month";
     const buckets = new Map<string, { views: number; visitors: Set<string> }>();
