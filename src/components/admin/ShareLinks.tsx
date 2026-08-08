@@ -22,9 +22,19 @@ interface ShareRow {
   category_slug: string;
   include_private: boolean;
   token: string;
+  code: string;
   created_at: string;
   path: string;
   og_image: string;
+}
+
+interface ShortRow {
+  id: string;
+  code: string;
+  label: string;
+  target_url: string;
+  og_image: string;
+  created_at: string;
 }
 
 function makeToken() {
@@ -33,25 +43,31 @@ function makeToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Full visitor URL for a link, e.g. https://site.com/gallery/weddings?k=<token> */
-function linkUrl(row: ShareRow) {
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const path =
-    row.scope === "category"
-      ? `/gallery/${row.category_slug}`
-      : row.scope === "page"
-        ? row.path || "/"
-        : "/gallery";
-  return `${origin}${path}?k=${row.token}`;
+/** Five-character code used in the short URL, e.g. /a2kh3 */
+function makeCode() {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint8Array(5);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
+function origin() {
+  return typeof window === "undefined" ? "" : window.location.origin;
+}
+
+/** The short, shareable URL for a link, e.g. https://site.com/a2kh3 */
+function shortUrl(code: string) {
+  return `${origin()}/${code}`;
 }
 
 /**
  * Share links — private, unlisted URLs for a single category (or the whole
- * gallery). Each link decides on its own whether the private photos inside
- * that category are revealed to whoever opens it.
+ * gallery), plus a plain shortener for any other page on the site. Every link
+ * is issued as a short code so nothing long or ugly ever gets shared.
  */
 export function ShareLinks() {
   const [rows, setRows] = useState<ShareRow[]>([]);
+  const [shorts, setShorts] = useState<ShortRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [label, setLabel] = useState("");
   const [scope, setScope] = useState<"category" | "gallery" | "page">("category");
@@ -61,13 +77,26 @@ export function ShareLinks() {
   const [includePrivate, setIncludePrivate] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  const [shortTarget, setShortTarget] = useState("");
+  const [shortLabel, setShortLabel] = useState("");
+  const [shortImage, setShortImage] = useState("");
+  const [shortening, setShortening] = useState(false);
+
   const load = async () => {
-    const { data, error } = await supabase
-      .from("share_links")
-      .select("id,label,scope,category_slug,include_private,token,created_at,path,og_image")
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: shortData, error: shortError }] = await Promise.all([
+      supabase
+        .from("share_links")
+        .select("id,label,scope,category_slug,include_private,token,code,created_at,path,og_image")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("short_links")
+        .select("id,code,label,target_url,og_image,created_at")
+        .order("created_at", { ascending: false }),
+    ]);
     if (error) toast.error(error.message);
+    if (shortError) toast.error(shortError.message);
     setRows((data ?? []) as ShareRow[]);
+    setShorts((shortData ?? []) as ShortRow[]);
     setLoading(false);
   };
 
@@ -83,13 +112,15 @@ export function ShareLinks() {
     setCreating(true);
     const { error } = await supabase.from("share_links").insert({
       label:
-        label.trim() || (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
+        label.trim() ||
+        (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
       scope,
       category_slug: scope === "category" ? slug : "",
       path: scope === "page" ? pagePath : "",
       og_image: ogImage,
       include_private: includePrivate,
       token: makeToken(),
+      code: makeCode(),
     });
     setCreating(false);
     if (error) {
@@ -112,20 +143,61 @@ export function ShareLinks() {
     await load();
   };
 
-  const copy = async (row: ShareRow) => {
-    await navigator.clipboard.writeText(linkUrl(row));
+  /** Turns a pasted URL from this site into a short redirect. */
+  const shorten = async () => {
+    const raw = shortTarget.trim();
+    if (!raw) {
+      toast.error("Paste a link first.");
+      return;
+    }
+    let target = raw;
+    if (!/^https?:\/\//i.test(target) && !target.startsWith("/")) target = `https://${target}`;
+    setShortening(true);
+    const { error } = await supabase.from("short_links").insert({
+      code: makeCode(),
+      label: shortLabel.trim() || target,
+      target_url: target,
+      og_image: shortImage,
+    });
+    setShortening(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setShortTarget("");
+    setShortLabel("");
+    setShortImage("");
+    toast.success("Short link created.");
+    await load();
+  };
+
+  const removeShort = async (id: string) => {
+    const { error } = await supabase.from("short_links").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Short link removed.");
+    await load();
+  };
+
+  const copy = async (url: string) => {
+    await navigator.clipboard.writeText(url);
     toast.success("Link copied.");
   };
 
   const field =
     "w-full border-0 border-b border-hairline bg-transparent pb-2 text-sm focus:border-foreground focus:outline-none";
+  const smallButton =
+    "inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.24em] uppercase hover:border-foreground";
 
   return (
     <div className="space-y-12 pb-20">
       <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
         Create an unlisted link to a category. Anyone with the link sees that page even if you chose
         to include the private photos — nothing changes for ordinary visitors, and revoking a link
-        cuts access straight away.
+        cuts access straight away. Every link is issued as a short URL such as{" "}
+        <span className="whitespace-nowrap">{origin()}/a2kh3</span>.
       </p>
 
       <section className="space-y-6 border border-hairline p-6">
@@ -197,10 +269,14 @@ export function ShareLinks() {
             />
           </div>
 
-          <label className="flex items-center gap-3 self-end pb-1">
-            <Toggle checked={includePrivate} onChange={(v) => setIncludePrivate(v)} />
+          <div className="flex items-center gap-3 self-end pb-1">
+            <Toggle
+              checked={includePrivate}
+              onChange={setIncludePrivate}
+              label="Show private images in this link"
+            />
             <span className="text-sm">Show private images in this link</span>
-          </label>
+          </div>
         </div>
 
         <button
@@ -225,7 +301,9 @@ export function ShareLinks() {
               <div key={r.id} className="flex flex-wrap items-center gap-4 py-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{r.label}</p>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">{linkUrl(r)}</p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {r.code ? shortUrl(r.code) : "No short code — recreate this link"}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {r.scope === "gallery"
                       ? "Whole gallery"
@@ -238,8 +316,9 @@ export function ShareLinks() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => void copy(r)}
-                  className="inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.24em] uppercase hover:border-foreground"
+                  disabled={!r.code}
+                  onClick={() => void copy(shortUrl(r.code))}
+                  className={`${smallButton} disabled:opacity-40`}
                 >
                   <Copy className="size-3.5" /> Copy
                 </button>
@@ -254,6 +333,83 @@ export function ShareLinks() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="space-y-6 border border-hairline p-6">
+        <div>
+          <h3 className="eyebrow">Link shortener</h3>
+          <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+            Paste any link from your own site and get a short redirect you can share anywhere.
+            Visits to it are counted in Statistics just like share links.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <label className="block">
+            <span className="eyebrow">Link to shorten</span>
+            <input
+              value={shortTarget}
+              onChange={(e) => setShortTarget(e.target.value)}
+              placeholder="https://www.shutterram.com/services"
+              className={`mt-3 ${field}`}
+            />
+          </label>
+          <label className="block">
+            <span className="eyebrow">Name (studio only)</span>
+            <input
+              value={shortLabel}
+              onChange={(e) => setShortLabel(e.target.value)}
+              placeholder="e.g. Services for Instagram bio"
+              className={`mt-3 ${field}`}
+            />
+          </label>
+          <div className="md:col-span-2">
+            <ImageField
+              value={shortImage}
+              onChange={setShortImage}
+              label="Link preview image (optional)"
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void shorten()}
+          disabled={shortening}
+          className="inline-flex items-center border border-foreground bg-foreground px-7 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background disabled:opacity-60"
+        >
+          {shortening ? "Shortening…" : "Shorten"}
+        </button>
+
+        {shorts.length > 0 ? (
+          <div className="divide-y divide-hairline border-y border-hairline">
+            {shorts.map((s) => (
+              <div key={s.id} className="flex flex-wrap items-center gap-4 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{shortUrl(s.code)}</p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">→ {s.target_url}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {s.label} · {s.og_image ? "Custom preview image" : "Default preview image"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void copy(shortUrl(s.code))}
+                  className={smallButton}
+                >
+                  <Copy className="size-3.5" /> Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeShort(s.id)}
+                  className="inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.24em] uppercase text-destructive hover:border-destructive"
+                >
+                  <Trash2 className="size-3.5" /> Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );
