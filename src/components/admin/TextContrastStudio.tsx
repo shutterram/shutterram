@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
 import { supabase } from "@/integrations/supabase/client";
+import { Toggle } from "@/components/admin/Toggle";
 
 interface InvertRow {
   key: string;
@@ -90,12 +91,7 @@ export function TextContrastStudio() {
                       <span className="mt-1 block text-xs text-muted-foreground">{r.hint}</span>
                     ) : null}
                   </span>
-                  <input
-                    type="checkbox"
-                    checked={r.inverted}
-                    onChange={() => toggle(r.key)}
-                    className="size-4 shrink-0 accent-foreground"
-                  />
+                  <Toggle checked={r.inverted} onChange={() => toggle(r.key)} />
                 </label>
               ))}
           </div>

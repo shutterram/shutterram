@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { optimiseImage, kb } from "@/lib/optimise-image";
+import { Toggle } from "@/components/admin/Toggle";
 import {
   defaultImageFlags,
   getImageFlags,
@@ -21,7 +22,6 @@ import {
   setImageFlags,
   type ImageFlags,
 } from "@/lib/image-index";
-
 
 /** Uploads a file to the private site-images bucket and returns its public path. */
 export async function uploadSiteImage(file: File): Promise<string> {
@@ -40,7 +40,6 @@ export async function uploadSiteImage(file: File): Promise<string> {
   if (error) throw error;
   return `/api/public/img/${key}`;
 }
-
 
 /**
  * The two per-image switches that follow every upload:
@@ -65,7 +64,8 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
       if (!live) return;
       // Apply a choice the user made before the file finished uploading.
       const pending = desired.current;
-      const differs = pending.indexable !== value.indexable || pending.isPrivate !== value.isPrivate;
+      const differs =
+        pending.indexable !== value.indexable || pending.isPrivate !== value.isPrivate;
       if (differs && value.indexable && !value.isPrivate) {
         try {
           await setImageFlags(src, pending);
@@ -101,48 +101,42 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
     }
   }
 
-  const row = "flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground";
+  const row =
+    "flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground";
 
   return (
     <div className="space-y-1.5">
       <label className={row}>
-        <input
-          type="checkbox"
+        <Toggle
           checked={flags.indexable}
           disabled={!ready}
-          onChange={(e) =>
+          onChange={(v) =>
             void toggle(
-              { indexable: e.target.checked },
-              e.target.checked
-                ? "Image can appear on the internet"
-                : "Image hidden from the internet",
+              { indexable: v },
+              v ? "Image can appear on the internet" : "Image hidden from the internet",
             )
           }
-          className="size-3 accent-current"
+          size="sm"
         />
         Show on Internet
       </label>
       <label className={row}>
-        <input
-          type="checkbox"
+        <Toggle
           checked={flags.isPrivate}
           disabled={!ready}
-          onChange={(e) =>
+          onChange={(v) =>
             void toggle(
-              { isPrivate: e.target.checked },
-              e.target.checked
-                ? "Image is private — share-link only"
-                : "Image visible on the site",
+              { isPrivate: v },
+              v ? "Image is private — share-link only" : "Image visible on the site",
             )
           }
-          className="size-3 accent-current"
+          size="sm"
         />
         Private (share link only)
       </label>
     </div>
   );
 }
-
 
 export function ImageField({
   value,
@@ -213,7 +207,6 @@ export function ImageField({
     </div>
   );
 }
-
 
 /** Dropdown of gallery categories, with an inline "add new" row and remove. */
 export function CategoryField({
@@ -356,12 +349,7 @@ export function CategoryField({
               />
             </label>
             <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={newHero}
-                onChange={(e) => setNewHero(e.target.checked)}
-                className="size-4 accent-current"
-              />
+              <Toggle checked={newHero} onChange={(v) => setNewHero(v)} />
               Show as a home page hero slide
             </label>
           </div>
@@ -406,7 +394,6 @@ export function CategoryField({
     </div>
   );
 }
-
 
 export type FieldType =
   "text" | "textarea" | "image" | "list" | "number" | "bool" | "category" | "select";
@@ -491,12 +478,7 @@ function FieldInput({
   if (type === "bool") {
     return (
       <label className="flex items-center gap-3 pt-4">
-        <input
-          type="checkbox"
-          checked={value === true}
-          onChange={(e) => onChange(e.target.checked)}
-          className="size-4 accent-current"
-        />
+        <Toggle checked={value === true} onChange={(v) => onChange(v)} />
         <span className="eyebrow">{spec.label}</span>
       </label>
     );
@@ -638,7 +620,6 @@ export function SingletonEditor({
   );
 }
 
-
 /** Editor for a list table: add, edit, reorder and delete rows. */
 export function ListEditor({
   table,
@@ -699,7 +680,6 @@ export function ListEditor({
     }
   }
 
-
   /** Write sort_order for every row so the new visual order sticks. */
   async function persistOrder(next: Row[]) {
     const ordered: Row[] = next.map((r, i) => ({ ...r, sort_order: i }));
@@ -719,8 +699,7 @@ export function ListEditor({
     for (const f of fields) {
       if (f.type === "list") draft[f.key] = [];
       else if (f.type === "number") draft[f.key] = 0;
-      else if (f.type === "bool")
-        draft[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
+      else if (f.type === "bool") draft[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else if (f.type === "select") draft[f.key] = f.options?.[0]?.value ?? "";
       else draft[f.key] = f.key === titleKey ? `New ${itemLabel}` : "";
     }
@@ -890,7 +869,6 @@ export function ListEditor({
       ) : null}
     </div>
   );
-
 }
 
 interface StagedFile {
@@ -945,8 +923,7 @@ function BulkUploader({
     for (const f of attrFields) {
       if (f.type === "list") attrs[f.key] = [];
       else if (f.type === "number") attrs[f.key] = 0;
-      else if (f.type === "bool")
-        attrs[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
+      else if (f.type === "bool") attrs[f.key] = f.key === "in_gallery" || f.key === "show_in_hero";
       else attrs[f.key] = f.key === titleKey ? base : "";
     }
     return attrs;
@@ -1046,21 +1023,11 @@ function BulkUploader({
             Pick several files, set details for each, then add them all at once.
           </p>
           <label className="mt-3 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={bulkIndexable}
-              onChange={(e) => setBulkIndexable(e.target.checked)}
-              className="size-3 accent-current"
-            />
+            <Toggle checked={bulkIndexable} onChange={(v) => setBulkIndexable(v)} size="sm" />
             Default for new files: show on Internet
           </label>
           <label className="mt-2 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={bulkPrivate}
-              onChange={(e) => setBulkPrivate(e.target.checked)}
-              className="size-3 accent-current"
-            />
+            <Toggle checked={bulkPrivate} onChange={(v) => setBulkPrivate(v)} size="sm" />
             Default for new files: private (share link only)
           </label>
         </div>
@@ -1127,30 +1094,26 @@ function BulkUploader({
                   />
                 ))}
                 <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-                  <input
-                    type="checkbox"
+                  <Toggle
                     checked={s.indexable}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setStaged((prev) =>
-                        prev.map((x) =>
-                          x.id === s.id ? { ...x, indexable: e.target.checked } : x,
-                        ),
+                        prev.map((x) => (x.id === s.id ? { ...x, indexable: v } : x)),
                       )
                     }
-                    className="size-3 accent-current"
+                    size="sm"
                   />
                   Show on Internet
                 </label>
                 <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-                  <input
-                    type="checkbox"
+                  <Toggle
                     checked={s.isPrivate}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setStaged((prev) =>
-                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: e.target.checked } : x)),
+                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: v } : x)),
                       )
                     }
-                    className="size-3 accent-current"
+                    size="sm"
                   />
                   Private (share link only)
                 </label>
@@ -1195,7 +1158,6 @@ function SaveButton({ onClick, saving }: { onClick: () => void; saving: boolean 
 function FloatingSave({ onClick, saving }: { onClick: () => void; saving: boolean }) {
   return <FloatingSaveBar onClick={onClick} saving={saving} label="Save changes" />;
 }
-
 
 function Loading() {
   return (
