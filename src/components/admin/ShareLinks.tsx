@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { categories } from "@/data/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageField } from "@/components/admin/ContentEditor";
+import { Toggle } from "@/components/admin/Toggle";
 
 /** Every page a link can point at, beyond the gallery and its categories. */
 const SITE_PAGES = [
@@ -198,12 +199,11 @@ export function ShareLinks() {
           </div>
 
           <label className="flex items-center gap-3 self-end pb-1">
-            <input
-              type="checkbox"
+            <Toggle
               checked={includePrivate}
-              onChange={(e) => setIncludePrivate(e.target.checked)}
-              className="size-4 accent-foreground"
-            />
+              onChange={(v) => setIncludePrivate(v)}
+
+              />
             <span className="text-sm">Show private images in this link</span>
           </label>
         </div>

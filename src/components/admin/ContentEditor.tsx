@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { optimiseImage, kb } from "@/lib/optimise-image";
 import {
+import { Toggle } from "@/components/admin/Toggle";
   defaultImageFlags,
   getImageFlags,
   imageKeyOf,
@@ -106,37 +107,35 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
   return (
     <div className="space-y-1.5">
       <label className={row}>
-        <input
-          type="checkbox"
+        <Toggle
           checked={flags.indexable}
           disabled={!ready}
-          onChange={(e) =>
+          onChange={(v) =>
             void toggle(
-              { indexable: e.target.checked },
-              e.target.checked
+              { indexable: v },
+              v
                 ? "Image can appear on the internet"
                 : "Image hidden from the internet",
             )
           }
-          className="size-3 accent-current"
-        />
+ size="sm"
+              />
         Show on Internet
       </label>
       <label className={row}>
-        <input
-          type="checkbox"
+        <Toggle
           checked={flags.isPrivate}
           disabled={!ready}
-          onChange={(e) =>
+          onChange={(v) =>
             void toggle(
-              { isPrivate: e.target.checked },
-              e.target.checked
+              { isPrivate: v },
+              v
                 ? "Image is private — share-link only"
                 : "Image visible on the site",
             )
           }
-          className="size-3 accent-current"
-        />
+ size="sm"
+              />
         Private (share link only)
       </label>
     </div>
@@ -356,11 +355,10 @@ export function CategoryField({
               />
             </label>
             <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
+              <Toggle
                 checked={newHero}
-                onChange={(e) => setNewHero(e.target.checked)}
-                className="size-4 accent-current"
+                onChange={(v) => setNewHero(v)}
+
               />
               Show as a home page hero slide
             </label>
@@ -491,12 +489,11 @@ function FieldInput({
   if (type === "bool") {
     return (
       <label className="flex items-center gap-3 pt-4">
-        <input
-          type="checkbox"
+        <Toggle
           checked={value === true}
-          onChange={(e) => onChange(e.target.checked)}
-          className="size-4 accent-current"
-        />
+          onChange={(v) => onChange(v)}
+
+              />
         <span className="eyebrow">{spec.label}</span>
       </label>
     );
@@ -1046,21 +1043,19 @@ function BulkUploader({
             Pick several files, set details for each, then add them all at once.
           </p>
           <label className="mt-3 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-            <input
-              type="checkbox"
+            <Toggle
               checked={bulkIndexable}
-              onChange={(e) => setBulkIndexable(e.target.checked)}
-              className="size-3 accent-current"
-            />
+              onChange={(v) => setBulkIndexable(v)}
+ size="sm"
+              />
             Default for new files: show on Internet
           </label>
           <label className="mt-2 flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-            <input
-              type="checkbox"
+            <Toggle
               checked={bulkPrivate}
-              onChange={(e) => setBulkPrivate(e.target.checked)}
-              className="size-3 accent-current"
-            />
+              onChange={(v) => setBulkPrivate(v)}
+ size="sm"
+              />
             Default for new files: private (share link only)
           </label>
         </div>
@@ -1127,31 +1122,29 @@ function BulkUploader({
                   />
                 ))}
                 <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-                  <input
-                    type="checkbox"
+                  <Toggle
                     checked={s.indexable}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setStaged((prev) =>
                         prev.map((x) =>
-                          x.id === s.id ? { ...x, indexable: e.target.checked } : x,
+                          x.id === s.id ? { ...x, indexable: v } : x,
                         ),
                       )
                     }
-                    className="size-3 accent-current"
-                  />
+ size="sm"
+              />
                   Show on Internet
                 </label>
                 <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
-                  <input
-                    type="checkbox"
+                  <Toggle
                     checked={s.isPrivate}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       setStaged((prev) =>
-                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: e.target.checked } : x)),
+                        prev.map((x) => (x.id === s.id ? { ...x, isPrivate: v } : x)),
                       )
                     }
-                    className="size-3 accent-current"
-                  />
+ size="sm"
+              />
                   Private (share link only)
                 </label>
               </div>

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { KeyRound, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
+import { Toggle } from "@/components/admin/Toggle";
   createUser,
   deleteUser,
   listUsers,
@@ -91,12 +92,11 @@ export function UserManagement() {
             />
           </label>
           <label className="flex items-center gap-3 self-end pb-1">
-            <input
-              type="checkbox"
+            <Toggle
               checked={makeAdmin}
-              onChange={(e) => setMakeAdmin(e.target.checked)}
-              className="size-4 accent-foreground"
-            />
+              onChange={(v) => setMakeAdmin(v)}
+
+              />
             <span className="text-sm">Give Content Studio access (admin)</span>
           </label>
         </div>
@@ -135,18 +135,17 @@ export function UserManagement() {
                 </div>
 
                 <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
+                  <Toggle
                     checked={u.isAdmin}
                     disabled={busy}
-                    onChange={(e) =>
+                    onChange={(v) =>
                       void run(
-                        () => changeRole({ data: { userId: u.id, isAdmin: e.target.checked } }),
+                        () => changeRole({ data: { userId: u.id, isAdmin: v } }),
                         "Access updated.",
                       )
                     }
-                    className="size-4 accent-foreground"
-                  />
+
+              />
                   Admin
                 </label>
 

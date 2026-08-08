@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Toggle } from "@/components/admin/Toggle";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Page = "home" | "gallery" | "category";
@@ -111,12 +112,11 @@ export function GridDefaultsStudio() {
           and gallery pages. Category pages never show it.
         </p>
         <label className="mt-5 inline-flex cursor-pointer items-center gap-3 text-sm">
-          <input
-            type="checkbox"
+          <Toggle
             checked={row["show_view_label"] !== false}
-            onChange={(e) => setRow({ ...row, show_view_label: e.target.checked })}
-            className="size-4 accent-current"
-          />
+            onChange={(v) => setRow({ ...row, show_view_label: v })}
+
+              />
           Show the “View” label
         </label>
       </div>
