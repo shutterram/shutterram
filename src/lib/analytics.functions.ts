@@ -177,10 +177,13 @@ export const recordViewDuration = createServerFn({ method: "POST" })
     }
     // The helper is server-only: visitors and signed-in users cannot execute it.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("record_view_duration" as never, {
-      _id: data.id,
-      _seconds: data.seconds,
-    } as never);
+    const { error } = await supabaseAdmin.rpc(
+      "record_view_duration" as never,
+      {
+        _id: data.id,
+        _seconds: data.seconds,
+      } as never,
+    );
     return { ok: !error };
   });
 

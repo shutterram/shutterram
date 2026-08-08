@@ -112,8 +112,7 @@ export function ShareLinks() {
     setCreating(true);
     const { error } = await supabase.from("share_links").insert({
       label:
-        label.trim() ||
-        (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
+        label.trim() || (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
       scope,
       category_slug: scope === "category" ? slug : "",
       path: scope === "page" ? pagePath : "",
