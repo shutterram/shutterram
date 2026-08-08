@@ -138,11 +138,15 @@ export const getSiteContent = createServerFn({ method: "GET" })
           .from("text_inverts" as never)
           .select("key,inverted")
           .then((r) => (r.data ?? []) as unknown as Row[]),
-        supabase
-          .from("image_settings" as never)
-          .select("path")
-          .eq("is_private", true)
-          .then((r) => (r.data ?? []) as unknown as Row[]),
+        // Private paths are readable only by the trusted server client: the
+        // public policy hides private rows so they can't be enumerated by anon.
+        import("@/integrations/supabase/client.server").then(({ supabaseAdmin }) =>
+          supabaseAdmin
+            .from("image_settings" as never)
+            .select("path")
+            .eq("is_private", true)
+            .then((r) => (r.data ?? []) as unknown as Row[]),
+        ),
       ]);
 
       // A share link (?k=token) may reveal private photos for one category.
