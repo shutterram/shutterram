@@ -138,11 +138,15 @@ export const getSiteContent = createServerFn({ method: "GET" })
           .from("text_inverts" as never)
           .select("key,inverted")
           .then((r) => (r.data ?? []) as unknown as Row[]),
-        supabase
-          .from("image_settings" as never)
-          .select("path")
-          .eq("is_private", true)
-          .then((r) => (r.data ?? []) as unknown as Row[]),
+        // Private paths are readable only by the trusted server client: the
+        // public policy hides private rows so they can't be enumerated by anon.
+        import("@/integrations/supabase/client.server").then(({ supabaseAdmin }) =>
+          supabaseAdmin
+            .from("image_settings" as never)
+            .select("path")
+            .eq("is_private", true)
+            .then((r) => (r.data ?? []) as unknown as Row[]),
+        ),
       ]);
 
       // A share link (?k=token) may reveal private photos for one category.
@@ -163,15 +167,19 @@ export const getSiteContent = createServerFn({ method: "GET" })
         (privateRows as unknown as Row[]).map((r) => String(r["path"] ?? "")),
       );
       const visiblePhotos = privatePaths.size
-        ? photos.filter((r: Row) => {
+        ? photos.flatMap((r: Row) => {
             const src = String(r["src"] ?? "");
             const key = src.split("/api/public/img/")[1] ?? "";
-            if (!key || !privatePaths.has(key)) return true;
-            if (!share) return false;
-            return (
+            if (!key || !privatePaths.has(key)) return [r];
+            if (!share) return [];
+            const allowed =
               share.scope === "gallery" ||
-              share.category_slug === String(r["category_slug"] ?? "")
-            );
+              share.category_slug === String(r["category_slug"] ?? "");
+            if (!allowed) return [];
+            // Private bytes are gated on the token too, so carry it on the URL.
+            return [
+              { ...r, src: `${src}${src.includes("?") ? "&" : "?"}k=${data.token}` } as Row,
+            ];
           })
         : photos;
 
