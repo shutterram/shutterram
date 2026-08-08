@@ -83,8 +83,7 @@ export function ShareLinks() {
     setCreating(true);
     const { error } = await supabase.from("share_links").insert({
       label:
-        label.trim() ||
-        (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
+        label.trim() || (scope === "gallery" ? "Full gallery" : scope === "page" ? pagePath : slug),
       scope,
       category_slug: scope === "category" ? slug : "",
       path: scope === "page" ? pagePath : "",
@@ -199,11 +198,7 @@ export function ShareLinks() {
           </div>
 
           <label className="flex items-center gap-3 self-end pb-1">
-            <Toggle
-              checked={includePrivate}
-              onChange={(v) => setIncludePrivate(v)}
-
-              />
+            <Toggle checked={includePrivate} onChange={(v) => setIncludePrivate(v)} />
             <span className="text-sm">Show private images in this link</span>
           </label>
         </div>

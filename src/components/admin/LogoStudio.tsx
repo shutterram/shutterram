@@ -160,11 +160,7 @@ export function LogoStudio() {
           onChange={(v) => set("logo_favicon", v)}
         />
         <label className="flex items-center gap-3 pt-8">
-          <Toggle
-            checked={invert}
-            onChange={(v) => set("logo_invert", v)}
-
-              />
+          <Toggle checked={invert} onChange={(v) => set("logo_invert", v)} />
           <span className="eyebrow">Invert logo colours (for dark artwork)</span>
         </label>
       </div>

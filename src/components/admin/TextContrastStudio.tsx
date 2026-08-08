@@ -91,11 +91,7 @@ export function TextContrastStudio() {
                       <span className="mt-1 block text-xs text-muted-foreground">{r.hint}</span>
                     ) : null}
                   </span>
-                  <Toggle
-                    checked={r.inverted}
-                    onChange={() => toggle(r.key)}
-
-              />
+                  <Toggle checked={r.inverted} onChange={() => toggle(r.key)} />
                 </label>
               ))}
           </div>

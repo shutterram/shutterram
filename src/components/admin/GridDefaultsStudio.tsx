@@ -80,8 +80,8 @@ export function GridDefaultsStudio() {
   return (
     <div className="space-y-10 pb-20">
       <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Pick how many columns each grid opens with. Choose a device first, then set the three
-        grids for that device. Visitors can still switch the view themselves.
+        Pick how many columns each grid opens with. Choose a device first, then set the three grids
+        for that device. Visitors can still switch the view themselves.
       </p>
 
       <div className="flex flex-wrap gap-3">
@@ -108,19 +108,17 @@ export function GridDefaultsStudio() {
       <div className="border border-hairline p-6">
         <p className="eyebrow">The word “View”</p>
         <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground">
-          Shows or hides the small “View” caption that sits next to the grid pickers on the home
-          and gallery pages. Category pages never show it.
+          Shows or hides the small “View” caption that sits next to the grid pickers on the home and
+          gallery pages. Category pages never show it.
         </p>
         <label className="mt-5 inline-flex cursor-pointer items-center gap-3 text-sm">
           <Toggle
             checked={row["show_view_label"] !== false}
             onChange={(v) => setRow({ ...row, show_view_label: v })}
-
-              />
+          />
           Show the “View” label
         </label>
       </div>
-
 
       <div className="grid gap-8 md:grid-cols-3">
         {PAGES.map((p) => (

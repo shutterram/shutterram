@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { KeyRound, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import {
 import { Toggle } from "@/components/admin/Toggle";
+import {
   createUser,
   deleteUser,
   listUsers,
@@ -92,11 +92,7 @@ export function UserManagement() {
             />
           </label>
           <label className="flex items-center gap-3 self-end pb-1">
-            <Toggle
-              checked={makeAdmin}
-              onChange={(v) => setMakeAdmin(v)}
-
-              />
+            <Toggle checked={makeAdmin} onChange={(v) => setMakeAdmin(v)} />
             <span className="text-sm">Give Content Studio access (admin)</span>
           </label>
         </div>
@@ -144,8 +140,7 @@ export function UserManagement() {
                         "Access updated.",
                       )
                     }
-
-              />
+                  />
                   Admin
                 </label>
 
