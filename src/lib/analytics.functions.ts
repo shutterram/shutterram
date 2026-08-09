@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
-import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
+import { MAX_VISIT_SECONDS, RANGE_HOURS } from "@/lib/analytics.ranges";
 
 export interface AnalyticsBucket {
   /** Day (YYYY-MM-DD) or month (YYYY-MM) label. */
@@ -58,39 +56,6 @@ export interface AnalyticsPayload {
   dayOfWeek: AnalyticsSlice[];
 }
 
-/**
- * Backend address + public key for the anonymous insert.
- * Hosts differ in which names they expose to the server runtime, so we accept
- * both the server-side names and the build-time VITE_ ones.
- */
-function publicEnv() {
-  const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"] || "";
-  const key =
-    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
-    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    "";
-  return { url, key };
-}
-
-/** Publishable-key client for the anonymous insert. */
-function publicClient() {
-  const { url, key } = publicEnv();
-
-  return createClient<Database>(url, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const headers = new Headers(init?.headers);
-        if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-          headers.delete("Authorization");
-        }
-        headers.set("apikey", key);
-        return fetch(input, { ...init, headers });
-      },
-    },
-  });
-}
-
 /** Records one page view. Anonymous, no personal data — just path + a random id. */
 export const trackPageView = createServerFn({ method: "POST" })
   .inputValidator(
@@ -123,43 +88,31 @@ export const trackPageView = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true };
+    if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true, id: "" };
+
+    const { BOT_RE, browserOf, osOf, publicClient, publicEnv, requestContext } = await import(
+      "@/lib/analytics.server"
+    );
+
     const env = publicEnv();
     if (!env.url || !env.key) {
       console.error("[analytics] backend address or public key missing on this host");
-      return { ok: false };
+      return { ok: false, id: "" };
     }
 
-    // Geography comes from the edge network's request headers, which are
-    // derived from the connecting IP. We never store the IP itself and we set
-    // no cookies — the visitor id is a random string kept by the browser.
-    let country = "";
-    let region = "";
-    let city = "";
-    let headerAgent = "";
-    try {
-      const headers = getRequest().headers;
-      const pick = (...names: string[]) => {
-        for (const n of names) {
-          const v = headers.get(n);
-          if (v) return v.slice(0, 64);
-        }
-        return "";
-      };
-      country = pick("cf-ipcountry", "x-vercel-ip-country", "x-geo-country", "x-country-code");
-      region = decodeURIComponent(
-        pick("x-vercel-ip-country-region", "cf-region", "x-geo-region") || "",
-      );
-      city = decodeURIComponent(pick("x-vercel-ip-city", "cf-ipcity", "x-geo-city") || "");
-      headerAgent = headers.get("user-agent") ?? "";
-    } catch {
-      /* geography is best-effort only */
-    }
-
+    const { country, region, city, userAgent: headerAgent } = requestContext();
     const agent = data.userAgent || headerAgent;
-    const { data: inserted, error } = await publicClient()
+
+    // The row id is generated here rather than read back from the database.
+    // Visitors may record a view but must never read the analytics table, so
+    // asking for the inserted row back would be refused by the access rules
+    // and would take the whole write down with it.
+    const id = crypto.randomUUID();
+
+    const { error } = await publicClient()
       .from("page_views" as never)
       .insert({
+        id,
         path: data.path,
         visitor_id: data.visitorId,
         referrer: data.referrer,
@@ -174,22 +127,25 @@ export const trackPageView = createServerFn({ method: "POST" })
         timezone: data.timezone,
         screen_size: data.screenSize,
         is_bot: BOT_RE.test(agent),
-      } as never)
-      .select("id")
-      .single();
-    if (error) console.error("[analytics] insert failed", error.message);
-    return { ok: !error, id: (inserted as { id?: string } | null)?.id ?? "" };
+      } as never);
+
+    if (error) {
+      console.error(`[analytics] insert failed [${error.code ?? "unknown"}] ${error.message}`);
+      return { ok: false, id: "" };
+    }
+    return { ok: true, id };
   });
 
 /** Records how long a visit lasted. Fire-and-forget when the page is closed. */
 export const recordViewDuration = createServerFn({ method: "POST" })
   .inputValidator((input: { id?: string; seconds?: number } | undefined) => ({
     id: String(input?.id ?? "").slice(0, 64),
-    seconds: Math.max(0, Math.min(7200, Math.round(Number(input?.seconds ?? 0)))),
+    seconds: Math.max(0, Math.min(MAX_VISIT_SECONDS, Math.round(Number(input?.seconds ?? 0)))),
   }))
   .handler(async ({ data }) => {
     if (!data.id || data.seconds <= 0) return { ok: false };
     if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_SERVICE_ROLE_KEY"]) {
+      console.error("[analytics] duration skipped: server credentials missing on this host");
       return { ok: false };
     }
     // The helper is server-only: visitors and signed-in users cannot execute it.
@@ -201,64 +157,9 @@ export const recordViewDuration = createServerFn({ method: "POST" })
         _seconds: data.seconds,
       } as never,
     );
+    if (error) console.error(`[analytics] duration failed: ${error.message}`);
     return { ok: !error };
   });
-
-const BOT_RE =
-  /bot|crawler|spider|crawling|preview|facebookexternalhit|slurp|bingpreview|headless|lighthouse|pingdom|monitor/i;
-
-/** Best-effort browser name from a user-agent string. No IP, no fingerprint. */
-function browserOf(ua: string): string {
-  if (!ua) return "Unknown";
-  if (BOT_RE.test(ua)) return "Bot / crawler";
-  if (/Edg\//.test(ua)) return "Edge";
-  if (/OPR\/|Opera/.test(ua)) return "Opera";
-  if (/SamsungBrowser/.test(ua)) return "Samsung Internet";
-  if (/Firefox\//.test(ua)) return "Firefox";
-  if (/Chrome\//.test(ua)) return "Chrome";
-  if (/Safari\//.test(ua)) return "Safari";
-  return "Other";
-}
-
-/** Best-effort operating system from a user-agent string. */
-function osOf(ua: string): string {
-  if (!ua) return "Unknown";
-  if (/Windows/.test(ua)) return "Windows";
-  if (/Android/.test(ua)) return "Android";
-  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
-  if (/Mac OS X|Macintosh/.test(ua)) return "macOS";
-  if (/Linux/.test(ua)) return "Linux";
-  return "Other";
-}
-
-/** Turns an ISO country code into a readable name ("SE" -> "Sweden"). */
-let regionNames: Intl.DisplayNames | null | undefined;
-function countryName(code: string): string {
-  const raw = code.trim().toUpperCase();
-  if (!raw) return "Unknown";
-  if (raw.length !== 2) return code;
-  if (regionNames === undefined) {
-    try {
-      regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-    } catch {
-      regionNames = null;
-    }
-  }
-  try {
-    return regionNames?.of(raw) ?? raw;
-  } catch {
-    return raw;
-  }
-}
-
-const RANGE_HOURS: Record<string, number> = {
-  "5h": 5,
-  "24h": 24,
-  "7d": 24 * 7,
-  month: 24 * 30,
-  year: 24 * 365,
-  all: 24 * 365 * 20,
-};
 
 /** Admin-only statistics for the studio dashboard. */
 export const getSiteAnalytics = createServerFn({ method: "POST" })
@@ -272,6 +173,8 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       _role: "admin",
     });
     if (!isAdmin) throw new Error("Forbidden");
+
+    const { countryName, DAY_NAMES } = await import("@/lib/analytics.server");
 
     const hours = RANGE_HOURS[data.range] ?? 24 * 30;
     const since = new Date(Date.now() - hours * 3600 * 1000);
@@ -343,7 +246,6 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       entry.visitors.add(visitor);
       map.set(key, entry);
     };
-    const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     let botViews = 0;
     let totalSeconds = 0;
 
@@ -396,7 +298,7 @@ export const getSiteAnalytics = createServerFn({ method: "POST" })
       addSlice("timezones", String(r["timezone"] || "") || "Unknown", visitor);
       addSlice("screens", String(r["screen_size"] || "") || "Unknown", visitor);
       addSlice("hourOfDay", `${iso.slice(11, 13)}:00`, visitor);
-      addSlice("dayOfWeek", DAYS[new Date(iso).getUTCDay()] ?? "Unknown", visitor);
+      addSlice("dayOfWeek", DAY_NAMES[new Date(iso).getUTCDay()] ?? "Unknown", visitor);
 
       const ref = String(row.referrer || "");
       let source = "Direct";

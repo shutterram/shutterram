@@ -122,15 +122,6 @@ export function countryName(code: string): string {
   }
 }
 
-export const RANGE_HOURS: Record<string, number> = {
-  "5h": 5,
-  "24h": 24,
-  "7d": 24 * 7,
-  month: 24 * 30,
-  year: 24 * 365,
-  all: 24 * 365 * 20,
-};
-
 export const DAY_NAMES = [
   "Sunday",
   "Monday",
@@ -140,3 +131,4 @@ export const DAY_NAMES = [
   "Friday",
   "Saturday",
 ];
+
