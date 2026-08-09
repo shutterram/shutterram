@@ -58,10 +58,24 @@ export interface AnalyticsPayload {
   dayOfWeek: AnalyticsSlice[];
 }
 
+/**
+ * Backend address + public key for the anonymous insert.
+ * Hosts differ in which names they expose to the server runtime, so we accept
+ * both the server-side names and the build-time VITE_ ones.
+ */
+function publicEnv() {
+  const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"] || "";
+  const key =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    "";
+  return { url, key };
+}
+
 /** Publishable-key client for the anonymous insert. */
 function publicClient() {
-  const url = process.env["SUPABASE_URL"]!;
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+  const { url, key } = publicEnv();
+
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     global: {
@@ -110,9 +124,12 @@ export const trackPageView = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true };
-    if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
+    const env = publicEnv();
+    if (!env.url || !env.key) {
+      console.error("[analytics] backend address or public key missing on this host");
       return { ok: false };
     }
+
     // Geography comes from the edge network's request headers, which are
     // derived from the connecting IP. We never store the IP itself and we set
     // no cookies — the visitor id is a random string kept by the browser.
