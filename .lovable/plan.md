@@ -25,7 +25,7 @@ If both point at the same project, nothing needs migrating and the code fix alon
 
 Note on the editor's own backend: it's managed and can't be detached or repointed from in here. Connecting your Supabase gives me visibility to verify against it; it doesn't switch what the editor preview runs on.
 
-## The fix (applied when you give the word)
+## The fix (after the recheck confirms it)
 
 1. Generate the page-view identifier inside the server function instead of asking the database to return it, and write the row without a read-back. This keeps analytics unreadable to visitors — no permissions are loosened.
 2. Return that identifier only after a confirmed write, so time-on-page tracking keeps working.
@@ -47,5 +47,6 @@ Code change only — no database migration, no permission changes. Push to GitHu
 ## Technical notes
 
 - Root cause: `.select("id").single()` on the insert in `src/lib/analytics.functions.ts` forces a `SELECT` under the `anon` role, which the admin-only read policy on `public.page_views` denies.
-- Fix: client-side `crypto.randomUUID()` for the row id, insert with no representation returned, return the id from the function.
+- Fix: server-generated `crypto.randomUUID()` for the row id, insert with no representation returned, return the id from the function.
 - The `Admins can read page views` policy and all existing grants stay exactly as they are.
+- Current known state: this backend is project `eputpbokthuwxvwhheuv`, matching the values in `.env`. The recheck confirms whether your deployed site uses that same reference.
