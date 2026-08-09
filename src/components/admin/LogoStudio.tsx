@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import logo from "@/assets/SRLogo.svg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageField } from "./ContentEditor";
+import { Toggle } from "@/components/admin/Toggle";
 
 type Row = Record<string, unknown>;
 
@@ -159,12 +160,7 @@ export function LogoStudio() {
           onChange={(v) => set("logo_favicon", v)}
         />
         <label className="flex items-center gap-3 pt-8">
-          <input
-            type="checkbox"
-            checked={invert}
-            onChange={(e) => set("logo_invert", e.target.checked)}
-            className="size-4 accent-current"
-          />
+          <Toggle checked={invert} onChange={(v) => set("logo_invert", v)} />
           <span className="eyebrow">Invert logo colours (for dark artwork)</span>
         </label>
       </div>

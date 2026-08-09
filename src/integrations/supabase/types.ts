@@ -620,6 +620,7 @@ export type Database = {
       share_links: {
         Row: {
           category_slug: string
+          code: string
           created_at: string
           id: string
           include_private: boolean
@@ -632,6 +633,7 @@ export type Database = {
         }
         Insert: {
           category_slug?: string
+          code?: string
           created_at?: string
           id?: string
           include_private?: boolean
@@ -644,6 +646,7 @@ export type Database = {
         }
         Update: {
           category_slug?: string
+          code?: string
           created_at?: string
           id?: string
           include_private?: boolean
@@ -652,6 +655,36 @@ export type Database = {
           path?: string
           scope?: string
           token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      short_links: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          label: string
+          og_image: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          label?: string
+          og_image?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          og_image?: string
+          target_url?: string
           updated_at?: string
         }
         Relationships: []
