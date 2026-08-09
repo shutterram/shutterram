@@ -1,41 +1,46 @@
-# Restore production analytics ingestion
+# Your own Supabase + the analytics fix
 
-## Confirmed diagnosis
+You asked to connect your own Supabase and to hold the code fix until you're ready. Here's what's true today and what happens once you say go.
 
-The live production site is invoking the analytics server function successfully, but it returns `{ ok: false, id: "" }`, and the database has received no new page-view rows since August 7.
+## What I found
 
-The write currently ends with `.select("id").single()`. That asks the anonymous database role to read the inserted analytics row back. The database intentionally permits anonymous inserts but restricts analytics reads to admins, so row-level security rejects the operation. This is why changing deployment environment variables did not solve it.
+- This project already has a working backend attached, and it holds your real traffic — I queried it and saw genuine page views from August 7 (paths, devices, US/SE visitors).
+- Your live site at `www.shutterram.com` is served by Vercel and **is** calling the tracking function successfully.
+- Tracking still fails at the last step. I reproduced an anonymous visit write against the live database and got:
+  `new row violates row-level security policy for table "page_views"`.
 
-## Implementation
+The cause is in the code, not your credentials. The tracking write ends by asking the database to hand the new row back. Anonymous visitors are deliberately allowed to *record* analytics but never to *read* it, so the database rejects the whole write. That's why updating environment variables changed nothing.
 
-1. **Fix page-view writes without weakening security**
-   - Generate the page-view UUID inside the server function.
-   - Include that UUID in the insert and use a minimal/no-return insert instead of `.select("id")`.
-   - Return the generated UUID only after a successful write, preserving duration tracking while keeping analytics rows unreadable to anonymous visitors.
-   - Keep the existing admin-only analytics read policy unchanged.
+## About connecting your own Supabase
 
-2. **Make failures diagnosable**
-   - Preserve safe server-side error logging with the database error code/message.
-   - Keep the browser call non-blocking, but ensure the server result accurately reports failed writes.
+The editor's backend is managed and cannot be detached or repointed from in here. So there are two realistic shapes — tell me which you want:
 
-3. **Keep server-function modules deployment-safe**
-   - Move runtime helpers/constants used by analytics into a server-safe helper module so the `createServerFn` file remains a thin declaration wrapper.
-   - Preserve the current public tracking, duration, and admin dashboard behavior.
+- **Recommended:** keep one backend for both. Your production already points at the same project, so your studio, photos, reviews and statistics stay in one place. Nothing to migrate.
+- **Separate production backend:** you run your own Supabase project for the live site. That means applying all migrations there, re-uploading images, recreating your admin login, and accepting that the editor and production hold different content and separate statistics.
 
-4. **Resolve the active hero hydration mismatch**
-   - Stabilize the initial hero slide markup so server and browser render the same first frame before effects begin.
-   - Do not change the hero’s appearance or interaction.
+I'd suggest the first unless you specifically want production data isolated from Lovable.
 
-## Verification
+## The fix (applied when you give the word)
 
-- Reproduce an anonymous production-style page-view insert and confirm it returns a non-empty ID.
-- Verify a new row appears with path, visitor ID, device, and geography fields.
-- Navigate between public pages and confirm page counts increase.
-- Leave/navigate away from a page and confirm duration updates when the server secret is available.
-- Confirm an anonymous client still cannot read `page_views`.
+1. Generate the page-view identifier inside the server function instead of asking the database to return it, and write the row without a read-back. This keeps analytics unreadable to visitors — no permissions are loosened.
+2. Return that identifier only after a confirmed write, so time-on-page tracking keeps working.
+3. Keep clear server-side logging so any future write failure is visible instead of silent.
+4. Move analytics helper code into a server-only module so the deployed build stays reliable.
+5. Resolve a hero-image rendering mismatch on the home page. No visual change.
+
+## How I'll verify
+
+- Perform an anonymous visit write and confirm a new row appears with path, device and country.
+- Browse public pages and confirm counts rise.
+- Confirm visitors still cannot read analytics data.
 - Check the Statistics panel across short and long ranges.
-- Verify the home page hydrates without the current HeroSlider mismatch.
 
-## Deployment note
+## Deploying it
 
-This fix requires a code redeploy only; it does not require broadening database permissions. After the Git push, redeploy the production build and test with a fresh visit to the live domain.
+Code change only — no database migration, no permission changes. Push to GitHub, let Vercel rebuild, then load the live site and the new visit will appear in Statistics.
+
+## Technical notes
+
+- Root cause: `.select("id").single()` on the insert in `src/lib/analytics.functions.ts` forces a `SELECT` under the `anon` role, which the admin-only read policy on `public.page_views` denies.
+- Fix: client-side `crypto.randomUUID()` for the row id, insert with no representation returned, return the id from the function.
+- The `Admins can read page views` policy and all existing grants stay exactly as they are.
