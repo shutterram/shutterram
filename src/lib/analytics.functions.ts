@@ -124,9 +124,12 @@ export const trackPageView = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     if (data.path.startsWith("/admin") || data.path.startsWith("/auth")) return { ok: true };
-    if (!process.env["SUPABASE_URL"] || !process.env["SUPABASE_PUBLISHABLE_KEY"]) {
+    const env = publicEnv();
+    if (!env.url || !env.key) {
+      console.error("[analytics] backend address or public key missing on this host");
       return { ok: false };
     }
+
     // Geography comes from the edge network's request headers, which are
     // derived from the connecting IP. We never store the IP itself and we set
     // no cookies — the visitor id is a random string kept by the browser.
