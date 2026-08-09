@@ -1,6 +1,6 @@
-# Your own Supabase + the analytics fix
+# Recheck against your Supabase, then fix analytics
 
-You asked to connect your own Supabase and to hold the code fix until you're ready. Here's what's true today and what happens once you say go.
+You want to connect Supabase so I can re-verify everything before we finalize the approach. Here's what I already know, what I'll re-check once you're connected, and the fix that follows.
 
 ## What I found
 
@@ -11,14 +11,19 @@ You asked to connect your own Supabase and to hold the code fix until you're rea
 
 The cause is in the code, not your credentials. The tracking write ends by asking the database to hand the new row back. Anonymous visitors are deliberately allowed to *record* analytics but never to *read* it, so the database rejects the whole write. That's why updating environment variables changed nothing.
 
-## About connecting your own Supabase
+## Recheck pass, once you've connected
 
-The editor's backend is managed and cannot be detached or repointed from in here. So there are two realistic shapes — tell me which you want:
+The open question I can't answer from here: does your live site use this same backend, or a different Supabase project? Everything else depends on that. Once connected I'll confirm, in order:
 
-- **Recommended:** keep one backend for both. Your production already points at the same project, so your studio, photos, reviews and statistics stay in one place. Nothing to migrate.
-- **Separate production backend:** you run your own Supabase project for the live site. That means applying all migrations there, re-uploading images, recreating your admin login, and accepting that the editor and production hold different content and separate statistics.
+1. Whether production and this editor point at the same project, by comparing the project reference your deployed site uses against this one.
+2. Whether your production database holds the visit rows, or whether they only exist in the one I can currently see.
+3. That the `page_views` table there has the same structure, permissions and access rules — this is where the blocked write happens.
+4. That the same anonymous-write rejection reproduces there, confirming the diagnosis holds for your real database rather than only the one I tested.
+5. Whether the studio content (photos, categories, reviews, theme) lives in the same place as the traffic data.
 
-I'd suggest the first unless you specifically want production data isolated from Lovable.
+If both point at the same project, nothing needs migrating and the code fix alone restores your statistics. If they're separate, I'll show you exactly what differs before we choose — including whether migrations are missing on the production side, which would be worth fixing regardless.
+
+Note on the editor's own backend: it's managed and can't be detached or repointed from in here. Connecting your Supabase gives me visibility to verify against it; it doesn't switch what the editor preview runs on.
 
 ## The fix (applied when you give the word)
 
