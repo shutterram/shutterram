@@ -8,7 +8,15 @@ import {
   useGridView,
 } from "@/components/site/ViewSelector";
 import { Lightbox } from "@/components/site/Lightbox";
-import { categories, invertClass, photos, type CategorySlug, t } from "@/data/portfolio";
+import {
+  categories,
+  imageGlowStyle,
+  imageShadowClass,
+  invertClass,
+  photos,
+  type CategorySlug,
+  t,
+} from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
@@ -115,7 +123,9 @@ function Gallery() {
               className={cn(
                 "absolute inset-x-0 bottom-0 translate-y-3 p-5 text-left opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100",
                 invertClass("gallery.caption"),
+                imageShadowClass(p.src),
               )}
+              style={imageGlowStyle(p.src)}
             >
               <p className="eyebrow">{p.category}</p>
               <p className="mt-1 font-display text-lg">{p.caption}</p>

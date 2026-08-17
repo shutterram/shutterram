@@ -10,8 +10,12 @@ interface InvertRow {
   group_label: string;
   hint: string;
   inverted: boolean;
+  shadow_dark: boolean;
+  shadow_light: boolean;
   sort_order: number;
 }
+
+type SwitchField = "inverted" | "shadow_dark" | "shadow_light";
 
 /**
  * Text contrast — every piece of text that sits on top of a photograph gets a
@@ -28,7 +32,7 @@ export function TextContrastStudio() {
     void (async () => {
       const { data, error } = await supabase
         .from("text_inverts")
-        .select("key,label,group_label,hint,inverted,sort_order")
+        .select("key,label,group_label,hint,inverted,shadow_dark,shadow_light,sort_order")
         .order("sort_order", { ascending: true });
       if (error) toast.error(error.message);
       setRows((data ?? []) as InvertRow[]);
@@ -36,8 +40,8 @@ export function TextContrastStudio() {
     })();
   }, []);
 
-  const toggle = (key: string) => {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, inverted: !r.inverted } : r)));
+  const toggle = (key: string, field: SwitchField) => {
+    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, [field]: !r[field] } : r)));
     setDirty(true);
   };
 
@@ -50,6 +54,8 @@ export function TextContrastStudio() {
         group_label: r.group_label,
         hint: r.hint,
         inverted: r.inverted,
+        shadow_dark: r.shadow_dark,
+        shadow_light: r.shadow_light,
         sort_order: r.sort_order,
       })),
       { onConflict: "key" },
@@ -71,7 +77,8 @@ export function TextContrastStudio() {
     <div className="space-y-10 pb-28">
       <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
         Text that sits over a photograph can disappear when the picture behind it is the same tone.
-        Flip any of these to switch that text to the opposite colour.
+        Flip the colour, or add a soft drop shadow behind the text — separately for dark mode and
+        light mode, so you can switch on only the one that needs it.
       </p>
 
       {groups.map((group) => (
@@ -81,9 +88,9 @@ export function TextContrastStudio() {
             {rows
               .filter((r) => r.group_label === group)
               .map((r) => (
-                <label
+                <div
                   key={r.key}
-                  className="flex cursor-pointer items-center justify-between gap-6 py-4"
+                  className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8"
                 >
                   <span className="min-w-0">
                     <span className="block text-sm">{r.label}</span>
@@ -91,8 +98,28 @@ export function TextContrastStudio() {
                       <span className="mt-1 block text-xs text-muted-foreground">{r.hint}</span>
                     ) : null}
                   </span>
-                  <Toggle checked={r.inverted} onChange={() => toggle(r.key)} />
-                </label>
+                  <div className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3">
+                    {(
+                      [
+                        { field: "inverted", label: "Flip colour" },
+                        { field: "shadow_dark", label: "Shadow — dark mode" },
+                        { field: "shadow_light", label: "Shadow — light mode" },
+                      ] as { field: SwitchField; label: string }[]
+                    ).map((s) => (
+                      <label
+                        key={s.field}
+                        className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
+                      >
+                        <Toggle
+                          size="sm"
+                          checked={r[s.field]}
+                          onChange={() => toggle(r.key, s.field)}
+                        />
+                        {s.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
           </div>
         </section>

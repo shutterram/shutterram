@@ -3,6 +3,8 @@ import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FloatingSaveBar } from "@/components/admin/FloatingSaveBar";
+import { ModalPortal } from "@/components/admin/ModalPortal";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { optimiseImage, kb } from "@/lib/optimise-image";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteImageFiles } from "@/lib/storage.functions";
 import { Toggle } from "@/components/admin/Toggle";
 import {
   defaultImageFlags,
@@ -65,8 +69,11 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
       // Apply a choice the user made before the file finished uploading.
       const pending = desired.current;
       const differs =
-        pending.indexable !== value.indexable || pending.isPrivate !== value.isPrivate;
-      if (differs && value.indexable && !value.isPrivate) {
+        pending.indexable !== value.indexable ||
+        pending.isPrivate !== value.isPrivate ||
+        pending.shadowDark !== value.shadowDark ||
+        pending.shadowLight !== value.shadowLight;
+      if (differs && value.indexable && !value.isPrivate && !value.shadowDark && !value.shadowLight) {
         try {
           await setImageFlags(src, pending);
         } catch {
@@ -134,6 +141,115 @@ export function SearchVisibilityToggle({ src }: { src: string }) {
         />
         Private (share link only)
       </label>
+      <label className={row}>
+        <Toggle
+          checked={flags.shadowDark}
+          disabled={!ready}
+          onChange={(v) =>
+            void toggle(
+              { shadowDark: v },
+              v ? "Text glow on — dark mode" : "Text glow off — dark mode",
+            )
+          }
+          size="sm"
+        />
+        Text glow — dark mode
+      </label>
+      <label className={row}>
+        <Toggle
+          checked={flags.shadowLight}
+          disabled={!ready}
+          onChange={(v) =>
+            void toggle(
+              { shadowLight: v },
+              v ? "Text glow on — light mode" : "Text glow off — light mode",
+            )
+          }
+          size="sm"
+        />
+        Text glow — light mode
+      </label>
+
+      {(flags.shadowDark || flags.shadowLight) && (
+        <div className="space-y-2 border-l border-hairline pl-3">
+          {flags.shadowDark && (
+            <GlowControls
+              label="Dark mode glow"
+              color={flags.glowColorDark}
+              strength={flags.glowStrengthDark}
+              disabled={!ready}
+              onColor={(v) => void toggle({ glowColorDark: v }, "Dark glow colour saved")}
+              onStrength={(v) => void toggle({ glowStrengthDark: v }, "Dark glow intensity saved")}
+            />
+          )}
+          {flags.shadowLight && (
+            <GlowControls
+              label="Light mode glow"
+              color={flags.glowColorLight}
+              strength={flags.glowStrengthLight}
+              disabled={!ready}
+              onColor={(v) => void toggle({ glowColorLight: v }, "Light glow colour saved")}
+              onStrength={(v) => void toggle({ glowStrengthLight: v }, "Light glow intensity saved")}
+            />
+          )}
+          <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+            Spread
+            <input
+              type="range"
+              min={40}
+              max={400}
+              step={10}
+              value={flags.glowSpread}
+              disabled={!ready}
+              onChange={(e) => void toggle({ glowSpread: Number(e.target.value) }, "Glow spread saved")}
+              className="h-1 w-32 accent-foreground"
+            />
+            <span className="tabular-nums">{flags.glowSpread}px</span>
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Colour + intensity pair for one mode of the per-image text glow. */
+function GlowControls({
+  label,
+  color,
+  strength,
+  disabled,
+  onColor,
+  onStrength,
+}: {
+  label: string;
+  color: string;
+  strength: number;
+  disabled: boolean;
+  onColor: (value: string) => void;
+  onStrength: (value: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+      <span className="w-28">{label}</span>
+      <input
+        type="color"
+        value={color}
+        disabled={disabled}
+        onChange={(e) => onColor(e.target.value)}
+        className="size-6 cursor-pointer border border-hairline bg-transparent"
+        aria-label={`${label} colour`}
+      />
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={strength}
+        disabled={disabled}
+        onChange={(e) => onStrength(Number(e.target.value))}
+        className="h-1 w-32 accent-foreground"
+        aria-label={`${label} intensity`}
+      />
+      <span className="tabular-nums">{strength}%</span>
     </div>
   );
 }
@@ -644,6 +760,9 @@ export function ListEditor({
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [dirtyId, setDirtyId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Row | null>(null);
+  const [purging, setPurging] = useState(false);
+  const purgeFiles = useServerFn(deleteImageFiles);
 
   async function load() {
     const { data, error } = await supabase
@@ -720,17 +839,42 @@ export function ListEditor({
     setOpen(created["id"] as string);
   }
 
-  async function removeRow(id: string) {
+  /** Storage keys of the uploaded images this row points at. */
+  function fileKeysOf(row: Row): string[] {
+    const keys = new Set<string>();
+    const text = JSON.stringify(row ?? null) ?? "";
+    const re = /\/api\/public\/img\/([A-Za-z0-9._-]+)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text))) if (m[1]) keys.add(m[1]);
+    return [...keys];
+  }
+
+  async function removeRow(row: Row, alsoFiles: boolean) {
+    const id = row["id"] as string;
+    setPurging(true);
     const { error } = await supabase
       .from(table as never)
       .delete()
       .eq("id", id);
     if (error) {
+      setPurging(false);
       toast.error(error.message);
       return;
     }
-    setRows(rows!.filter((r) => r["id"] !== id));
-    toast.success("Deleted");
+    if (alsoFiles) {
+      const keys = fileKeysOf(row);
+      if (keys.length) {
+        try {
+          await purgeFiles({ data: { keys } });
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Entry deleted, files could not be");
+        }
+      }
+    }
+    setPurging(false);
+    setPendingDelete(null);
+    setRows((rows ?? []).filter((r) => r["id"] !== id));
+    toast.success(alsoFiles ? "Deleted with its image files" : "Deleted");
   }
 
   async function move(index: number, dir: -1 | 1) {
@@ -829,9 +973,7 @@ export function ListEditor({
                   <button
                     type="button"
                     aria-label={`Delete ${itemLabel}`}
-                    onClick={() => {
-                      if (confirm(`Delete this ${itemLabel}?`)) void removeRow(id);
-                    }}
+                    onClick={() => setPendingDelete(row)}
                     className="px-2 py-1 hover:text-foreground"
                   >
                     <X className="size-4" />
@@ -867,7 +1009,49 @@ export function ListEditor({
           saving={saving}
         />
       ) : null}
+      {pendingDelete ? (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-background/85 p-6 backdrop-blur-sm">
+
+          <div className="w-full max-w-md border border-hairline bg-background p-6">
+            <p className="eyebrow">Delete {itemLabel}</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Removing it from the site keeps the uploaded image files in storage, so an older
+              template or version can still bring it back. Deleting the files too is permanent.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={purging}
+                onClick={() => void removeRow(pendingDelete, false)}
+                className="border border-foreground bg-foreground px-5 py-3 text-[0.625rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85 disabled:opacity-50"
+              >
+                Remove from site
+              </button>
+              <button
+                type="button"
+                disabled={purging}
+                onClick={() => void removeRow(pendingDelete, true)}
+                className="border border-hairline px-5 py-3 text-[0.625rem] tracking-[0.24em] uppercase transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+              >
+                Remove and delete files
+              </button>
+              <button
+                type="button"
+                disabled={purging}
+                onClick={() => setPendingDelete(null)}
+                className="px-5 py-2 text-[0.625rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+        </ModalPortal>
+      ) : null}
     </div>
+
+
   );
 }
 
@@ -879,6 +1063,8 @@ interface StagedFile {
   /** Per-file visibility switches, applied right after the upload. */
   indexable: boolean;
   isPrivate: boolean;
+  shadowDark: boolean;
+  shadowLight: boolean;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
@@ -938,6 +1124,8 @@ function BulkUploader({
       attrs: blankAttrs(file),
       indexable: bulkIndexable,
       isPrivate: bulkPrivate,
+      shadowDark: false,
+      shadowLight: false,
       status: "pending" as const,
     }));
     setStaged((prev) => [...prev, ...next]);
@@ -961,6 +1149,8 @@ function BulkUploader({
               ...s,
               indexable: first.indexable,
               isPrivate: first.isPrivate,
+              shadowDark: first.shadowDark,
+              shadowLight: first.shadowLight,
               attrs: { ...s.attrs, ...first.attrs, [titleKey]: s.attrs[titleKey] },
             },
       );
@@ -977,8 +1167,14 @@ function BulkUploader({
       setStaged((prev) => prev.map((s) => (s.id === item.id ? { ...s, status: "uploading" } : s)));
       try {
         const src = await uploadSiteImage(item.file);
-        if (!item.indexable || item.isPrivate) {
-          await setImageFlags(src, { indexable: item.indexable, isPrivate: item.isPrivate });
+        if (!item.indexable || item.isPrivate || item.shadowDark || item.shadowLight) {
+          await setImageFlags(src, {
+            ...defaultImageFlags,
+            indexable: item.indexable,
+            isPrivate: item.isPrivate,
+            shadowDark: item.shadowDark,
+            shadowLight: item.shadowLight,
+          });
         }
         const draft: Row = { ...item.attrs, [imageKey]: src, sort_order: order++ };
 
@@ -1116,6 +1312,30 @@ function BulkUploader({
                     size="sm"
                   />
                   Private (share link only)
+                </label>
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <Toggle
+                    checked={s.shadowDark}
+                    onChange={(v) =>
+                      setStaged((prev) =>
+                        prev.map((x) => (x.id === s.id ? { ...x, shadowDark: v } : x)),
+                      )
+                    }
+                    size="sm"
+                  />
+                  Text glow — dark mode
+                </label>
+                <label className="flex items-center gap-2 text-[0.625rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  <Toggle
+                    checked={s.shadowLight}
+                    onChange={(v) =>
+                      setStaged((prev) =>
+                        prev.map((x) => (x.id === s.id ? { ...x, shadowLight: v } : x)),
+                      )
+                    }
+                    size="sm"
+                  />
+                  Text glow — light mode
                 </label>
               </div>
               <div className="flex w-24 shrink-0 flex-col items-end gap-2 text-[0.625rem] uppercase tracking-widest text-muted-foreground">

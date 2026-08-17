@@ -32,7 +32,13 @@ export function Toggle({
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      onClick={() => onChange(!checked)}
+      onClick={(e) => {
+        // The switch often sits inside a <label>; without this the label
+        // re-dispatches the click onto the button and the value flips twice.
+        e.preventDefault();
+        e.stopPropagation();
+        onChange(!checked);
+      }}
       className={`relative inline-flex shrink-0 items-center rounded-full border transition-colors duration-200 disabled:opacity-50 ${track} ${
         checked ? "border-foreground bg-foreground" : "border-hairline bg-transparent"
       } ${className}`}

@@ -1,11 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { invertClass, t, type Service } from "@/data/portfolio";
+import { imageGlowStyle, imageShadowClass, invertClass, t, type Service } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export function ServiceCard({ service, index = 0 }: { service: Service; index?: number }) {
   return (
-    <article className="group relative isolate flex aspect-[4/5] flex-col justify-end overflow-hidden border border-hairline">
+    <article
+      className={cn(
+        "group relative isolate flex aspect-[4/5] flex-col justify-end overflow-hidden border border-hairline",
+        imageShadowClass(service.image),
+      )}
+      style={imageGlowStyle(service.image)}
+    >
       <img
         src={service.image}
         alt={service.title}

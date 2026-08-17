@@ -105,7 +105,23 @@ export let typography: Typography = defaultTypography;
 export let aboutImage: string =
   "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1000&q=80";
 /** Studio switches for text that sits on top of a photo. */
-export let textInverts: Record<string, boolean> = {};
+export interface OverlayTextSetting {
+  inverted: boolean;
+  shadowDark: boolean;
+  shadowLight: boolean;
+}
+export let textInverts: Record<string, OverlayTextSetting> = {};
+/** Per-image drop-shadow switches, keyed by the served image path. */
+export interface ImageGlow {
+  dark: boolean;
+  light: boolean;
+  colorDark: string;
+  colorLight: string;
+  strengthDark: number;
+  strengthLight: number;
+  spread: number;
+}
+export let imageShadows: Record<string, ImageGlow> = {};
 /** Default column counts per page and device, set in the studio. */
 export type GridPage = "home" | "gallery" | "category";
 export type GridDevice = "desktop" | "tablet" | "mobile";
@@ -121,9 +137,52 @@ export let showViewLabel = true;
 /** Non-null when the visitor opened a private share link. */
 export let shareContext: { scope: string; category_slug: string } | null = null;
 
-/** Class that flips a text colour when the studio marks that text as inverted. */
+/**
+ * Classes for text that sits on top of a photo: flips the colour when the
+ * studio marks it as inverted, and adds a soft drop shadow in whichever
+ * mode (dark / light) the studio switched the shadow on for.
+ */
 export function invertClass(key: string): string {
-  return textInverts[key] ? "text-flip" : "";
+  const s = textInverts[key];
+  if (!s) return "";
+  return [
+    s.inverted ? "text-flip" : "",
+    s.shadowDark ? "text-shade-dark" : "",
+    s.shadowLight ? "text-shade-light" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Studio glow settings for one specific image, or null when it has none. */
+export function imageGlowOf(src: string | null | undefined): ImageGlow | null {
+  if (!src) return null;
+  const served = src.split("/api/public/img/")[1]?.split("?")[0];
+  const key = served ?? src.trim().slice(0, 400);
+  const s = key ? imageShadows[key] : undefined;
+  if (!s || (!s.dark && !s.light)) return null;
+  return s;
+}
+
+/**
+ * Class for the wide, blurred glow that sits behind text overlaying one
+ * specific image. Pair it with {@link imageGlowStyle} for colour + intensity.
+ */
+export function imageShadowClass(src: string | null | undefined): string {
+  return imageGlowOf(src) ? "text-glow" : "";
+}
+
+/** Colour / intensity / spread variables for the per-image text glow. */
+export function imageGlowStyle(src: string | null | undefined): CSSProperties {
+  const s = imageGlowOf(src);
+  if (!s) return {};
+  return {
+    ["--tg-color-dark" as string]: s.colorDark,
+    ["--tg-color-light" as string]: s.colorLight,
+    ["--tg-alpha-dark" as string]: s.dark ? s.strengthDark : 0,
+    ["--tg-alpha-light" as string]: s.light ? s.strengthLight : 0,
+    ["--tg-spread" as string]: `${s.spread}px`,
+  } as CSSProperties;
 }
 
 /** Editable label lookup — falls back to the built-in wording. */
@@ -399,7 +458,28 @@ export function applyContent(payload: SiteContentPayload | null | undefined) {
   }));
 
   textInverts = Object.fromEntries(
-    (payload.text_inverts ?? []).map((r: Row) => [str(r["key"]), r["inverted"] === true]),
+    (payload.text_inverts ?? []).map((r: Row) => [
+      str(r["key"]),
+      {
+        inverted: r["inverted"] === true,
+        shadowDark: r["shadow_dark"] === true,
+        shadowLight: r["shadow_light"] === true,
+      },
+    ]),
+  );
+  imageShadows = Object.fromEntries(
+    (payload.image_shadows ?? []).map((r: Row) => [
+      str(r["path"]),
+      {
+        dark: r["shadow_dark"] === true,
+        light: r["shadow_light"] === true,
+        colorDark: str(r["glow_color_dark"], "#000000"),
+        colorLight: str(r["glow_color_light"], "#ffffff"),
+        strengthDark: Number(r["glow_strength_dark"] ?? 55),
+        strengthLight: Number(r["glow_strength_light"] ?? 55),
+        spread: Number(r["glow_spread"] ?? 140),
+      },
+    ]),
   );
   shareContext = payload.share ?? null;
 

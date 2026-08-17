@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invertClass } from "@/data/portfolio";
+import { imageGlowStyle, imageShadowClass, invertClass } from "@/data/portfolio";
 import { cn } from "@/lib/utils";
 
 export function BeforeAfterSlider({
@@ -69,7 +69,9 @@ export function BeforeAfterSlider({
         className={cn(
           "pointer-events-none absolute left-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm",
           invertClass("beforeafter.labels"),
+          imageShadowClass(before),
         )}
+        style={imageGlowStyle(before)}
       >
         Before
       </span>
@@ -77,7 +79,9 @@ export function BeforeAfterSlider({
         className={cn(
           "pointer-events-none absolute right-4 top-4 border border-hairline bg-background/60 px-3 py-1 text-[0.625rem] tracking-[0.28em] uppercase backdrop-blur-sm",
           invertClass("beforeafter.labels"),
+          imageShadowClass(after),
         )}
+        style={imageGlowStyle(after)}
       >
         After
       </span>

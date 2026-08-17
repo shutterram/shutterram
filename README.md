@@ -144,13 +144,19 @@ Each panel opens its own set of tabs.
 | Panel | Tabs |
 | --- | --- |
 | **Content Studio** | Site & About · Grid defaults · Logos · Colours · Fonts · Wording · Text contrast · Hero categories · Services · Editing samples · Stats · Page sections · Process steps · Social links |
-| **Gallery management** | Photos |
-| **Link generator** | Share links |
-| **Admin / user management** | Users |
-| **Review management** | Client reviews · Testimonials |
+| **Gallery Management** | Photos |
+| **Link Generator** | Share links (incl. the link shortener) |
+| **Admin & Users** | Users |
+| **Review Management** | Client reviews · Testimonials |
 | **SEO** | SEO |
 | **Statistics** | Traffic · Image visibility |
-| **Form** | Form delivery |
+| **Templates & History** | Templates · History · Storage cleanup |
+| **Forms** | Form delivery |
+
+Two studio-wide conveniences: every yes/no control is a **toggle switch**, and the studio
+**remembers where you were** — the panel and tab are written to the URL hash and to local storage,
+so a refresh drops you back on the exact tab you were editing.
+
 
 | Tab | What it controls |
 | --- | --- |
@@ -160,7 +166,7 @@ Each panel opens its own set of tabs.
 | **Colours** | Every colour token, separately for dark and light mode, with intensity (opacity) sliders, per-token **Undo / Redo / Reset to default** and a **Reset all** |
 | **Fonts** | Font family, size, weight, letter-spacing and line-height per **section** and per **device** (desktop / tablet / mobile), with a live sample of the real site text, plus the **Font library** for registering new Google/CSS fonts with their weights and styles |
 | **Wording** | Every standalone string on the site (buttons, labels, micro-copy), grouped |
-| **Text contrast** | A switch per piece of text that sits on top of a photograph (hero title/tagline/buttons, category covers, gallery captions, service cards, Before/After labels) — flip it to make that text the opposite colour so it stays readable |
+| **Text contrast** | Two things: a switch per piece of text that sits on top of a photograph (hero title/tagline/buttons, category covers, gallery captions, service cards, Before/After labels) to flip it to the opposite colour, and the **text glow** controls described in [Text glow behind overlaid text](#text-glow-behind-overlaid-text) |
 | **Hero categories** | Slug, title, label, tagline, hero image, **category cover image** and the **Show as a home page hero slide** toggle (a category can live in the gallery only) |
 | **Services** | Title, subtitle, slug, gallery category, description, image, includes list, price line |
 | **Editing samples** | Title, note, **Before** photo and **After** photo for the comparison slider |
@@ -168,18 +174,24 @@ Each panel opens its own set of tabs.
 | **Page sections** | Order, visibility, eyebrow, heading, italic second line and intro of every section on every page |
 | **Process steps** | The Experience milestones, assigned to *Home & Services* or *About Me* |
 | **Social links** | Name, URL, built-in icon name, or a custom uploaded icon |
-| **Photos** | Caption, category (with inline **+ Add new category…**), image, featured flag + position, the three visibility switches, internal key |
-| **Share links** | Unlisted links to any page or category, each with its own **Show private images** choice and optional custom social preview image; copy the full link or revoke it at any time |
+| **Photos** | Caption, category (with inline **+ Add new category…**), image, featured flag + position, the three visibility switches, per-image text glow, internal key |
+| **Share links** | Unlisted links to any page or category, each with its own **Show private images** choice and optional custom social preview image; copy the full link or revoke it at any time — plus the **link shortener** below it |
 | **Users** | Add maintainers, grant or remove Content Studio (admin) access, reset a password, remove an account |
 | **Client reviews** | The shareable `/review` link + approve / edit / delete submissions |
 | **Testimonials** | Name, role, quote, rating (placeholder/manual entries) |
 | **SEO** | Per-path title, description, keywords, OG title/description/image, canonical, robots — plus a **Page coverage** panel that lists any site page (including new gallery categories) that has no SEO row yet and adds them in one click |
 | **Traffic** | The full visitor dashboard (see [Site statistics](#site-statistics)) |
 | **Image visibility** | An audit of every image and where it is allowed to appear |
+| **Templates** | Download the current content as a template, or load one back in — whole site, one panel, or one section (see [Templates, history & storage](#templates-history--storage)) |
+| **History** | Every change, with one-click rollback (and roll-forward) to any earlier point |
+| **Storage cleanup** | Scan the image bucket for files nothing links to any more and delete them in bulk |
 | **Form delivery** | The private form endpoint URL (never sent to the browser) |
 
 Every list supports add, edit, reorder (↑ ↓) and delete. **New entries — single or bulk — are
 inserted at the top of the list**, right under the Add controls, so you never scroll to fill them in.
+Deleting a photo asks whether to **remove it from the site** (keeping the file, so an older template
+can still restore it) or **remove it and delete the file** for good.
+
 
 
 ### Saving your edits
@@ -316,15 +328,22 @@ explicit columns — `select("*")` will fail with a permission error.**
 | `theme_tokens` | Colour tokens with dark/light values and opacity |
 | `type_tokens` | Typography per section per device |
 | `custom_fonts` | Extra font families registered in the Fonts tab |
-| `image_settings` | Per-image `indexable` + `is_private` switches |
+| `image_settings` | Per-image switches: `indexable`, `is_private`, and the text-glow settings (`shadow_dark`, `shadow_light`, `glow_color_*`, `glow_strength_*`, `glow_spread`) |
 | `text_inverts` | Per-text contrast switches for text over photos |
-| `share_links` | Unlisted category/gallery links, each with `include_private` |
+| `share_links` | Unlisted category/gallery links, each with `include_private` and its own OG image |
+| `short_links` | Shortened `/{code}` links (target URL + hit tracking) |
+| `site_versions` | Saved templates and automatic snapshots used by rollback |
+| `content_changes` | Append-only change log behind the History panel |
 | `seo_pages` | Per-path SEO metadata |
+| `page_views` | Anonymous, cookie-free traffic records behind the Statistics panel |
 | `user_roles` | `user_id` + `app_role` — the **only** place roles are stored |
 
 Helpers: `app_role` enum, `has_role(uuid, app_role)` security-definer function,
-`resolve_share_link(text)` security-definer function (turns a `?k=` token into a scope), and
-`touch_updated_at()` triggers on every content table.
+`resolve_share_link(text)` / `share_link_og_image(text)` (turn a `?k=` token into a scope / preview
+image), `content_tables()`, `content_snapshot()`, `restore_snapshot()` and `log_content_change()`
+(templates, history and rollback), `record_view_duration()` for analytics, and `touch_updated_at()`
+triggers on every content table.
+
 
 ### RLS rules that must be preserved
 - Public `SELECT` on content tables for `anon` + `authenticated`.
@@ -614,6 +633,45 @@ Text laid over a photograph can vanish when the picture behind it is the same to
 contrast** lists every such piece of text with a switch; flipping one adds the `.text-flip` utility
 (defined in `src/styles.css`) which paints that text in the opposite colour. Stored in the
 `text_inverts` table, read through `invertClass()` in `src/data/portfolio.ts`.
+
+### Text glow behind overlaid text
+Separate from the contrast flip: a soft, wide glow painted *behind* a block of text that sits on a
+photograph, so the words lift off a busy picture without a hard outline. It is set **per image**, in
+Studio → **Photos** (and on hero categories), and separately for dark and light mode:
+
+| Control | What it does |
+| --- | --- |
+| Glow on (dark) / (light) | Turns the effect on for that mode only |
+| Glow colour | Any colour — usually black on light photos, white on dark ones |
+| Strength | How opaque the glow is |
+| Spread | How wide it fades out |
+
+Stored on `image_settings` per image path (external images are keyed by their URL). Rendered as a
+radial-gradient pseudo-element via the utilities in `src/styles.css`; hero images additionally feed
+the header and nav through `src/lib/hero-glow.ts`, so the logo and menu stay readable on top of them.
+
+### Templates, history & storage
+Studio → **Templates & History**.
+
+- **Templates.** Download the current content as a template and load it back later. Scope it to the
+  **whole site**, a **panel**, or a single **section** — the same download/load buttons also appear
+  inline at the top of every panel and section, so you can snapshot just the tab you are editing.
+  A plain `.json` template stores content and image *links*; a **bundled `.zip`** additionally packs
+  the image files themselves, which is what you want for a true portable backup.
+- **History.** Every create/edit/delete is logged (`content_changes`), and snapshots are taken
+  automatically as you work (`site_versions`). Roll back to any earlier point in one click — a fresh
+  snapshot is taken first, so you can roll forward again if you change your mind.
+- **Storage cleanup.** Scans the `site-images` bucket for files nothing references any more and lets
+  you tick and delete them in bulk. The toggle above the Scan button, **protect files still used by
+  saved versions and history**, keeps anything an old template or rollback might need; turn it off to
+  judge only against what is live right now.
+
+### Link shortener
+Studio → **Link Generator**. Below the share-link list, paste any URL on the site and click
+**Shorten** to get a `https://your-domain/{code}` link. Codes live in the `short_links` table and are
+resolved by `src/routes/$code.tsx`, which records the hit and redirects — so shortened links show up
+in Statistics alongside share links.
+
 
 ### Default grid columns per device
 Studio → **Grid defaults**. Pick a device (Desktop / Tablet / Mobile) at the top, then set 1, 2 or 3
