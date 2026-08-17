@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/SRLogo.svg.asset.json";
-import { site, logos, t, logoStyle } from "@/data/portfolio";
+import { site, logos, t, logoStyle, invertClass, imageGlowStyle, imageShadowClass } from "@/data/portfolio";
+import { useHeroImage } from "@/lib/hero-glow";
 import { cn } from "@/lib/utils";
 import { LogoLockup } from "./LogoLockup";
 import { ThemeToggle } from "./ThemeToggle";
@@ -23,6 +24,10 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const { theme } = useTheme();
   const isMobile = useIsMobile();
+  const heroImage = useHeroImage();
+  // Over a hero photo the header picks up that image's glow; once the solid
+  // header background kicks in on scroll it is no longer needed.
+  const heroGlow = !scrolled ? heroImage : null;
 
   /**
    * Studio heights are tuned for desktop — clamp them so the mark never clips on
@@ -66,7 +71,13 @@ export function SiteHeader() {
             : "border-b border-transparent bg-transparent py-6",
         )}
       >
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6">
+        <div
+          className={cn(
+            "mx-auto flex max-w-7xl flex-col items-center gap-3 px-6",
+            imageShadowClass(heroGlow),
+          )}
+          style={imageGlowStyle(heroGlow)}
+        >
           <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center md:flex md:justify-center">
             <span className="size-6 md:hidden" aria-hidden="true" />
             <Link
@@ -108,7 +119,7 @@ export function SiteHeader() {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-9 md:flex">
+          <nav className={cn("hidden items-center gap-9 md:flex", invertClass("nav.links"))}>
             {navItems.map((item) => (
               <Link
                 key={item.to}
@@ -154,7 +165,7 @@ export function SiteHeader() {
             </button>
           </div>
 
-          <nav className="flex flex-1 flex-col items-center gap-5 pt-6">
+          <nav className={cn("flex flex-1 flex-col items-center gap-5 pt-6", invertClass("nav.links"))}>
             {navItems.map((item, i) => (
               <Link
                 key={item.to}

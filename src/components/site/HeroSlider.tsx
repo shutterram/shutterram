@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { heroCategories, invertClass, site, t } from "@/data/portfolio";
+import { heroCategories, imageGlowStyle, imageShadowClass, invertClass, site, t } from "@/data/portfolio";
+import { setHeroImage } from "@/lib/hero-glow";
 import { cn } from "@/lib/utils";
 
 export function HeroSlider() {
@@ -12,6 +13,12 @@ export function HeroSlider() {
   const go = useCallback((dir: number) => {
     setActive((i) => (i + dir + categories.length) % categories.length);
   }, [categories.length]);
+
+  // Let the header (logo + nav) pick up this slide's glow settings.
+  useEffect(() => {
+    setHeroImage(categories[active]?.hero ?? null);
+    return () => setHeroImage(null);
+  }, [categories, active]);
 
   useEffect(() => {
     if (paused) return;
@@ -46,7 +53,13 @@ export function HeroSlider() {
         </div>
       ))}
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
+      <div
+        className={cn(
+          "relative z-10 flex h-full flex-col items-center justify-center px-6 text-center",
+          imageShadowClass(categories[active]?.hero),
+        )}
+        style={imageGlowStyle(categories[active]?.hero)}
+      >
         <div className={cn("fade-up mb-8 flex flex-col items-center", invertClass("hero.brand"))}>
           <span className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
             Shutter<span className="italic text-muted-foreground">Ram</span>

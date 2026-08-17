@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      content_changes: {
+        Row: {
+          after: Json | null
+          before: Json | null
+          changed_by: string | null
+          created_at: string
+          id: string
+          op: string
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          after?: Json | null
+          before?: Json | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          op: string
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          after?: Json | null
+          before?: Json | null
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          op?: string
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       custom_fonts: {
         Row: {
           css_url: string
@@ -169,21 +202,42 @@ export type Database = {
       }
       image_settings: {
         Row: {
+          glow_color_dark: string
+          glow_color_light: string
+          glow_spread: number
+          glow_strength_dark: number
+          glow_strength_light: number
           indexable: boolean
           is_private: boolean
           path: string
+          shadow_dark: boolean
+          shadow_light: boolean
           updated_at: string
         }
         Insert: {
+          glow_color_dark?: string
+          glow_color_light?: string
+          glow_spread?: number
+          glow_strength_dark?: number
+          glow_strength_light?: number
           indexable?: boolean
           is_private?: boolean
           path: string
+          shadow_dark?: boolean
+          shadow_light?: boolean
           updated_at?: string
         }
         Update: {
+          glow_color_dark?: string
+          glow_color_light?: string
+          glow_spread?: number
+          glow_strength_dark?: number
+          glow_strength_light?: number
           indexable?: boolean
           is_private?: boolean
           path?: string
+          shadow_dark?: boolean
+          shadow_light?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -719,6 +773,39 @@ export type Database = {
         }
         Relationships: []
       }
+      site_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: Json
+          id: string
+          kind: string
+          label: string
+          scope: string
+          tables: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          kind?: string
+          label?: string
+          scope?: string
+          tables?: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          kind?: string
+          label?: string
+          scope?: string
+          tables?: string[]
+        }
+        Relationships: []
+      }
       socials: {
         Row: {
           href: string
@@ -826,6 +913,8 @@ export type Database = {
           inverted: boolean
           key: string
           label: string
+          shadow_dark: boolean
+          shadow_light: boolean
           sort_order: number
           updated_at: string
         }
@@ -836,6 +925,8 @@ export type Database = {
           inverted?: boolean
           key: string
           label?: string
+          shadow_dark?: boolean
+          shadow_light?: boolean
           sort_order?: number
           updated_at?: string
         }
@@ -846,6 +937,8 @@ export type Database = {
           inverted?: boolean
           key?: string
           label?: string
+          shadow_dark?: boolean
+          shadow_light?: boolean
           sort_order?: number
           updated_at?: string
         }
@@ -991,6 +1084,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      content_snapshot: { Args: { _tables?: string[] }; Returns: Json }
+      content_tables: { Args: never; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1009,6 +1104,10 @@ export type Database = {
           include_private: boolean
           scope: string
         }[]
+      }
+      restore_snapshot: {
+        Args: { _data: Json; _tables?: string[] }
+        Returns: undefined
       }
       share_link_og_image: { Args: { _token: string }; Returns: string }
     }

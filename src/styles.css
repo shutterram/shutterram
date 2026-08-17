@@ -364,3 +364,47 @@ html {
 .text-flip * {
   color: var(--background) !important;
 }
+
+/* Studio-controlled drop shadow for text that sits on top of a photo.
+   Switched on per text area, separately for dark and light mode. */
+.dark .text-shade-dark,
+.dark .text-shade-dark *,
+.light .text-shade-light,
+.light .text-shade-light * {
+  text-shadow:
+    0 1px 2px color-mix(in oklab, var(--background) 85%, transparent),
+    0 2px 12px color-mix(in oklab, var(--background) 65%, transparent);
+}
+
+/* Studio-controlled wide glow behind text that overlays a photo.
+   Colour, intensity and spread are set per image (dark / light separately). */
+.text-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.text-glow::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--tg-spread, 140px) * -0.55);
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--tg-color, #000) calc(var(--tg-alpha, 0) * 1%), transparent) 0%,
+    color-mix(in oklab, var(--tg-color, #000) calc(var(--tg-alpha, 0) * 0.45%), transparent) 55%,
+    transparent 100%
+  );
+  filter: blur(calc(var(--tg-spread, 140px) / 3));
+}
+
+.dark .text-glow {
+  --tg-color: var(--tg-color-dark, #000);
+  --tg-alpha: var(--tg-alpha-dark, 0);
+}
+
+.light .text-glow {
+  --tg-color: var(--tg-color-light, #fff);
+  --tg-alpha: var(--tg-alpha-light, 0);
+}

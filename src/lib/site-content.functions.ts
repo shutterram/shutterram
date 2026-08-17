@@ -22,6 +22,8 @@ export interface SiteContentPayload {
   type_tokens: Row[];
   custom_fonts: Row[];
   text_inverts: Row[];
+  /** Per-image drop-shadow switches, keyed by served image path. */
+  image_shadows: Row[];
   /** Set when the visitor opened a share link that reveals private photos. */
   share: { scope: string; category_slug: string } | null;
 }
@@ -43,6 +45,7 @@ const EMPTY: SiteContentPayload = {
   type_tokens: [],
   custom_fonts: [],
   text_inverts: [],
+  image_shadows: [],
   share: null,
 };
 
@@ -104,6 +107,7 @@ export const getSiteContent = createServerFn({ method: "GET" })
         custom_fonts,
         text_inverts,
         privateRows,
+        shadowRows,
       ] = await Promise.all([
         supabase
           .from("settings" as never)
@@ -136,7 +140,7 @@ export const getSiteContent = createServerFn({ method: "GET" })
         table("custom_fonts"),
         supabase
           .from("text_inverts" as never)
-          .select("key,inverted")
+          .select("key,inverted,shadow_dark,shadow_light")
           .then((r) => (r.data ?? []) as unknown as Row[]),
         // Private paths are readable only by the trusted server client: the
         // public policy hides private rows so they can't be enumerated by anon.
@@ -145,6 +149,14 @@ export const getSiteContent = createServerFn({ method: "GET" })
             .from("image_settings" as never)
             .select("path")
             .eq("is_private", true)
+            .then((r) => (r.data ?? []) as unknown as Row[]),
+        ),
+        // Shadow switches are cosmetic, but live on the same admin-only table.
+        import("@/integrations/supabase/client.server").then(({ supabaseAdmin }) =>
+          supabaseAdmin
+            .from("image_settings" as never)
+            .select("path,shadow_dark,shadow_light,glow_color_dark,glow_color_light,glow_strength_dark,glow_strength_light,glow_spread")
+            .or("shadow_dark.eq.true,shadow_light.eq.true")
             .then((r) => (r.data ?? []) as unknown as Row[]),
         ),
       ]);
@@ -200,6 +212,7 @@ export const getSiteContent = createServerFn({ method: "GET" })
         type_tokens,
         custom_fonts,
         text_inverts,
+        image_shadows: shadowRows as unknown as Row[],
         share: share ? { scope: share.scope, category_slug: share.category_slug } : null,
       };
     } catch (error) {

@@ -15,6 +15,10 @@ import { TypographyStudio } from "@/components/admin/TypographyStudio";
 import { VisibilityAudit } from "@/components/admin/VisibilityAudit";
 import { GridDefaultsStudio } from "@/components/admin/GridDefaultsStudio";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
+import { TemplatesStudio } from "@/components/admin/TemplatesStudio";
+import { HistoryPanel } from "@/components/admin/HistoryPanel";
+import { StorageCleanup } from "@/components/admin/StorageCleanup";
+import { TemplateBar } from "@/components/admin/TemplateBar";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -397,6 +401,30 @@ const SECTIONS = [
     ] satisfies FieldSpec[],
   },
   {
+    id: "templates",
+    panel: "backup",
+    label: "Templates",
+    kind: "templates" as const,
+    table: "site_versions",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "history",
+    panel: "backup",
+    label: "History",
+    kind: "history" as const,
+    table: "site_versions",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
+    id: "storage",
+    panel: "backup",
+    label: "Storage cleanup",
+    kind: "storage" as const,
+    table: "photos",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
     id: "audit",
     panel: "stats",
     label: "Image visibility",
@@ -414,13 +442,60 @@ const PANELS = [
   { id: "reviews", label: "Review Management", hint: "Client reviews and testimonials" },
   { id: "seo", label: "SEO", hint: "Titles, descriptions and social previews" },
   { id: "stats", label: "Statistics", hint: "Traffic, visitors and image visibility" },
+  {
+    id: "backup",
+    label: "Templates & History",
+    hint: "Templates, version history and storage cleanup",
+  },
   { id: "forms", label: "Forms", hint: "Where enquiries are delivered" },
 ] as const;
+
+/** Remember which panel/section you were on, so a reload lands back there. */
+function readPosition(): { panel: string; section: string } | null {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash.replace(/^#/, "");
+  const [panel, section] = hash.split("/");
+  const found = SECTIONS.find((s) => s.panel === panel && s.id === section);
+  if (found) return { panel: found.panel, section: found.id };
+  try {
+    const saved = window.localStorage.getItem("studio:position");
+    if (saved) {
+      const parsed = JSON.parse(saved) as { panel?: string; section?: string };
+      const hit = SECTIONS.find((s) => s.panel === parsed.panel && s.id === parsed.section);
+      if (hit) return { panel: hit.panel, section: hit.id };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 function AdminPage() {
   const [panel, setPanel] = useState<string>("content");
   const [active, setActive] = useState(SECTIONS[0]!.id);
+  const [positionReady, setPositionReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const pos = readPosition();
+    if (pos) {
+      setPanel(pos.panel);
+      setActive(pos.section);
+    }
+    setPositionReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!positionReady || typeof window === "undefined") return;
+    const value = `${panel}/${active}`;
+    window.history.replaceState(null, "", `${window.location.pathname}#${value}`);
+    try {
+      window.localStorage.setItem("studio:position", JSON.stringify({ panel, section: active }));
+    } catch {
+      /* ignore */
+    }
+  }, [panel, active, positionReady]);
+
   const navigate = useNavigate();
   const router = useRouter();
 
@@ -535,8 +610,23 @@ function AdminPage() {
             ))}
           </nav>
 
+          {panel !== "backup" ? (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border border-hairline p-4">
+              <TemplateBar scope={`panel:${panel}`} label="This panel" />
+              <TemplateBar scope={`section:${section.id}`} label="This section" />
+            </div>
+          ) : null}
+
+
+
       <div className="mt-12">
-        {section.kind === "grids" ? (
+        {section.kind === "storage" ? (
+          <StorageCleanup />
+        ) : section.kind === "templates" ? (
+          <TemplatesStudio />
+        ) : section.kind === "history" ? (
+          <HistoryPanel />
+        ) : section.kind === "grids" ? (
           <GridDefaultsStudio />
         ) : section.kind === "analytics" ? (
           <AnalyticsDashboard />
