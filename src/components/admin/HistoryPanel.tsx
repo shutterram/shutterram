@@ -8,6 +8,7 @@ import {
   deleteVersion,
   downloadVersion,
   getChanges,
+  gotoChange,
   getVersions,
   restoreVersion,
 } from "@/lib/templates.functions";
@@ -44,18 +45,21 @@ export function HistoryPanel() {
   const rollTo = useServerFn(restoreVersion);
   const removeVersion = useServerFn(deleteVersion);
   const grabVersion = useServerFn(downloadVersion);
+  const jumpTo = useServerFn(gotoChange);
   const router = useRouter();
 
   const [versions, setVersions] = useState<SiteVersion[] | null>(null);
   const [changes, setChanges] = useState<ChangeEntry[] | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState<string>("");
 
   const load = useCallback(async () => {
     try {
-      const [v, c] = await Promise.all([fetchVersions({}), fetchChanges({ data: { limit: 120 } })]);
+      const [v, c] = await Promise.all([fetchVersions({}), fetchChanges({ data: { limit: 200 } })]);
       setVersions(v);
-      setChanges(c);
+      setChanges(c.changes);
+      setCursor(c.cursor ?? c.changes[0]?.id ?? null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load history");
       setVersions([]);
@@ -207,22 +211,63 @@ export function HistoryPanel() {
 
       <section>
         <p className="eyebrow">Change log</p>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Every individual edit, in order. Pick any entry to move the site to exactly that point —
+          backwards or forwards. The same list is always available in the floating history rail on
+          the right (Ctrl+Z to step back, Ctrl+X to step forward).
+        </p>
         {changes.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">Nothing has changed yet.</p>
         ) : (
           <ul className="mt-4 divide-y divide-hairline border-y border-hairline">
-            {changes.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3 text-sm">
-                <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
-                  {when(c.createdAt)}
-                </span>
-                <span>{OP_LABEL[c.op] ?? c.op}</span>
-                <span className="text-muted-foreground">
-                  {TABLE_LABELS[c.table] ?? c.table}
-                  {c.title ? ` — ${c.title}` : ""}
-                </span>
-              </li>
-            ))}
+            {changes.map((c) => {
+              const here = c.id === cursor;
+              return (
+                <li
+                  key={c.id}
+                  className={
+                    "flex flex-wrap items-center justify-between gap-3 py-3 text-sm " +
+                    (here ? "bg-foreground/5" : "")
+                  }
+                >
+                  <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+                      {when(c.createdAt)}
+                    </span>
+                    <span>{OP_LABEL[c.op] ?? c.op}</span>
+                    <span className="text-muted-foreground">
+                      {TABLE_LABELS[c.table] ?? c.table}
+                      {c.title ? ` — ${c.title}` : ""}
+                    </span>
+                  </span>
+                  {here ? (
+                    <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+                      You are here
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy !== ""}
+                      onClick={() =>
+                        void run(
+                          `c-${c.id}`,
+                          () => jumpTo({ data: { id: c.id } }),
+                          "Site moved to that point",
+                        )
+                      }
+                      className="inline-flex items-center gap-2 border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground disabled:opacity-50"
+                    >
+                      {busy === `c-${c.id}` ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <RotateCcw className="size-3" />
+                      )}
+                      Move here
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

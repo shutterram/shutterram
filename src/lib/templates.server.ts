@@ -137,6 +137,23 @@ export async function versionData(id: string) {
   };
 }
 
+/** Which logged change the site is currently sitting at. */
+export async function timelineCursor(): Promise<string | null> {
+  const db = await admin();
+  const { data, error } = await db.rpc("timeline_state" as never, {} as never);
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  const id = (row as { change_id?: string | null } | null)?.change_id;
+  return id ? String(id) : null;
+}
+
+/** Move the site to the state it was in right after a specific logged change. */
+export async function timelineGoto(changeId: string) {
+  const db = await admin();
+  const { error } = await db.rpc("timeline_goto" as never, { _change_id: changeId } as never);
+  if (error) throw new Error(error.message);
+}
+
 const TITLE_KEYS = ["label", "title", "name", "caption", "key", "path", "slug"];
 
 export async function listChanges(limit: number): Promise<ChangeEntry[]> {

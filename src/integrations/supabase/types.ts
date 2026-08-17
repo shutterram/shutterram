@@ -107,6 +107,27 @@ export type Database = {
         }
         Relationships: []
       }
+      content_cursor: {
+        Row: {
+          change_at: string | null
+          change_id: string | null
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          change_at?: string | null
+          change_id?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          change_at?: string | null
+          change_id?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_fonts: {
         Row: {
           css_url: string
@@ -1084,8 +1105,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_row: { Args: { _row: Json; _table: string }; Returns: undefined }
       content_snapshot: { Args: { _tables?: string[] }; Returns: Json }
       content_tables: { Args: never; Returns: string[] }
+      delete_row: { Args: { _row: Json; _table: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1093,6 +1116,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      pk_where_clause: { Args: { _table: string }; Returns: string }
       record_view_duration: {
         Args: { _id: string; _seconds: number }
         Returns: undefined
@@ -1110,6 +1134,14 @@ export type Database = {
         Returns: undefined
       }
       share_link_og_image: { Args: { _token: string }; Returns: string }
+      timeline_goto: { Args: { _change_id: string }; Returns: undefined }
+      timeline_state: {
+        Args: never
+        Returns: {
+          change_at: string
+          change_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin"

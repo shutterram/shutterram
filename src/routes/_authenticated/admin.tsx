@@ -17,6 +17,7 @@ import { GridDefaultsStudio } from "@/components/admin/GridDefaultsStudio";
 import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { TemplatesStudio } from "@/components/admin/TemplatesStudio";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
+import { HistoryDock } from "@/components/admin/HistoryDock";
 import { StorageCleanup } from "@/components/admin/StorageCleanup";
 import { TemplateBar } from "@/components/admin/TemplateBar";
 
@@ -682,6 +683,9 @@ function AdminPage() {
         Changes are saved straight to your site. Use “Refresh site” (or reload a page) to see them
         live.
       </p>
+
+      <HistoryDock />
     </div>
+
   );
 }

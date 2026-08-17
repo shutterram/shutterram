@@ -8,6 +8,8 @@ import {
   saveVersion,
   snapshot,
   tablesForScope,
+  timelineCursor,
+  timelineGoto,
   versionData,
   type ChangeEntry,
   type SiteVersion,
@@ -97,9 +99,20 @@ export const getChanges = createServerFn({ method: "GET" })
   .inputValidator((input: { limit?: number } | undefined) => ({
     limit: Math.min(Math.max(Number(input?.limit ?? 100), 1), 300),
   }))
-  .handler(async ({ data, context }): Promise<ChangeEntry[]> => {
+  .handler(async ({ data, context }): Promise<{ changes: ChangeEntry[]; cursor: string | null }> => {
     await assertAdmin(context);
-    return listChanges(data.limit);
+    const [changes, cursor] = await Promise.all([listChanges(data.limit), timelineCursor()]);
+    return { changes, cursor };
+  });
+
+/** Jump the site to the state right after one logged change (undo or redo a step). */
+export const gotoChange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => ({ id: String(input.id) }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    await timelineGoto(data.id);
+    return { ok: true };
   });
 
 /** Roll the site back (or forward) to a saved version. */
