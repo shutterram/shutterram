@@ -1,0 +1,1 @@
+ALTER TABLE public.crm_contract_fields ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'client';

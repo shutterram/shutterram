@@ -14,7 +14,7 @@ const navLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-hairline bg-surface/30">
+    <footer className="relative z-0 isolate border-t border-hairline bg-surface/30">
       <div className="mx-auto max-w-7xl px-6 pb-20 pt-12">
         <div className="grid gap-14 text-center md:grid-cols-12 md:text-left">
           <div className="md:col-span-12 lg:col-span-5">

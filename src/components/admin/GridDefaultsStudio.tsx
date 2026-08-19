@@ -29,6 +29,7 @@ const keyOf = (page: Page, device: Device) => `grid_${page}_${device}`;
  */
 export function GridDefaultsStudio() {
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
+  const [crm, setCrm] = useState<Record<string, unknown> | null>(null);
   const [device, setDevice] = useState<Device>("desktop");
   const [saving, setSaving] = useState(false);
 
@@ -42,6 +43,12 @@ export function GridDefaultsStudio() {
         if (error) toast.error(error.message);
         setRow((data ?? {}) as Record<string, unknown>);
       });
+    void supabase
+      .from("crm_settings" as never)
+      .select("*")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setCrm((data ?? {}) as Record<string, unknown>));
   }, []);
 
   if (!row) {
@@ -67,6 +74,19 @@ export function GridDefaultsStudio() {
         patch[k] = typeof row[k] === "string" ? row[k] : "2";
       }
     patch["show_view_label"] = row["show_view_label"] !== false;
+
+    if (crm) {
+      const crmPatch: Record<string, unknown> = {};
+      for (const d of DEVICES) {
+        const k = `gallery_grid_${d.id}`;
+        crmPatch[k] = typeof crm[k] === "string" ? crm[k] : "2";
+      }
+      const { error: crmError } = await supabase
+        .from("crm_settings" as never)
+        .update(crmPatch as never)
+        .eq("id", true);
+      if (crmError) toast.error(crmError.message);
+    }
 
     const { error } = await supabase
       .from("settings" as never)
@@ -144,6 +164,37 @@ export function GridDefaultsStudio() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="border border-hairline p-6">
+        <p className="eyebrow">Client galleries — /g links</p>
+        <p className="mt-2 max-w-xl text-xs text-muted-foreground">
+          How many columns your client galleries and photo-selection links open with on{" "}
+          {DEVICES.find((d) => d.id === device)?.label.toLowerCase()}. Clients can still switch.
+        </p>
+        <div className="mt-5 flex max-w-xs gap-2">
+          {COLUMNS.map((c) => {
+            const key = `gallery_grid_${device}`;
+            const cur = crm && typeof crm[key] === "string" && ["1", "2", "3"].includes(crm[key] as string)
+              ? (crm[key] as string)
+              : "2";
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCrm({ ...(crm ?? {}), [key]: c })}
+                className={
+                  "flex-1 border py-3 text-xs transition-colors " +
+                  (cur === c
+                    ? "border-foreground text-foreground"
+                    : "border-hairline text-muted-foreground hover:border-foreground")
+                }
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <button

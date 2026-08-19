@@ -20,9 +20,14 @@ import { Route as ReviewRouteImport } from './routes/review'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
+import { Route as GTokenRouteImport } from './routes/g.$token'
 import { Route as GalleryIndexRouteImport } from './routes/gallery.index'
 import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
+import { Route as SignTokenRouteImport } from './routes/sign.$token'
+import { Route as ApiPublicGoogleCallbackRouteImport } from './routes/api/public/google/callback'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img.$'
+import { Route as ApiPublicCrmImgSplatRouteImport } from './routes/api/public/crm/img.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +83,16 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const GTokenRoute = GTokenRouteImport.update({
+  id: '/g/$token',
+  path: '/g/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GalleryIndexRoute = GalleryIndexRouteImport.update({
   id: '/gallery/',
   path: '/gallery/',
@@ -88,9 +103,24 @@ const GalleryCategoryRoute = GalleryCategoryRouteImport.update({
   path: '/gallery/$category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignTokenRoute = SignTokenRouteImport.update({
+  id: '/sign/$token',
+  path: '/sign/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGoogleCallbackRoute = ApiPublicGoogleCallbackRouteImport.update({
+  id: '/api/public/google/callback',
+  path: '/api/public/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicImgSplatRoute = ApiPublicImgSplatRouteImport.update({
   id: '/api/public/img/$',
   path: '/api/public/img/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCrmImgSplatRoute = ApiPublicCrmImgSplatRouteImport.update({
+  id: '/api/public/crm/img/$',
+  path: '/api/public/crm/img/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -105,9 +135,14 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/crm': typeof AuthenticatedCrmRoute
+  '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/sign/$token': typeof SignTokenRoute
   '/gallery/': typeof GalleryIndexRoute
+  '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -120,9 +155,14 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/crm': typeof AuthenticatedCrmRoute
+  '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/sign/$token': typeof SignTokenRoute
   '/gallery': typeof GalleryIndexRoute
+  '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -137,9 +177,14 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRoute
+  '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/sign/$token': typeof SignTokenRoute
   '/gallery/': typeof GalleryIndexRoute
+  '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,9 +199,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/admin'
+    | '/crm'
+    | '/g/$token'
     | '/gallery/$category'
+    | '/sign/$token'
     | '/gallery/'
+    | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/img/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -169,9 +219,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/admin'
+    | '/crm'
+    | '/g/$token'
     | '/gallery/$category'
+    | '/sign/$token'
     | '/gallery'
+    | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/img/$'
   id:
     | '__root__'
     | '/'
@@ -185,9 +240,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/_authenticated/crm'
+    | '/g/$token'
     | '/gallery/$category'
+    | '/sign/$token'
     | '/gallery/'
+    | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/img/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -201,9 +261,13 @@ export interface RootRouteChildren {
   ReviewRoute: typeof ReviewRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  GTokenRoute: typeof GTokenRoute
   GalleryCategoryRoute: typeof GalleryCategoryRoute
+  SignTokenRoute: typeof SignTokenRoute
   GalleryIndexRoute: typeof GalleryIndexRoute
+  ApiPublicGoogleCallbackRoute: typeof ApiPublicGoogleCallbackRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
+  ApiPublicCrmImgSplatRoute: typeof ApiPublicCrmImgSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,6 +349,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/g/$token': {
+      id: '/g/$token'
+      path: '/g/$token'
+      fullPath: '/g/$token'
+      preLoaderRoute: typeof GTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gallery/': {
       id: '/gallery/'
       path: '/gallery'
@@ -299,6 +377,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalleryCategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign/$token': {
+      id: '/sign/$token'
+      path: '/sign/$token'
+      fullPath: '/sign/$token'
+      preLoaderRoute: typeof SignTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/google/callback': {
+      id: '/api/public/google/callback'
+      path: '/api/public/google/callback'
+      fullPath: '/api/public/google/callback'
+      preLoaderRoute: typeof ApiPublicGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/img/$': {
       id: '/api/public/img/$'
       path: '/api/public/img/$'
@@ -306,15 +398,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicImgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/crm/img/$': {
+      id: '/api/public/crm/img/$'
+      path: '/api/public/crm/img/$'
+      fullPath: '/api/public/crm/img/$'
+      preLoaderRoute: typeof ApiPublicCrmImgSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -331,9 +432,13 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewRoute: ReviewRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  GTokenRoute: GTokenRoute,
   GalleryCategoryRoute: GalleryCategoryRoute,
+  SignTokenRoute: SignTokenRoute,
   GalleryIndexRoute: GalleryIndexRoute,
+  ApiPublicGoogleCallbackRoute: ApiPublicGoogleCallbackRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
+  ApiPublicCrmImgSplatRoute: ApiPublicCrmImgSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

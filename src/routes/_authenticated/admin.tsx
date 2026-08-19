@@ -541,6 +541,12 @@ function AdminPage() {
             Refresh site
           </button>
           <Link
+            to="/crm"
+            className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+          >
+            Studio CRM
+          </Link>
+          <Link
             to="/"
             className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
           >
