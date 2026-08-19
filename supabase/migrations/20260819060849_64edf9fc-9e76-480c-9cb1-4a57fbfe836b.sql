@@ -1,0 +1,2 @@
+ALTER TABLE public.crm_settings ADD COLUMN IF NOT EXISTS contract_timezone text NOT NULL DEFAULT 'America/New_York';
+ALTER TABLE public.crm_contracts ADD COLUMN IF NOT EXISTS timezone text NOT NULL DEFAULT '';

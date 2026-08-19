@@ -223,8 +223,11 @@ function RootComponent() {
   }, [pathname]);
 
   // The private studio pages render without the public site chrome.
+  // The private studio pages render without the public site chrome. Client-facing
+  // pages (/sign, /g) keep the full site header and footer.
   const isStudio =
     pathname.startsWith("/admin") ||
+    pathname.startsWith("/crm") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/reset-password");
 
@@ -236,7 +239,7 @@ function RootComponent() {
       {paletteCss ? <style dangerouslySetInnerHTML={{ __html: paletteCss }} /> : null}
       {typeCss ? <style dangerouslySetInnerHTML={{ __html: typeCss }} /> : null}
       {isStudio ? null : <SiteHeader />}
-      <main key={pathname} className="page-in min-h-screen">
+      <main key={pathname} className="page-in relative z-0 isolate min-h-screen">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>

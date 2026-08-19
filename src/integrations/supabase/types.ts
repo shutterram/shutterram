@@ -128,6 +128,826 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_activity: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          kind: string
+          message: string
+          meta: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          kind?: string
+          message?: string
+          meta?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          kind?: string
+          message?: string
+          meta?: Json
+        }
+        Relationships: []
+      }
+      crm_bookings: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          lead_id: string | null
+          location: string
+          notes: string
+          package: string
+          starts_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          lead_id?: string | null
+          location?: string
+          notes?: string
+          package?: string
+          starts_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          lead_id?: string | null
+          location?: string
+          notes?: string
+          package?: string
+          starts_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_bookings_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_bookings_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contacts: {
+        Row: {
+          address: string
+          archived: boolean
+          company: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string
+          phone: string
+          source: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          archived?: boolean
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string
+          phone?: string
+          source?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          archived?: boolean
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string
+          phone?: string
+          source?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_contract_fields: {
+        Row: {
+          bold: boolean
+          contract_id: string
+          created_at: string
+          font_size: number
+          h: number
+          id: string
+          kind: string
+          label: string
+          page: number
+          placeholder: string
+          required: boolean
+          role: string
+          sort_order: number
+          updated_at: string
+          value: string
+          w: number
+          x: number
+          y: number
+        }
+        Insert: {
+          bold?: boolean
+          contract_id: string
+          created_at?: string
+          font_size?: number
+          h?: number
+          id?: string
+          kind?: string
+          label?: string
+          page?: number
+          placeholder?: string
+          required?: boolean
+          role?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
+          w?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          bold?: boolean
+          contract_id?: string
+          created_at?: string
+          font_size?: number
+          h?: number
+          id?: string
+          kind?: string
+          label?: string
+          page?: number
+          placeholder?: string
+          required?: boolean
+          role?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
+          w?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contract_fields_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_contracts: {
+        Row: {
+          access_code: string
+          booking_id: string | null
+          contact_id: string | null
+          created_at: string
+          drive_file_id: string
+          drive_link: string
+          expires_at: string | null
+          file_path: string
+          id: string
+          message: string
+          opened_at: string | null
+          page_count: number
+          password_hash: string
+          signed_at: string | null
+          signed_ip: string
+          signed_path: string
+          signed_user_agent: string
+          signer_email: string
+          signer_name: string
+          signer_phone: string
+          status: string
+          timezone: string
+          title: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          access_code?: string
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          drive_file_id?: string
+          drive_link?: string
+          expires_at?: string | null
+          file_path?: string
+          id?: string
+          message?: string
+          opened_at?: string | null
+          page_count?: number
+          password_hash?: string
+          signed_at?: string | null
+          signed_ip?: string
+          signed_path?: string
+          signed_user_agent?: string
+          signer_email?: string
+          signer_name?: string
+          signer_phone?: string
+          status?: string
+          timezone?: string
+          title?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          access_code?: string
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          drive_file_id?: string
+          drive_link?: string
+          expires_at?: string | null
+          file_path?: string
+          id?: string
+          message?: string
+          opened_at?: string | null
+          page_count?: number
+          password_hash?: string
+          signed_at?: string | null
+          signed_ip?: string
+          signed_path?: string
+          signed_user_agent?: string
+          signer_email?: string
+          signer_name?: string
+          signer_phone?: string
+          status?: string
+          timezone?: string
+          title?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contracts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_galleries: {
+        Row: {
+          access_code: string
+          allow_client_password: boolean
+          allow_download: boolean
+          booking_id: string | null
+          client_password_hash: string
+          contact_id: string | null
+          cover_url: string
+          created_at: string
+          drive_folder_id: string
+          expires_at: string | null
+          id: string
+          kind: string
+          last_opened_at: string | null
+          max_picks: number
+          message: string
+          password_hash: string
+          status: string
+          submitted_at: string | null
+          title: string
+          token: string
+          updated_at: string
+          watermark: boolean
+        }
+        Insert: {
+          access_code?: string
+          allow_client_password?: boolean
+          allow_download?: boolean
+          booking_id?: string | null
+          client_password_hash?: string
+          contact_id?: string | null
+          cover_url?: string
+          created_at?: string
+          drive_folder_id?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          last_opened_at?: string | null
+          max_picks?: number
+          message?: string
+          password_hash?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          token: string
+          updated_at?: string
+          watermark?: boolean
+        }
+        Update: {
+          access_code?: string
+          allow_client_password?: boolean
+          allow_download?: boolean
+          booking_id?: string | null
+          client_password_hash?: string
+          contact_id?: string | null
+          cover_url?: string
+          created_at?: string
+          drive_folder_id?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          last_opened_at?: string | null
+          max_picks?: number
+          message?: string
+          password_hash?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          token?: string
+          updated_at?: string
+          watermark?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_galleries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_galleries_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_gallery_images: {
+        Row: {
+          bytes: number
+          created_at: string
+          drive_file_id: string
+          gallery_id: string
+          height: number
+          id: string
+          name: string
+          preview_path: string
+          sort_order: number
+          thumb_path: string
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          bytes?: number
+          created_at?: string
+          drive_file_id?: string
+          gallery_id: string
+          height?: number
+          id?: string
+          name?: string
+          preview_path?: string
+          sort_order?: number
+          thumb_path?: string
+          updated_at?: string
+          width?: number
+        }
+        Update: {
+          bytes?: number
+          created_at?: string
+          drive_file_id?: string
+          gallery_id?: string
+          height?: number
+          id?: string
+          name?: string
+          preview_path?: string
+          sort_order?: number
+          thumb_path?: string
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_gallery_images_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "crm_galleries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_gallery_picks: {
+        Row: {
+          comment: string
+          created_at: string
+          gallery_id: string
+          id: string
+          image_id: string
+          label: string
+          picked: boolean
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          comment?: string
+          created_at?: string
+          gallery_id: string
+          id?: string
+          image_id: string
+          label?: string
+          picked?: boolean
+          rating?: number
+          updated_at?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          image_id?: string
+          label?: string
+          picked?: boolean
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_gallery_picks_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "crm_galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_gallery_picks_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "crm_gallery_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_google_account: {
+        Row: {
+          access_token: string
+          connected_at: string | null
+          connected_by: string | null
+          email: string
+          expires_at: string | null
+          id: boolean
+          refresh_token: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string
+          connected_at?: string | null
+          connected_by?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: boolean
+          refresh_token?: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string | null
+          connected_by?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: boolean
+          refresh_token?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_invoices: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          contact_id: string | null
+          created_at: string
+          currency: string
+          due_on: string | null
+          id: string
+          issued_on: string | null
+          line_items: Json
+          notes: string
+          number: string
+          paid_on: string | null
+          status: string
+          tax: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          due_on?: string | null
+          id?: string
+          issued_on?: string | null
+          line_items?: Json
+          notes?: string
+          number?: string
+          paid_on?: string | null
+          status?: string
+          tax?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          due_on?: string | null
+          id?: string
+          issued_on?: string | null
+          line_items?: Json
+          notes?: string
+          number?: string
+          paid_on?: string | null
+          status?: string
+          tax?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_invoices_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          currency: string
+          expected_date: string | null
+          id: string
+          notes: string
+          sort_order: number
+          source: string
+          stage: string
+          title: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          expected_date?: string | null
+          id?: string
+          notes?: string
+          sort_order?: number
+          source?: string
+          stage?: string
+          title?: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          expected_date?: string | null
+          id?: string
+          notes?: string
+          sort_order?: number
+          source?: string
+          stage?: string
+          title?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_settings: {
+        Row: {
+          contract_date_font_size: number
+          contract_field_font_size: number
+          contract_footer_note: string
+          contract_timezone: string
+          cull_allow_comments: boolean
+          cull_allow_labels: boolean
+          cull_allow_rating: boolean
+          currency: string
+          drive_contracts_folder_id: string
+          drive_final_parent_folder_id: string
+          drive_raw_parent_folder_id: string
+          gallery_accent: string
+          gallery_grid_desktop: string
+          gallery_grid_mobile: string
+          gallery_grid_tablet: string
+          gallery_show_filenames: boolean
+          gallery_welcome: string
+          id: boolean
+          invoice_next_number: number
+          invoice_prefix: string
+          lead_sources: string[]
+          pipeline_stages: string[]
+          preview_max_px: number
+          preview_quality: number
+          thumb_max_px: number
+          updated_at: string
+          watermark_opacity: number
+          watermark_size: number
+          watermark_text: string
+        }
+        Insert: {
+          contract_date_font_size?: number
+          contract_field_font_size?: number
+          contract_footer_note?: string
+          contract_timezone?: string
+          cull_allow_comments?: boolean
+          cull_allow_labels?: boolean
+          cull_allow_rating?: boolean
+          currency?: string
+          drive_contracts_folder_id?: string
+          drive_final_parent_folder_id?: string
+          drive_raw_parent_folder_id?: string
+          gallery_accent?: string
+          gallery_grid_desktop?: string
+          gallery_grid_mobile?: string
+          gallery_grid_tablet?: string
+          gallery_show_filenames?: boolean
+          gallery_welcome?: string
+          id?: boolean
+          invoice_next_number?: number
+          invoice_prefix?: string
+          lead_sources?: string[]
+          pipeline_stages?: string[]
+          preview_max_px?: number
+          preview_quality?: number
+          thumb_max_px?: number
+          updated_at?: string
+          watermark_opacity?: number
+          watermark_size?: number
+          watermark_text?: string
+        }
+        Update: {
+          contract_date_font_size?: number
+          contract_field_font_size?: number
+          contract_footer_note?: string
+          contract_timezone?: string
+          cull_allow_comments?: boolean
+          cull_allow_labels?: boolean
+          cull_allow_rating?: boolean
+          currency?: string
+          drive_contracts_folder_id?: string
+          drive_final_parent_folder_id?: string
+          drive_raw_parent_folder_id?: string
+          gallery_accent?: string
+          gallery_grid_desktop?: string
+          gallery_grid_mobile?: string
+          gallery_grid_tablet?: string
+          gallery_show_filenames?: boolean
+          gallery_welcome?: string
+          id?: boolean
+          invoice_next_number?: number
+          invoice_prefix?: string
+          lead_sources?: string[]
+          pipeline_stages?: string[]
+          preview_max_px?: number
+          preview_quality?: number
+          thumb_max_px?: number
+          updated_at?: string
+          watermark_opacity?: number
+          watermark_size?: number
+          watermark_text?: string
+        }
+        Relationships: []
+      }
+      crm_tasks: {
+        Row: {
+          booking_id: string | null
+          contact_id: string | null
+          created_at: string
+          detail: string
+          done: boolean
+          due_at: string | null
+          id: string
+          lead_id: string | null
+          priority: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          detail?: string
+          done?: boolean
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          detail?: string
+          done?: boolean
+          due_at?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_fonts: {
         Row: {
           css_url: string
