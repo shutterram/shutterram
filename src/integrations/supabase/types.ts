@@ -445,6 +445,9 @@ export type Database = {
           client_password_hash: string
           compression: string
           contact_id: string | null
+          cover_image_id: string | null
+          cover_mode: string
+          cover_path: string
           cover_url: string
           created_at: string
           default_sort: string
@@ -467,6 +470,7 @@ export type Database = {
           preview_max_bytes: number
           preview_max_px: number
           raw_folder_id: string
+          show_message: boolean
           source: string
           status: string
           submitted_at: string | null
@@ -483,6 +487,9 @@ export type Database = {
           client_password_hash?: string
           compression?: string
           contact_id?: string | null
+          cover_image_id?: string | null
+          cover_mode?: string
+          cover_path?: string
           cover_url?: string
           created_at?: string
           default_sort?: string
@@ -505,6 +512,7 @@ export type Database = {
           preview_max_bytes?: number
           preview_max_px?: number
           raw_folder_id?: string
+          show_message?: boolean
           source?: string
           status?: string
           submitted_at?: string | null
@@ -521,6 +529,9 @@ export type Database = {
           client_password_hash?: string
           compression?: string
           contact_id?: string | null
+          cover_image_id?: string | null
+          cover_mode?: string
+          cover_path?: string
           cover_url?: string
           created_at?: string
           default_sort?: string
@@ -543,6 +554,7 @@ export type Database = {
           preview_max_bytes?: number
           preview_max_px?: number
           raw_folder_id?: string
+          show_message?: boolean
           source?: string
           status?: string
           submitted_at?: string | null
@@ -564,6 +576,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_galleries_cover_image_id_fkey"
+            columns: ["cover_image_id"]
+            isOneToOne: false
+            referencedRelation: "crm_gallery_images"
             referencedColumns: ["id"]
           },
           {
@@ -848,6 +867,47 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_preview_jobs: {
+        Row: {
+          done: number
+          failed: number
+          gallery_id: string
+          message: string
+          started_at: string
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          done?: number
+          failed?: number
+          gallery_id: string
+          message?: string
+          started_at?: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          done?: number
+          failed?: number
+          gallery_id?: string
+          message?: string
+          started_at?: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_preview_jobs_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: true
+            referencedRelation: "crm_galleries"
             referencedColumns: ["id"]
           },
         ]

@@ -37,6 +37,11 @@ export interface GallerySummary {
   preview_max_bytes: number;
   default_sort: string;
   cover_url: string;
+  cover_mode: string;
+  cover_image_id: string | null;
+  cover_path: string;
+  message: string;
+  show_message: boolean;
 }
 
 export const galleryMeta = createServerFn({ method: "GET" })
@@ -103,6 +108,11 @@ export const listGalleries = createServerFn({ method: "POST" })
       preview_max_bytes: Number(g["preview_max_bytes"] ?? 10485760),
       default_sort: String(g["default_sort"] ?? "default"),
       cover_url: String(g["cover_url"] ?? ""),
+      cover_mode: String(g["cover_mode"] ?? "first"),
+      cover_image_id: (g["cover_image_id"] as string | null) ?? null,
+      cover_path: String(g["cover_path"] ?? ""),
+      message: String(g["message"] ?? ""),
+      show_message: Boolean(g["show_message"] ?? true),
     }));
   });
 
@@ -167,6 +177,10 @@ export const updateGallery = createServerFn({ method: "POST" })
       previewMaxBytes?: number;
       defaultSort?: string;
       coverUrl?: string;
+      coverMode?: string;
+      coverImageId?: string | null;
+      coverPath?: string;
+      showMessage?: boolean;
     }) => input,
   )
   .handler(async ({ data, context }) => {
@@ -221,6 +235,25 @@ export const updateGallery = createServerFn({ method: "POST" })
     )
       patch["default_sort"] = data.defaultSort;
     if (data.coverUrl !== undefined) patch["cover_url"] = data.coverUrl;
+    if (data.coverMode !== undefined && ["none", "first", "og", "pick", "upload"].includes(data.coverMode))
+      patch["cover_mode"] = data.coverMode;
+    if (data.coverPath !== undefined) patch["cover_path"] = data.coverPath;
+    if (data.showMessage !== undefined) patch["show_message"] = data.showMessage;
+    if (data.coverImageId !== undefined) {
+      // Same guard as the link-preview image: a Drive re-sync replaces rows,
+      // so never write an id that no longer belongs to this gallery.
+      if (data.coverImageId) {
+        const { data: chosen } = await supabaseAdmin
+          .from("crm_gallery_images")
+          .select("id")
+          .eq("id", data.coverImageId)
+          .eq("gallery_id", data.id)
+          .maybeSingle();
+        patch["cover_image_id"] = chosen?.id ?? null;
+      } else {
+        patch["cover_image_id"] = null;
+      }
+    }
     if (data.clearClientPassword) patch["client_password_hash"] = "";
     if (data.password !== undefined)
       patch["password_hash"] = data.password ? await hashPassword(data.password) : "";
@@ -270,16 +303,16 @@ export const galleryUploadTargets = createServerFn({ method: "POST" })
     };
   });
 
-/** Admin: upload slot for a gallery's standalone social preview image. */
+/** Admin: upload slot for a gallery's standalone social preview or cover image. */
 export const galleryOgUploadTarget = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { galleryId: string }) => input)
+  .inputValidator((input: { galleryId: string; kind?: "og" | "cover" }) => input)
   .handler(async ({ data, context }) => {
     const { assertCrmAdmin } = await import("./crm.server");
     await assertCrmAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { GALLERY_BUCKET } = await import("./gallery.server");
-    const path = `${data.galleryId}/og-${crypto.randomUUID()}.jpg`;
+    const path = `${data.galleryId}/${data.kind === "cover" ? "cover" : "og"}-${crypto.randomUUID()}.jpg`;
     const { data: signed, error } = await supabaseAdmin.storage
       .from(GALLERY_BUCKET)
       .createSignedUploadUrl(path);
@@ -692,4 +725,181 @@ export const unlockGalleryPicking = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { checkPickPin } = await import("./gallery.server");
     return checkPickPin(String(data.token).slice(0, 64), String(data.pin));
+  });
+
+/* ------------------------------------------------------------------ */
+/* Batched upload helpers — one round-trip for many photos instead of  */
+/* three per photo, which is what made 500-photo runs crawl.           */
+/* ------------------------------------------------------------------ */
+
+export interface ThumbSlot {
+  imageId: string;
+  thumb: { path: string; token: string };
+  preview: { path: string; token: string } | null;
+}
+
+/** Admin: signed upload slots for many thumbnails/previews at once. */
+export const thumbUploadSlots = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { galleryId: string; items: { imageId: string; withPreview: boolean }[] }) => input,
+  )
+  .handler(async ({ data, context }): Promise<{ bucket: string; slots: ThumbSlot[] }> => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { GALLERY_BUCKET } = await import("./gallery.server");
+    const slots = await Promise.all(
+      data.items.slice(0, 200).map(async (item) => {
+        const thumbPath = `${data.galleryId}/${crypto.randomUUID()}-thumb.jpg`;
+        const previewPath = `${data.galleryId}/${crypto.randomUUID()}-preview.jpg`;
+        const [thumb, preview] = await Promise.all([
+          supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(thumbPath),
+          item.withPreview
+            ? supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(previewPath)
+            : null,
+        ]);
+        if (thumb.error || !thumb.data) throw new Error(thumb.error?.message ?? "Upload failed");
+        return {
+          imageId: item.imageId,
+          thumb: { path: thumbPath, token: thumb.data.token },
+          preview:
+            preview && preview.data ? { path: previewPath, token: preview.data.token } : null,
+        } satisfies ThumbSlot;
+      }),
+    );
+    return { bucket: GALLERY_BUCKET, slots };
+  });
+
+/** Admin: attach many freshly built thumbnails/previews in one call. */
+export const attachImageThumbs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { items: { imageId: string; thumbPath: string; previewPath?: string }[] }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await Promise.all(
+      data.items.slice(0, 200).map((item) =>
+        supabaseAdmin
+          .from("crm_gallery_images")
+          .update({
+            thumb_path: item.thumbPath,
+            ...(item.previewPath ? { preview_path: item.previewPath } : {}),
+          } as never)
+          .eq("id", item.imageId),
+      ),
+    );
+    return { ok: true };
+  });
+
+/** Admin: signed upload slots for many new uploads at once. */
+export const galleryUploadTargetsBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string; names: string[] }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { GALLERY_BUCKET } = await import("./gallery.server");
+    const targets = await Promise.all(
+      data.names.slice(0, 200).map(async (name) => {
+        const stem = `${data.galleryId}/${crypto.randomUUID()}`;
+        const previewPath = `${stem}-preview.jpg`;
+        const thumbPath = `${stem}-thumb.jpg`;
+        const originalPath = `${stem}-original`;
+        const [preview, thumb, original] = await Promise.all([
+          supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(previewPath),
+          supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(thumbPath),
+          supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(originalPath),
+        ]);
+        if (preview.error || thumb.error || original.error)
+          throw new Error(
+            preview.error?.message ?? thumb.error?.message ?? original.error?.message ?? "Failed",
+          );
+        return {
+          name,
+          previewPath,
+          previewToken: preview.data!.token,
+          thumbPath,
+          thumbToken: thumb.data!.token,
+          originalPath,
+          originalToken: original.data!.token,
+        };
+      }),
+    );
+    return { bucket: GALLERY_BUCKET, targets };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Preview-rebuild progress, stored server side so the bar survives a  */
+/* logout and can be watched from any other device.                    */
+/* ------------------------------------------------------------------ */
+
+export interface PreviewJob {
+  status: "running" | "done" | "stalled" | "cancelled";
+  total: number;
+  done: number;
+  failed: number;
+  message: string;
+  updatedAt: string;
+}
+
+export const previewJobGet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string }) => input)
+  .handler(async ({ data, context }): Promise<PreviewJob | null> => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("crm_preview_jobs")
+      .select("status,total,done,failed,message,updated_at")
+      .eq("gallery_id", data.galleryId)
+      .maybeSingle();
+    if (!row) return null;
+    // A run only lives inside the browser tab that started it, so a job that
+    // stopped reporting for two minutes is treated as interrupted.
+    const stale = Date.now() - new Date(row.updated_at as string).getTime() > 120_000;
+    return {
+      status: row.status === "running" && stale ? "stalled" : (row.status as PreviewJob["status"]),
+      total: row.total as number,
+      done: row.done as number,
+      failed: row.failed as number,
+      message: (row.message as string) ?? "",
+      updatedAt: row.updated_at as string,
+    };
+  });
+
+export const previewJobSet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      galleryId: string;
+      status: "running" | "done" | "cancelled";
+      total: number;
+      done: number;
+      failed?: number;
+      message?: string;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("crm_preview_jobs").upsert(
+      {
+        gallery_id: data.galleryId,
+        status: data.status,
+        total: data.total,
+        done: data.done,
+        failed: data.failed ?? 0,
+        message: data.message ?? "",
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "gallery_id" },
+    );
+    return { ok: true };
   });

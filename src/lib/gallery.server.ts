@@ -71,6 +71,8 @@ export interface PublicGallery {
   gridTablet: string;
   gridMobile: string;
   ogImage: string;
+  cover: string;
+  showMessage: boolean;
   defaultSort: string;
   images: PublicGalleryImage[];
 }
@@ -91,15 +93,46 @@ export async function loadPublicGalleryMeta(
   if (!data || data.status === "draft" || data.status === "archived") {
     return { title: "Your gallery | Shutter Ram", description: "Private client gallery.", ogImage: "" };
   }
+  // A short fingerprint of the chosen picture, so swapping it changes the URL
+  // and platforms stop serving the previously scraped card.
+  const source = String(data.cover_url || data.og_image_id || "");
+  let stamp = 0;
+  for (const ch of source) stamp = (stamp * 31 + ch.charCodeAt(0)) >>> 0;
   return {
     title: `${data.title || "Your gallery"} | Shutter Ram`,
     description: data.message || "View and choose your photographs from your private gallery.",
-    ogImage: data.cover_url
-      ? `/api/public/crm/gallery-og/${token}`
-      : data.og_image_id
-        ? await signImage(data.og_image_id, "preview")
-        : "",
+    // Always the stable unsigned endpoint: signed image links expire after a
+    // few hours, so social crawlers would re-fetch them and get nothing.
+    ogImage: source ? `/api/public/crm/gallery-og/${token}?v=${stamp.toString(36)}` : "",
   };
+}
+
+/**
+ * Works out the big cover picture shown at the top of a client gallery.
+ * The photographer picks the source; anything unavailable falls back to the
+ * gallery's first photograph so the page never shows an empty frame.
+ */
+async function resolveCover(
+  token: string,
+  gallery: Record<string, unknown>,
+  firstPreview: string,
+): Promise<string> {
+  const mode = String(gallery["cover_mode"] ?? "first");
+  if (mode === "none") return "";
+  if (mode === "upload" && gallery["cover_path"]) {
+    const source = String(gallery["cover_path"]);
+    let stamp = 0;
+    for (const ch of source) stamp = (stamp * 31 + ch.charCodeAt(0)) >>> 0;
+    return `/api/public/crm/gallery-cover/${token}?v=${stamp.toString(36)}`;
+  }
+  if (mode === "pick" && gallery["cover_image_id"]) {
+    return signImage(String(gallery["cover_image_id"]), "preview");
+  }
+  if (mode === "og") {
+    if (gallery["og_image_id"]) return signImage(String(gallery["og_image_id"]), "preview");
+    if (gallery["cover_url"]) return `/api/public/crm/gallery-og/${token}`;
+  }
+  return firstPreview;
 }
 
 export async function loadPublicGallery(
@@ -194,6 +227,8 @@ export async function loadPublicGallery(
     gridTablet: gallery.grid_tablet ?? settings?.gallery_grid_tablet ?? "3",
     gridMobile: gallery.grid_mobile ?? settings?.gallery_grid_mobile ?? "2",
     ogImage: gallery.og_image_id ? await signImage(gallery.og_image_id, "preview") : "",
+    cover: await resolveCover(token, gallery as Record<string, unknown>, out[0]?.preview ?? ""),
+    showMessage: (gallery as { show_message?: boolean }).show_message ?? true,
     defaultSort: gallery.default_sort ?? "default",
     images: out,
   };

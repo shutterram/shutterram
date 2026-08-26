@@ -27,6 +27,7 @@ import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as ApiPublicGoogleCallbackRouteImport } from './routes/api/public/google/callback'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img.$'
+import { Route as ApiPublicCrmGalleryCoverTokenRouteImport } from './routes/api/public/crm/gallery-cover.$token'
 import { Route as ApiPublicCrmGalleryOgTokenRouteImport } from './routes/api/public/crm/gallery-og.$token'
 import { Route as ApiPublicCrmImgSplatRouteImport } from './routes/api/public/crm/img.$'
 
@@ -119,6 +120,12 @@ const ApiPublicImgSplatRoute = ApiPublicImgSplatRouteImport.update({
   path: '/api/public/img/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCrmGalleryCoverTokenRoute =
+  ApiPublicCrmGalleryCoverTokenRouteImport.update({
+    id: '/api/public/crm/gallery-cover/$token',
+    path: '/api/public/crm/gallery-cover/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCrmGalleryOgTokenRoute =
   ApiPublicCrmGalleryOgTokenRouteImport.update({
     id: '/api/public/crm/gallery-og/$token',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-cover/$token': typeof ApiPublicCrmGalleryCoverTokenRoute
   '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-cover/$token': typeof ApiPublicCrmGalleryCoverTokenRoute
   '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-cover/$token': typeof ApiPublicCrmGalleryCoverTokenRoute
   '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/gallery/'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-cover/$token'
     | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   fileRoutesByTo: FileRoutesByTo
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-cover/$token'
     | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   id:
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/gallery/'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-cover/$token'
     | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   fileRoutesById: FileRoutesById
@@ -280,6 +293,7 @@ export interface RootRouteChildren {
   GalleryIndexRoute: typeof GalleryIndexRoute
   ApiPublicGoogleCallbackRoute: typeof ApiPublicGoogleCallbackRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
+  ApiPublicCrmGalleryCoverTokenRoute: typeof ApiPublicCrmGalleryCoverTokenRoute
   ApiPublicCrmGalleryOgTokenRoute: typeof ApiPublicCrmGalleryOgTokenRoute
   ApiPublicCrmImgSplatRoute: typeof ApiPublicCrmImgSplatRoute
 }
@@ -412,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicImgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/crm/gallery-cover/$token': {
+      id: '/api/public/crm/gallery-cover/$token'
+      path: '/api/public/crm/gallery-cover/$token'
+      fullPath: '/api/public/crm/gallery-cover/$token'
+      preLoaderRoute: typeof ApiPublicCrmGalleryCoverTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/crm/gallery-og/$token': {
       id: '/api/public/crm/gallery-og/$token'
       path: '/api/public/crm/gallery-og/$token'
@@ -459,6 +480,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryIndexRoute: GalleryIndexRoute,
   ApiPublicGoogleCallbackRoute: ApiPublicGoogleCallbackRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
+  ApiPublicCrmGalleryCoverTokenRoute: ApiPublicCrmGalleryCoverTokenRoute,
   ApiPublicCrmGalleryOgTokenRoute: ApiPublicCrmGalleryOgTokenRoute,
   ApiPublicCrmImgSplatRoute: ApiPublicCrmImgSplatRoute,
 }

@@ -431,13 +431,26 @@ function ClientGalleryPage() {
     }
   }
 
+  const clientMessage = gallery.showMessage ? gallery.message || gallery.welcome : "";
+
   return (
     <main className={`mx-auto px-6 pb-24 pt-56 ${Number(columns) > 4 ? "max-w-[96rem]" : "max-w-6xl"}`}>
+      {gallery.cover ? (
+        <figure className="mb-10 overflow-hidden">
+          <img
+            src={gallery.cover}
+            alt={`${gallery.title} cover`}
+            className="h-[38vh] min-h-64 w-full object-cover md:h-[52vh]"
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+      ) : null}
       <p className="eyebrow">{isCull ? "Photo selection" : "Your gallery"}</p>
       <h1 className="mt-3 font-display text-[clamp(1.75rem,4vw,2.75rem)]">{gallery.title}</h1>
-      {gallery.welcome || gallery.message ? (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {gallery.message || gallery.welcome}
+      {clientMessage ? (
+        <p className="mt-4 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+          {clientMessage}
         </p>
       ) : null}
 

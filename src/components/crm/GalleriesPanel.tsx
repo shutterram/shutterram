@@ -3,19 +3,22 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  attachImageThumb,
+  attachImageThumbs,
   createGallery,
   galleryResults,
   importDriveFolder,
   sendPicksToDrive,
   setPickDone,
-  thumbUploadTarget,
-  galleryUploadTargets,
+  thumbUploadSlots,
+  galleryUploadTargetsBatch,
   galleryOgUploadTarget,
   listGalleries,
+  previewJobGet,
+  previewJobSet,
   registerGalleryImages,
   updateGallery,
   type GallerySummary,
+  type PreviewJob,
 } from "@/lib/gallery.functions";
 import { crmDelete, crmSettingsGet } from "@/lib/crm.functions";
 import { Btn, Card, CheckField, Empty, Label, SelectField, TextField, copyLink } from "./ui";
@@ -48,24 +51,86 @@ interface Prepared {
   bytes: number;
 }
 
+type ImageSource = HTMLImageElement | ImageBitmap;
+
+function sourceSize(img: ImageSource) {
+  return img instanceof HTMLImageElement
+    ? { w: img.naturalWidth, h: img.naturalHeight }
+    : { w: img.width, h: img.height };
+}
+
+/** Runs async work over a list with a fixed number of lanes. */
+async function runPool<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let cursor = 0;
+  const lanes = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) return;
+      out[index] = await worker(items[index] as T, index);
+    }
+  });
+  await Promise.all(lanes);
+  return out;
+}
+
+/** Decodes a file or URL off the main thread when the browser supports it. */
+async function decodeImage(source: File | Blob | string): Promise<ImageSource> {
+  if (typeof source !== "string" && typeof createImageBitmap === "function") {
+    try {
+      return await createImageBitmap(source);
+    } catch {
+      /* fall through to the <img> path */
+    }
+  }
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  const url = typeof source === "string" ? source : URL.createObjectURL(source);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Could not read image"));
+      img.src = url;
+    });
+  } finally {
+    if (typeof source !== "string") setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+  return img;
+}
+
+function releaseImage(img: ImageSource) {
+  if (!(img instanceof HTMLImageElement)) img.close();
+}
+
 async function drawTo(
-  img: HTMLImageElement,
+  img: ImageSource,
   maxPx: number,
   quality: number,
   watermark: { text: string; opacity: number; size: number } | null,
   format: "image/jpeg" = "image/jpeg",
 ): Promise<{ blob: Blob; width: number; height: number }> {
-  const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
-  const w = Math.round(img.naturalWidth * scale);
-  const h = Math.round(img.naturalHeight * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
+  const { w: sw, h: sh } = sourceSize(img);
+  const scale = Math.min(1, maxPx / Math.max(sw, sh));
+  const w = Math.round(sw * scale);
+  const h = Math.round(sh * scale);
   // Standardise generated previews to browser-managed sRGB JPEG so their
   // appearance remains consistent across the gallery and downloaded preview.
-  const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
+  const offscreen = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(w, h) : null;
+  const canvas = offscreen ?? document.createElement("canvas");
+  if (!offscreen) {
+    (canvas as HTMLCanvasElement).width = w;
+    (canvas as HTMLCanvasElement).height = h;
+  }
+  const ctx = (canvas as HTMLCanvasElement).getContext("2d", { colorSpace: "srgb" }) as
+    | CanvasRenderingContext2D
+    | null;
   if (!ctx) throw new Error("Canvas unavailable");
-  ctx.drawImage(img, 0, 0, w, h);
+  ctx.drawImage(img as CanvasImageSource, 0, 0, w, h);
   if (watermark?.text) {
     const size = Math.max(12, (w * watermark.size) / 100);
     ctx.font = `600 ${size}px sans-serif`;
@@ -78,19 +143,23 @@ async function drawTo(
     ctx.fillText(watermark.text, 0, 0);
     ctx.restore();
   }
-  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, format, quality / 100));
+  const blob = offscreen
+    ? await offscreen.convertToBlob({ type: format, quality: quality / 100 })
+    : await new Promise<Blob | null>((res) =>
+        (canvas as HTMLCanvasElement).toBlob(res, format, quality / 100),
+      );
   if (!blob) throw new Error("Could not process image");
   return { blob, width: w, height: h };
 }
 
 async function drawToByteLimit(
-  img: HTMLImageElement,
+  img: ImageSource,
   maxBytes: number,
   watermark: { text: string; opacity: number; size: number } | null,
 ) {
   // Everything is plain JPEG: universally supported, predictable quality
   // control, and no surprise PNG/WebP behaviour.
-  let edge = Math.max(img.naturalWidth, img.naturalHeight);
+  let edge = Math.max(sourceSize(img).w, sourceSize(img).h);
   let best = await drawTo(img, edge, 100, watermark, "image/jpeg");
   if (best.blob.size <= maxBytes) return best;
 
@@ -98,7 +167,10 @@ async function drawToByteLimit(
     let low = 72;
     let high = 99;
     let fitting: typeof best | null = null;
-    for (let attempt = 0; attempt < 9; attempt += 1) {
+    // A true binary search: it stops as soon as the range collapses instead of
+    // re-encoding the same quality over and over, which is the same result in
+    // roughly half the work.
+    while (low <= high) {
       const quality = Math.round((low + high) / 2);
       const candidate = await drawTo(img, edge, quality, watermark, "image/jpeg");
       if (candidate.blob.size <= maxBytes) {
@@ -233,20 +305,68 @@ function GalleryDetail({
   onSaved: () => Promise<void>;
 }) {
   const update = useServerFn(updateGallery);
-  const targets = useServerFn(galleryUploadTargets);
   const register = useServerFn(registerGalleryImages);
   const results = useServerFn(galleryResults);
   const settingsGet = useServerFn(crmSettingsGet);
   const driveImport = useServerFn(importDriveFolder);
   const pushToDrive = useServerFn(sendPicksToDrive);
-  const thumbTarget = useServerFn(thumbUploadTarget);
   const ogTarget = useServerFn(galleryOgUploadTarget);
-  const attachThumb = useServerFn(attachImageThumb);
+  const attachThumbs = useServerFn(attachImageThumbs);
+  const thumbSlots = useServerFn(thumbUploadSlots);
+  const uploadTargetsBatch = useServerFn(galleryUploadTargetsBatch);
+  const jobGet = useServerFn(previewJobGet);
+  const jobSet = useServerFn(previewJobSet);
   const markDone = useServerFn(setPickDone);
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const ogFileRef = useRef<HTMLInputElement | null>(null);
+  const coverFileRef = useRef<HTMLInputElement | null>(null);
+  const cancelRef = useRef(false);
+  const lastReportRef = useRef(0);
   const [progress, setProgress] = useState("");
+  const [job, setJob] = useState<PreviewJob | null>(null);
+
+  /** Publishes progress to the server so any device can follow the same run. */
+  const startJob = async (total: number, message: string) => {
+    cancelRef.current = false;
+    lastReportRef.current = Date.now();
+    setJob({ status: "running", total, done: 0, failed: 0, message, updatedAt: "" });
+    try {
+      await jobSet({
+        data: { galleryId: gallery.id, status: "running", total, done: 0, failed: 0, message },
+      });
+    } catch {
+      /* progress reporting must never block the actual work */
+    }
+  };
+
+  const reportJob = async (total: number, done: number, failed: number, message: string) => {
+    setJob({ status: "running", total, done, failed, message, updatedAt: "" });
+    // Throttled: one write every couple of seconds, not one per photo.
+    if (Date.now() - lastReportRef.current < 2000 && done < total) return;
+    lastReportRef.current = Date.now();
+    try {
+      await jobSet({
+        data: { galleryId: gallery.id, status: "running", total, done, failed, message },
+      });
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const endJob = async (
+    total: number,
+    done: number,
+    failed: number,
+    status: "done" | "cancelled",
+  ) => {
+    setJob({ status, total, done, failed, message: "", updatedAt: "" });
+    try {
+      await jobSet({ data: { galleryId: gallery.id, status, total, done, failed, message: "" } });
+    } catch {
+      /* ignore */
+    }
+  };
   const [form, setForm] = useState({
     title: gallery.title,
     status: gallery.status,
@@ -275,10 +395,16 @@ function GalleryDetail({
     ),
     defaultSort: gallery.default_sort || "default",
     coverUrl: gallery.cover_url || "",
+    coverMode: gallery.cover_mode || "first",
+    coverImageId: gallery.cover_image_id ?? "",
+    coverPath: gallery.cover_path || "",
+    message: gallery.message || "",
+    showMessage: gallery.show_message ?? true,
   });
   const [busy, setBusy] = useState("");
   const [picked, setPicked] = useState<Awaited<ReturnType<typeof galleryResults>> | null>(null);
   const [choosingOg, setChoosingOg] = useState(false);
+  const [choosingCover, setChoosingCover] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -290,11 +416,31 @@ function GalleryDetail({
     })();
   }, [results, gallery.id]);
 
-  async function save(rebuildChangedPreviews = true) {
-    const previewSettingsChanged =
-      form.downscalePreviews !== gallery.downscale_previews ||
-      form.previewMaxPx !== gallery.preview_max_px ||
-      form.previewMaxKb * 1024 !== gallery.preview_max_bytes;
+  // Any device that opens this gallery follows the same rebuild, because the
+  // progress lives in the database rather than in this browser tab.
+  useEffect(() => {
+    let stop = false;
+    const tick = async () => {
+      try {
+        const current = await jobGet({ data: { galleryId: gallery.id } });
+        if (!stop) setJob(current);
+      } catch {
+        /* ignore */
+      }
+    };
+    void tick();
+    const timer = window.setInterval(tick, 4000);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+    };
+  }, [jobGet, gallery.id]);
+
+  /**
+   * Saving only stores settings. Rebuilding previews is deliberately never
+   * triggered here — it runs solely from the "Rebuild previews" button.
+   */
+  async function save() {
     try {
       await update({
         data: {
@@ -321,22 +467,16 @@ function GalleryDetail({
           previewMaxBytes: form.previewMaxKb * 1024,
           defaultSort: form.defaultSort,
           coverUrl: form.coverUrl,
+          coverMode: form.coverMode,
+          coverImageId: form.coverImageId || null,
+          coverPath: form.coverPath,
+          message: form.message,
+          showMessage: form.showMessage,
           ...(form.password ? { password: form.password } : {}),
           ...(form.pickPin ? { pickPin: form.pickPin } : {}),
         },
       });
-      if (
-        rebuildChangedPreviews &&
-        previewSettingsChanged &&
-        form.downscalePreviews &&
-        picked?.length
-      ) {
-        setBusy("Applying the new preview size to existing photos…");
-        await buildThumbs(picked, true);
-        toast.success("Gallery saved and previews rebuilt");
-      } else {
-        toast.success("Gallery saved");
-      }
+      toast.success("Gallery saved");
       await onSaved();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not save");
@@ -354,75 +494,84 @@ function GalleryDetail({
         }
       : null;
 
-    const done: Prepared[] = [];
-    let index = 0;
-    for (const file of Array.from(files)) {
-      index += 1;
-      setProgress(`Preparing ${index} of ${files.length}…`);
-      if (!file.type.startsWith("image/")) continue;
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      await new Promise((res, rej) => {
-        img.onload = res;
-        img.onerror = rej;
-        img.src = url;
-      });
-      const preview = form.downscalePreviews
-        ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark)
-        : await drawTo(img, 12000, 100, mark);
-      const thumb = await drawTo(img, thumbMax, 70, mark);
-      URL.revokeObjectURL(url);
-      done.push({
-        name: file.name,
-        original: file,
-        preview: preview.blob,
-        thumb: thumb.blob,
-        width: preview.width,
-        height: preview.height,
-        bytes: file.size,
-      });
-    }
+    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (!images.length) return;
 
     const registered: Parameters<typeof register>[0]["data"]["images"] = [];
-    let n = 0;
-    for (const item of done) {
-      n += 1;
-      setProgress(`Uploading ${n} of ${done.length}…`);
-      const t = await targets({ data: { galleryId: gallery.id, name: item.name } });
-      const [a, b, c] = await Promise.all([
-        supabase.storage
-          .from(t.bucket)
-          .uploadToSignedUrl(t.previewPath, t.previewToken, item.preview, {
-            contentType: item.preview.type || "image/jpeg",
-          }),
-        supabase.storage.from(t.bucket).uploadToSignedUrl(t.thumbPath, t.thumbToken, item.thumb, {
-          contentType: "image/jpeg",
-        }),
-        supabase.storage
-          .from(t.bucket)
-          .uploadToSignedUrl(t.originalPath, t.originalToken, item.original, {
-            contentType: item.original.type || "application/octet-stream",
-          }),
-      ]);
-      if (a.error || b.error || c.error) {
-        toast.error(a.error?.message ?? b.error?.message ?? c.error?.message ?? "Upload failed");
-        continue;
-      }
-      registered.push({
-        name: item.name,
-        originalName: item.name,
-        originalPath: t.originalPath,
-        previewPath: t.previewPath,
-        thumbPath: t.thumbPath,
-        width: item.width,
-        height: item.height,
-        bytes: item.bytes,
+    let finished = 0;
+    let failed = 0;
+    const total = images.length;
+    await startJob(total, "Uploading photos");
+
+    // Photos are handled in chunks so the signed upload slots are requested in
+    // one round-trip per chunk instead of one per photo, and several photos
+    // are encoded and uploaded at the same time.
+    const CHUNK = 20;
+    for (let start = 0; start < images.length; start += CHUNK) {
+      if (cancelRef.current) break;
+      const chunk = images.slice(start, start + CHUNK);
+      const slots = await uploadTargetsBatch({
+        data: { galleryId: gallery.id, names: chunk.map((f) => f.name) },
       });
+      const prepared = await runPool(chunk, 3, async (file, index) => {
+        if (cancelRef.current) return null;
+        const t = slots.targets[index];
+        if (!t) return null;
+        try {
+          const img = await decodeImage(file);
+          const preview = form.downscalePreviews
+            ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark)
+            : await drawTo(img, 12000, 100, mark);
+          const thumb = await drawTo(img, thumbMax, 70, mark);
+          releaseImage(img);
+          const [a, b, c] = await Promise.all([
+            supabase.storage
+              .from(slots.bucket)
+              .uploadToSignedUrl(t.previewPath, t.previewToken, preview.blob, {
+                contentType: preview.blob.type || "image/jpeg",
+              }),
+            supabase.storage
+              .from(slots.bucket)
+              .uploadToSignedUrl(t.thumbPath, t.thumbToken, thumb.blob, {
+                contentType: "image/jpeg",
+              }),
+            supabase.storage
+              .from(slots.bucket)
+              .uploadToSignedUrl(t.originalPath, t.originalToken, file, {
+                contentType: file.type || "application/octet-stream",
+              }),
+          ]);
+          if (a.error || b.error || c.error) throw new Error(a.error?.message ?? "Upload failed");
+          return {
+            name: file.name,
+            originalName: file.name,
+            originalPath: t.originalPath,
+            previewPath: t.previewPath,
+            thumbPath: t.thumbPath,
+            width: preview.width,
+            height: preview.height,
+            bytes: file.size,
+          };
+        } catch {
+          failed += 1;
+          return null;
+        } finally {
+          finished += 1;
+          setProgress(`Uploading ${finished} of ${total}…`);
+          void reportJob(total, finished, failed, "Uploading photos");
+        }
+      });
+      const ok = prepared.filter(Boolean) as typeof registered;
+      if (ok.length) {
+        registered.push(...ok);
+        await register({ data: { galleryId: gallery.id, images: ok } });
+      }
     }
 
+    await endJob(total, finished, failed, cancelRef.current ? "cancelled" : "done");
     if (registered.length) {
-      await register({ data: { galleryId: gallery.id, images: registered } });
       toast.success(`${registered.length} photos added`);
+      setPicked(await results({ data: { galleryId: gallery.id } }));
       await onSaved();
     }
     setProgress("");
@@ -439,52 +588,74 @@ function GalleryDetail({
       ? rows
       : rows.filter((row) => !row.hasThumb || (form.downscalePreviews && !row.hasPreview));
     if (!missing.length) return;
-    let n = 0;
-    for (const row of missing) {
-      n += 1;
-      setBusy(`Building gallery JPEGs ${n} of ${missing.length}…`);
-      try {
-        const image = new Image();
-        const loaded = new Promise<void>((res, rej) => {
-          image.onload = () => res();
-          image.onerror = () => rej(new Error("load failed"));
-        });
-        image.src = row.orig;
-        await loaded;
-        const thumb = await drawTo(image, 600, 70, null);
-        const preview = form.downscalePreviews
-          ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
-          : null;
-        const [thumbSlot, previewSlot] = await Promise.all([
-          thumbTarget({ data: { galleryId: gallery.id, kind: "thumb" } }),
-          preview ? thumbTarget({ data: { galleryId: gallery.id, kind: "preview" } }) : null,
-        ]);
-        const uploads = await Promise.all([
-          supabase.storage
-            .from(thumbSlot.bucket)
-            .uploadToSignedUrl(thumbSlot.path, thumbSlot.token, thumb.blob, {
-              contentType: "image/jpeg",
-            }),
-          preview && previewSlot
-            ? supabase.storage
-                .from(previewSlot.bucket)
-                .uploadToSignedUrl(previewSlot.path, previewSlot.token, preview.blob, {
-                  contentType: preview.blob.type || "image/jpeg",
-                })
-            : null,
-        ]);
-        if (uploads[0].error || uploads[1]?.error) continue;
-        await attachThumb({
-          data: {
+
+    cancelRef.current = false;
+    const total = missing.length;
+    let finished = 0;
+    let failed = 0;
+    await startJob(total, "Rebuilding previews");
+
+    const CHUNK = 20;
+    for (let start = 0; start < missing.length; start += CHUNK) {
+      if (cancelRef.current) break;
+      const chunk = missing.slice(start, start + CHUNK);
+      const { bucket, slots } = await thumbSlots({
+        data: {
+          galleryId: gallery.id,
+          items: chunk.map((row) => ({ imageId: row.id, withPreview: form.downscalePreviews })),
+        },
+      });
+      const attachments = await runPool(chunk, 3, async (row, index) => {
+        if (cancelRef.current) return null;
+        const slot = slots[index];
+        if (!slot) return null;
+        try {
+          const image = await decodeImage(row.orig);
+          const thumb = await drawTo(image, 600, 70, null);
+          const preview =
+            form.downscalePreviews && slot.preview
+              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
+              : null;
+          releaseImage(image);
+          const uploads = await Promise.all([
+            supabase.storage
+              .from(bucket)
+              .uploadToSignedUrl(slot.thumb.path, slot.thumb.token, thumb.blob, {
+                contentType: "image/jpeg",
+              }),
+            preview && slot.preview
+              ? supabase.storage
+                  .from(bucket)
+                  .uploadToSignedUrl(slot.preview.path, slot.preview.token, preview.blob, {
+                    contentType: preview.blob.type || "image/jpeg",
+                  })
+              : null,
+          ]);
+          if (uploads[0].error || uploads[1]?.error) throw new Error("upload failed");
+          return {
             imageId: row.id,
-            thumbPath: thumbSlot.path,
-            ...(previewSlot ? { previewPath: previewSlot.path } : {}),
-          },
-        });
-      } catch {
-        /* skip photos Drive refuses to serve */
-      }
+            thumbPath: slot.thumb.path,
+            ...(preview && slot.preview ? { previewPath: slot.preview.path } : {}),
+          };
+        } catch {
+          /* skip photos Drive refuses to serve */
+          failed += 1;
+          return null;
+        } finally {
+          finished += 1;
+          setBusy(`Building gallery JPEGs ${finished} of ${total}…`);
+          void reportJob(total, finished, failed, "Rebuilding previews");
+        }
+      });
+      const items = attachments.filter(Boolean) as {
+        imageId: string;
+        thumbPath: string;
+        previewPath?: string;
+      }[];
+      if (items.length) await attachThumbs({ data: { items } });
     }
+
+    await endJob(total, finished, failed, cancelRef.current ? "cancelled" : "done");
     setBusy("");
     setPicked(await results({ data: { galleryId: gallery.id } }));
   }
@@ -496,7 +667,7 @@ function GalleryDetail({
     }
     try {
       setBusy("Reading your Drive folder…");
-      await save(false);
+      await save();
       const res = await driveImport({
         data: {
           galleryId: gallery.id,
@@ -525,9 +696,8 @@ function GalleryDetail({
   async function rebuildDrivePreviews() {
     if (!picked?.length) return;
     try {
-      await save(false);
       await buildThumbs(picked, true);
-      toast.success("Opened previews rebuilt with the new limits");
+      toast.success("Opened previews rebuilt with the current limits");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not rebuild previews");
       setBusy("");
@@ -561,6 +731,30 @@ function GalleryDetail({
       if (ogFileRef.current) ogFileRef.current.value = "";
     }
   }
+
+  /** Uploads the wide picture shown at the top of the client's gallery page. */
+  async function uploadCover(file: File) {
+    if (!file.type.startsWith("image/")) return;
+    try {
+      setBusy("Preparing cover picture…");
+      const image = await decodeImage(file);
+      const rendered = await drawTo(image, 2200, 82, null);
+      releaseImage(image);
+      const target = await ogTarget({ data: { galleryId: gallery.id, kind: "cover" } });
+      const uploaded = await supabase.storage
+        .from(target.bucket)
+        .uploadToSignedUrl(target.path, target.token, rendered.blob, { contentType: "image/jpeg" });
+      if (uploaded.error) throw uploaded.error;
+      setForm((current) => ({ ...current, coverPath: target.path, coverMode: "upload" }));
+      toast.success("Cover picture uploaded — save the gallery to apply it");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not upload cover picture");
+    } finally {
+      setBusy("");
+      if (coverFileRef.current) coverFileRef.current.value = "";
+    }
+  }
+
 
   async function sendRawsToDrive() {
     try {
@@ -646,7 +840,12 @@ function GalleryDetail({
               </Btn>
             </>
           ) : (
-            <Btn onClick={() => fileRef.current?.click()}>Add photos</Btn>
+            <>
+              <Btn onClick={() => fileRef.current?.click()}>Add photos</Btn>
+              {picked?.length ? (
+                <Btn onClick={() => void rebuildDrivePreviews()}>Rebuild previews</Btn>
+              ) : null}
+            </>
           )}
           {pickedOnly.length ? (
             <>
@@ -686,6 +885,37 @@ function GalleryDetail({
         </div>
       </div>
 
+      {job && (job.status === "running" || job.status === "stalled") ? (
+        <div className="mt-4 border border-border p-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>
+              {job.message || "Processing"} · {job.done} of {job.total}
+              {job.failed ? ` · ${job.failed} skipped` : ""}
+              {job.status === "stalled" ? " · interrupted" : ""}
+            </span>
+            {job.status === "running" && (progress || busy) ? (
+              <button
+                type="button"
+                className="underline"
+                onClick={() => {
+                  cancelRef.current = true;
+                  setProgress("Finishing current photos…");
+                }}
+              >
+                Cancel
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-2 h-1 w-full bg-muted">
+            <div
+              className="h-1 bg-foreground transition-all"
+              style={{
+                width: `${job.total ? Math.min(100, Math.round((job.done / job.total) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
       {progress || busy ? (
         <p className="mt-4 text-sm text-muted-foreground">{progress || busy}</p>
       ) : null}
@@ -727,11 +957,21 @@ function GalleryDetail({
                   key={p.id}
                   className={
                     "relative " +
-                    (choosingOg
+                    (choosingOg || choosingCover
                       ? "cursor-pointer outline-offset-2 hover:outline hover:outline-1 hover:outline-foreground"
                       : "")
                   }
                   onClick={() => {
+                    if (choosingCover) {
+                      setForm((current) => ({
+                        ...current,
+                        coverMode: "pick",
+                        coverImageId: p.id,
+                      }));
+                      setChoosingCover(false);
+                      toast.success("Cover picture selected — save the gallery to apply it");
+                      return;
+                    }
                     if (!choosingOg) return;
                     setForm((current) => ({ ...current, ogImageId: p.id, coverUrl: "" }));
                     setChoosingOg(false);
@@ -739,9 +979,9 @@ function GalleryDetail({
                   }}
                 >
                   <img src={p.thumb} alt={p.name} className="aspect-square w-full object-cover" />
-                  {choosingOg ? (
+                  {choosingOg || choosingCover ? (
                     <span className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-2 text-center text-[0.55rem] tracking-[0.2em] uppercase">
-                      Use as link preview
+                      {choosingCover ? "Use as cover" : "Use as link preview"}
                     </span>
                   ) : null}
                   {p.picked ? (
@@ -984,6 +1224,62 @@ function GalleryDetail({
                       ? "A gallery photo is selected."
                       : "Choose a gallery photo or upload a separate image used only when the link is shared."}
               </p>
+            </div>
+            <div>
+              <Label>Cover picture</Label>
+              <input
+                ref={coverFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadCover(file);
+                }}
+              />
+              <div className="mt-3">
+                <SelectField
+                  label="Source"
+                  value={form.coverMode}
+                  onChange={(v) => setForm({ ...form, coverMode: v })}
+                  options={[
+                    { value: "first", label: "First photo of the gallery" },
+                    { value: "og", label: "Same as link preview image" },
+                    { value: "pick", label: "Chosen gallery photo" },
+                    { value: "upload", label: "Uploaded picture" },
+                    { value: "none", label: "No cover picture" },
+                  ]}
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {picked?.length ? (
+                  <Btn onClick={() => setChoosingCover((current) => !current)}>
+                    {choosingCover ? "Cancel selection" : "Select from gallery"}
+                  </Btn>
+                ) : null}
+                <Btn onClick={() => coverFileRef.current?.click()}>Upload cover</Btn>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {choosingCover
+                  ? "Click a photo in the gallery on the left."
+                  : "Shown large at the top of the client's gallery page. Falls back to the first photo if the chosen picture is unavailable."}
+              </p>
+            </div>
+            <div>
+              <CheckField
+                label="Show a message to the client"
+                checked={form.showMessage}
+                onChange={(v) => setForm({ ...form, showMessage: v })}
+              />
+              {form.showMessage ? (
+                <textarea
+                  rows={4}
+                  value={form.message}
+                  onChange={(event) => setForm({ ...form, message: event.target.value })}
+                  placeholder="Add a personal note for this client…"
+                  className="mt-3 w-full border-0 border-b border-border bg-transparent py-2 text-sm outline-none focus:border-foreground"
+                />
+              ) : null}
             </div>
             <SelectField
               label="Photo source"
