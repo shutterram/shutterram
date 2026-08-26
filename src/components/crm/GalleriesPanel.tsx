@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   attachImageThumbs,
   createGallery,
+  deleteGallery,
   galleryResults,
   importDriveFolder,
   sendPicksToDrive,
@@ -21,7 +22,7 @@ import {
   type GallerySummary,
   type PreviewJob,
 } from "@/lib/gallery.functions";
-import { crmDelete, crmSettingsGet } from "@/lib/crm.functions";
+import { crmSettingsGet } from "@/lib/crm.functions";
 import { Btn, Card, CheckField, Empty, Label, SelectField, TextField, copyLink } from "./ui";
 
 /** Preview compression presets, with a rough per-photo size so you can judge before uploading. */
@@ -192,7 +193,7 @@ async function drawToByteLimit(
 export function GalleriesPanel({ contacts }: { contacts: { id: string; name: string }[] }) {
   const list = useServerFn(listGalleries);
   const create = useServerFn(createGallery);
-  const remove = useServerFn(crmDelete);
+  const remove = useServerFn(deleteGallery);
 
   const [rows, setRows] = useState<GallerySummary[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -282,8 +283,8 @@ export function GalleriesPanel({ contacts }: { contacts: { id: string; name: str
                 <Btn
                   variant="danger"
                   onClick={() => {
-                    if (!window.confirm("Delete this gallery?")) return;
-                    void remove({ data: { table: "crm_galleries", id: g.id } }).then(load);
+                    if (!window.confirm("Delete this gallery and all of its images from storage?")) return;
+                    void remove({ data: { id: g.id } }).then(load);
                   }}
                 >
                   Delete

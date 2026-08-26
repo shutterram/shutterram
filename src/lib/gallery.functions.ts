@@ -314,6 +314,63 @@ export const updateGallery = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Admin: permanently delete a gallery and all of its storage files. */
+export const deleteGallery = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => ({ id: String(input.id).slice(0, 64) }))
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin, logActivity } = await import("./crm.server");
+    const userId = await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { GALLERY_BUCKET } = await import("./gallery.server");
+
+    const { data: gallery, error: galleryError } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("id,token,cover_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (galleryError) throw new Error(galleryError.message);
+    if (!gallery) return { ok: true };
+
+    const { data: images } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("preview_path,thumb_path,original_path")
+      .eq("gallery_id", data.id);
+
+    const paths = new Set<string>();
+    for (const img of (images ?? []) as Record<string, string>[]) {
+      if (img["preview_path"]) paths.add(img["preview_path"]);
+      if (img["thumb_path"]) paths.add(img["thumb_path"]);
+      if (img["original_path"]) paths.add(img["original_path"]);
+    }
+    if (gallery.cover_path) paths.add(gallery.cover_path);
+
+    const pathList = Array.from(paths).filter(Boolean);
+    for (let i = 0; i < pathList.length; i += 100) {
+      const batch = pathList.slice(i, i + 100);
+      const { error: storageError } = await supabaseAdmin.storage.from(GALLERY_BUCKET).remove(batch);
+      if (storageError) throw new Error(storageError.message);
+    }
+
+    await supabaseAdmin.from("crm_preview_jobs" as never).delete().eq("gallery_id", data.id);
+    await supabaseAdmin
+      .from("short_links" as never)
+      .delete()
+      .eq("target_url", `/g/${gallery.token}`);
+
+    const { error } = await supabaseAdmin.from("crm_galleries").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    await logActivity({
+      entityType: "gallery",
+      entityId: data.id,
+      kind: "deleted",
+      message: "Deleted gallery and cleaned up storage",
+      userId,
+    });
+    return { ok: true };
+  });
+
 /** Admin: signed upload targets so the browser can push watermarked previews straight to storage. */
 export const galleryUploadTargets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
