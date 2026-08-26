@@ -12,6 +12,7 @@ import {
   thumbUploadSlots,
   galleryUploadTargetsBatch,
   galleryOgUploadTarget,
+  galleryShortLink,
   listGalleries,
   previewJobGet,
   previewJobSet,
@@ -305,6 +306,7 @@ function GalleryDetail({
   onSaved: () => Promise<void>;
 }) {
   const update = useServerFn(updateGallery);
+  const getShortLink = useServerFn(galleryShortLink);
   const register = useServerFn(registerGalleryImages);
   const results = useServerFn(galleryResults);
   const settingsGet = useServerFn(crmSettingsGet);
@@ -807,9 +809,13 @@ function GalleryDetail({
         </div>
         <div className="flex flex-wrap gap-2">
           <Btn
-            onClick={() =>
-              copyLink(`${window.location.origin}/g/${gallery.token}`, (m) => toast.success(m))
-            }
+            onClick={() => {
+              void getShortLink({ data: { galleryId: gallery.id } })
+                .then(({ code }) => copyLink(`${window.location.origin}/${code}`, (m) => toast.success(m)))
+                .catch((error) =>
+                  toast.error(error instanceof Error ? error.message : "Could not create link"),
+                );
+            }}
           >
             Copy client link
           </Btn>

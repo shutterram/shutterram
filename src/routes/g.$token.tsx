@@ -18,6 +18,7 @@ import { GalleryViewer } from "@/components/site/GalleryViewer";
 import { ScrollRail } from "@/components/site/ScrollRail";
 import { downloadMany, downloadOne } from "@/lib/download";
 import { SITE_URL } from "@/lib/seo";
+import { setHeroImage } from "@/lib/hero-glow";
 
 type GalleryColumns = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
 
@@ -48,11 +49,22 @@ export const Route = createFileRoute("/g/$token")({
   loader: ({ params }) => galleryMeta({ data: { token: params.token } }),
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData?.title ?? "Your gallery | Shutter Ram" },
-      { name: "description", content: loaderData?.description ?? "Private client gallery." },
+      { title: loaderData?.title ?? "Your gallery | Shutter Ram Photography" },
+      {
+        name: "description",
+        content:
+          loaderData?.description ?? "View and choose your photographs from your private gallery.",
+      },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: loaderData?.title ?? "Your gallery | Shutter Ram" },
-      { property: "og:description", content: loaderData?.description ?? "Private client gallery." },
+      {
+        property: "og:title",
+        content: loaderData?.title ?? "Your gallery | Shutter Ram Photography",
+      },
+      {
+        property: "og:description",
+        content:
+          loaderData?.description ?? "View and choose your photographs from your private gallery.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: loaderData?.ogImage ? "summary_large_image" : "summary" },
       ...(loaderData?.ogImage
@@ -107,6 +119,11 @@ function ClientGalleryPage() {
   const storageKey = `shutterram:gallery:${token}`;
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    setHeroImage(gallery?.cover ?? null);
+    return () => setHeroImage(null);
+  }, [gallery?.cover]);
 
   useEffect(() => {
     const read = () =>
@@ -434,20 +451,29 @@ function ClientGalleryPage() {
   const clientMessage = gallery.showMessage ? gallery.message || gallery.welcome : "";
 
   return (
-    <main className={`mx-auto px-6 pb-24 pt-56 ${Number(columns) > 4 ? "max-w-[96rem]" : "max-w-6xl"}`}>
+    <main className="pb-24">
       {gallery.cover ? (
-        <figure className="mb-10 overflow-hidden">
+        <figure className="relative h-[60vh] min-h-[26rem] w-full overflow-hidden">
           <img
             src={gallery.cover}
             alt={`${gallery.title} cover`}
-            className="h-[38vh] min-h-64 w-full object-cover md:h-[52vh]"
+            className="size-full object-cover"
             loading="eager"
             decoding="async"
           />
+          <div className="hero-scrim absolute inset-0" />
+          <div className="absolute inset-0 flex items-center justify-center px-6 pt-28 text-center text-primary">
+            <h1 className="max-w-5xl font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight drop-shadow-lg">
+              {gallery.title}
+            </h1>
+          </div>
         </figure>
       ) : null}
+      <div className={`mx-auto px-6 ${gallery.cover ? "pt-12" : "pt-56"} ${Number(columns) > 4 ? "max-w-[96rem]" : "max-w-6xl"}`}>
       <p className="eyebrow">{isCull ? "Photo selection" : "Your gallery"}</p>
-      <h1 className="mt-3 font-display text-[clamp(1.75rem,4vw,2.75rem)]">{gallery.title}</h1>
+      {!gallery.cover ? (
+        <h1 className="mt-3 font-display text-[clamp(1.75rem,4vw,2.75rem)]">{gallery.title}</h1>
+      ) : null}
       {clientMessage ? (
         <p className="mt-4 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
           {clientMessage}
@@ -927,6 +953,7 @@ function ClientGalleryPage() {
           }}
         />
       ) : null}
+      </div>
     </main>
   );
 }

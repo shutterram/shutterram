@@ -51,6 +51,53 @@ export const galleryMeta = createServerFn({ method: "GET" })
     return loadPublicGalleryMeta(String(data.token).slice(0, 64));
   });
 
+/** Admin: creates or reuses a compact, metadata-rich client gallery link. */
+export const galleryShortLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string }) => ({
+    galleryId: String(input.galleryId).slice(0, 64),
+  }))
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: gallery, error: galleryError } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("token,title")
+      .eq("id", data.galleryId)
+      .maybeSingle();
+    if (galleryError || !gallery) throw new Error(galleryError?.message ?? "Gallery not found");
+
+    const target = `/g/${gallery.token}`;
+    const ogImage = `/api/public/crm/gallery-og/${gallery.token}`;
+    const { data: existing } = await supabaseAdmin
+      .from("short_links")
+      .select("code")
+      .eq("target_url", target)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.code) {
+      await supabaseAdmin
+        .from("short_links")
+        .update({ label: gallery.title, og_image: ogImage } as never)
+        .eq("code", existing.code);
+      return { code: existing.code };
+    }
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const code = crypto.randomUUID().replaceAll("-", "").slice(0, 7);
+      const { error } = await supabaseAdmin.from("short_links").insert({
+        code,
+        label: gallery.title,
+        target_url: target,
+        og_image: ogImage,
+      } as never);
+      if (!error) return { code };
+      if (error.code !== "23505") throw new Error(error.message);
+    }
+    throw new Error("Could not create a short gallery link");
+  });
+
 export const listGalleries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<GallerySummary[]> => {

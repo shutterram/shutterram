@@ -5,6 +5,13 @@ export interface ShortLinkTarget {
   target: string;
   ogImage: string;
   label: string;
+  description?: string;
+}
+
+function imageStamp(source: string): string {
+  let stamp = 0;
+  for (const char of source) stamp = (stamp * 31 + char.charCodeAt(0)) >>> 0;
+  return stamp.toString(36);
 }
 
 /** Where a share link points, before the tracking token is attached. */
@@ -60,6 +67,25 @@ export async function resolveShortCode(code: string): Promise<ShortLinkTarget | 
   // Keep same-site destinations tracked under this short code.
   const sameSite = target.startsWith("/") || target.startsWith(SITE_URL);
   if (sameSite) target += `${target.includes("?") ? "&" : "?"}k=${code}`;
+
+  const galleryMatch = target.match(/^\/g\/([^?]+)/);
+  if (galleryMatch?.[1]) {
+    const { data: gallery } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("title,message,token,cover_url,og_image_id,status")
+      .eq("token", galleryMatch[1])
+      .maybeSingle();
+    if (gallery && gallery.status !== "archived") {
+      const source = String(gallery.cover_url || gallery.og_image_id || "first");
+      return {
+        target,
+        label: `${gallery.title || "Your gallery"} | Shutter Ram Photography`,
+        description:
+          gallery.message || "View and choose your photographs from your private gallery.",
+        ogImage: `/api/public/crm/gallery-og/${gallery.token}?v=${imageStamp(source)}`,
+      };
+    }
+  }
 
   return { target, ogImage: row.og_image ?? "", label: row.label ?? "" };
 }

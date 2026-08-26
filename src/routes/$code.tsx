@@ -16,7 +16,8 @@ export const Route = createFileRoute("/$code")({
   head: ({ loaderData }) => {
     const link = loaderData?.link;
     const title = link?.label?.trim() ? link.label.trim() : "Shutter Ram";
-    const description = "A shared link from the Shutter Ram photography studio.";
+    const description =
+      link?.description || "View and choose your photographs from your private gallery.";
     const image = link?.ogImage
       ? link.ogImage.startsWith("http")
         ? link.ogImage

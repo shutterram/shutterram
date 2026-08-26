@@ -90,20 +90,24 @@ export async function loadPublicGalleryMeta(
     .select("title,message,og_image_id,cover_url,status")
     .eq("token", token)
     .maybeSingle();
-  if (!data || data.status === "draft" || data.status === "archived") {
-    return { title: "Your gallery | Shutter Ram", description: "Private client gallery.", ogImage: "" };
+  if (!data || data.status === "archived") {
+    return {
+      title: "Your gallery | Shutter Ram Photography",
+      description: "View and choose your photographs from your private gallery.",
+      ogImage: "",
+    };
   }
   // A short fingerprint of the chosen picture, so swapping it changes the URL
   // and platforms stop serving the previously scraped card.
-  const source = String(data.cover_url || data.og_image_id || "");
+  const source = String(data.cover_url || data.og_image_id || "first");
   let stamp = 0;
   for (const ch of source) stamp = (stamp * 31 + ch.charCodeAt(0)) >>> 0;
   return {
-    title: `${data.title || "Your gallery"} | Shutter Ram`,
+    title: `${data.title || "Your gallery"} | Shutter Ram Photography`,
     description: data.message || "View and choose your photographs from your private gallery.",
     // Always the stable unsigned endpoint: signed image links expire after a
     // few hours, so social crawlers would re-fetch them and get nothing.
-    ogImage: source ? `/api/public/crm/gallery-og/${token}?v=${stamp.toString(36)}` : "",
+    ogImage: `/api/public/crm/gallery-og/${token}?v=${stamp.toString(36)}`,
   };
 }
 

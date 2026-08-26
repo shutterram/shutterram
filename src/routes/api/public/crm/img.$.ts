@@ -102,7 +102,7 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
           // A storage-cleanup deletion can leave the old path on the image row.
           // For grid thumbnails only, recover with Google's small derivative;
           // never pull a multi-megabyte original into the grid.
-          if (kind === "thumb" && image.drive_file_id) {
+          if ((kind === "thumb" || kind === "preview") && image.drive_file_id) {
             const { fetchDriveThumbnail } = await import("@/lib/google-drive.server");
             const fallback = await fetchDriveThumbnail(image.drive_file_id);
             if (fallback) {
@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
           }
         }
 
-        if (kind === "thumb" && image.drive_file_id) {
+        if ((kind === "thumb" || kind === "preview") && image.drive_file_id) {
           const { fetchDriveThumbnail } = await import("@/lib/google-drive.server");
           const res = await fetchDriveThumbnail(image.drive_file_id);
           if (!res) return new Response("Not found", { status: 404 });
