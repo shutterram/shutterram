@@ -109,49 +109,6 @@ function releaseImage(img: ImageSource) {
   if (!(img instanceof HTMLImageElement)) img.close();
 }
 
-/**
- * Draws a photo down to `maxPx` on its longest edge using progressive halving,
- * which keeps fine detail crisp instead of the soft/aliased result a single
- * large downscale step produces.
- */
-function scaledCanvas(img: ImageSource, w: number, h: number) {
-  const make = (cw: number, ch: number) => {
-    const off = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(cw, ch) : null;
-    const c = off ?? document.createElement("canvas");
-    if (!off) {
-      (c as HTMLCanvasElement).width = cw;
-      (c as HTMLCanvasElement).height = ch;
-    }
-    const cx = (c as HTMLCanvasElement).getContext("2d", { colorSpace: "srgb" }) as
-      | CanvasRenderingContext2D
-      | null;
-    if (!cx) throw new Error("Canvas unavailable");
-    cx.imageSmoothingEnabled = true;
-    cx.imageSmoothingQuality = "high";
-    return { c, cx };
-  };
-
-  const { w: sw, h: sh } = sourceSize(img);
-  let curW = sw;
-  let curH = sh;
-  let source: CanvasImageSource = img as CanvasImageSource;
-
-  // Halve repeatedly while we're more than 2x away from the target.
-  while (curW > w * 2 && curH > h * 2) {
-    const nextW = Math.max(w, Math.round(curW / 2));
-    const nextH = Math.max(h, Math.round(curH / 2));
-    const step = make(nextW, nextH);
-    step.cx.drawImage(source, 0, 0, nextW, nextH);
-    source = step.c as unknown as CanvasImageSource;
-    curW = nextW;
-    curH = nextH;
-  }
-
-  const final = make(w, h);
-  final.cx.drawImage(source, 0, 0, w, h);
-  return final;
-}
-
 async function drawTo(
   img: ImageSource,
   maxPx: number,
@@ -163,9 +120,14 @@ async function drawTo(
   const scale = Math.min(1, maxPx / Math.max(sw, sh));
   const w = Math.round(sw * scale);
   const h = Math.round(sh * scale);
-  // Standardise generated previews to browser-managed sRGB JPEG so their
-  // appearance remains consistent across the gallery and downloaded preview.
-  const { c: canvas, cx: ctx } = scaledCanvas(img, w, h);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  // This is the same browser-managed sRGB JPEG path used by the original
+  // high-quality public-gallery preview builder.
+  const ctx = canvas.getContext("2d", { colorSpace: "srgb" });
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.drawImage(img as CanvasImageSource, 0, 0, w, h);
   if (watermark?.text) {
     const size = Math.max(12, (w * watermark.size) / 100);
     ctx.font = `600 ${size}px sans-serif`;
@@ -178,45 +140,47 @@ async function drawTo(
     ctx.fillText(watermark.text, 0, 0);
     ctx.restore();
   }
-  const blob =
-    typeof OffscreenCanvas === "function" && canvas instanceof OffscreenCanvas
-      ? await canvas.convertToBlob({ type: format, quality: quality / 100 })
-      : await new Promise<Blob | null>((res) =>
-          (canvas as HTMLCanvasElement).toBlob(res, format, quality / 100),
-        );
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, format, quality / 100));
   if (!blob) throw new Error("Could not process image");
   return { blob, width: w, height: h };
 }
 
 /** Lanes used when encoding + uploading photos in parallel. */
 const ENCODE_LANES = 5;
-/** Previews always encode at high quality; size is met by resolution only. */
-const PREVIEW_QUALITY = 92;
-
 async function drawToByteLimit(
   img: ImageSource,
   maxBytes: number,
   watermark: { text: string; opacity: number; size: number } | null,
-  maxPx = 2560,
 ) {
-  // Quality never drops below 92 — a preview that is over budget is made
-  // smaller in pixels, never crushed. The square-root overshoot ratio means
-  // it converges in one or two extra encodes, so rebuilds stay fast.
+  // Keep this identical to the original high-quality preview builder: begin
+  // with the source's full resolution at JPEG quality 100, then find the best
+  // quality that actually fits. Resolution is reduced only when even quality
+  // 72 cannot satisfy the selected byte ceiling.
   const { w: sw, h: sh } = sourceSize(img);
-  let edge = Math.min(Math.max(sw, sh), maxPx);
+  let edge = Math.max(sw, sh);
+  let best = await drawTo(img, edge, 100, watermark, "image/jpeg");
+  if (best.blob.size <= maxBytes) return best;
 
-  let best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
-  for (let pass = 0; pass < 4 && best.blob.size > maxBytes && edge > 1000; pass += 1) {
-    const ratio = Math.sqrt(maxBytes / best.blob.size);
-    edge = Math.max(1000, Math.round(edge * Math.min(0.92, Math.max(0.6, ratio))));
-    best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
+  for (let pass = 0; pass < 6; pass += 1) {
+    let low = 72;
+    let high = 99;
+    let fitting: typeof best | null = null;
+    for (let attempt = 0; attempt < 9; attempt += 1) {
+      const quality = Math.round((low + high) / 2);
+      const candidate = await drawTo(img, edge, quality, watermark, "image/jpeg");
+      if (candidate.blob.size <= maxBytes) {
+        fitting = candidate;
+        low = quality + 1;
+      } else {
+        high = quality - 1;
+      }
+    }
+    if (fitting) return fitting;
+    edge = Math.max(1600, Math.round(edge * 0.9));
+    best = await drawTo(img, edge, 72, watermark, "image/jpeg");
   }
   return best;
 }
-
-
-
-
 
 export function GalleriesPanel({ contacts }: { contacts: { id: string; name: string }[] }) {
   const list = useServerFn(listGalleries);
@@ -311,7 +275,8 @@ export function GalleriesPanel({ contacts }: { contacts: { id: string; name: str
                 <Btn
                   variant="danger"
                   onClick={() => {
-                    if (!window.confirm("Delete this gallery and all of its images from storage?")) return;
+                    if (!window.confirm("Delete this gallery and all of its images from storage?"))
+                      return;
                     void remove({ data: { id: g.id } }).then(load);
                   }}
                 >
@@ -554,7 +519,7 @@ function GalleryDetail({
         try {
           const img = await decodeImage(file);
           const preview = form.downscalePreviews
-            ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark, Math.max(1600, form.previewMaxPx))
+            ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark)
             : await drawTo(img, 12000, 100, mark);
           const thumb = await drawTo(img, thumbMax, 70, mark);
           releaseImage(img);
@@ -648,7 +613,7 @@ function GalleryDetail({
           const thumb = await drawTo(image, 600, 70, null);
           const preview =
             form.downscalePreviews && slot.preview
-              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null, Math.max(1600, form.previewMaxPx))
+              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
               : null;
           releaseImage(image);
           const uploads = await Promise.all([
@@ -789,7 +754,6 @@ function GalleryDetail({
     }
   }
 
-
   async function sendRawsToDrive() {
     try {
       setBusy("Copying RAW files inside Drive…");
@@ -843,7 +807,9 @@ function GalleryDetail({
           <Btn
             onClick={() => {
               void getShortLink({ data: { galleryId: gallery.id } })
-                .then(({ code }) => copyLink(`${window.location.origin}/${code}`, (m) => toast.success(m)))
+                .then(({ code }) =>
+                  copyLink(`${window.location.origin}/${code}`, (m) => toast.success(m)),
+                )
                 .catch((error) =>
                   toast.error(error instanceof Error ? error.message : "Could not create link"),
                 );
