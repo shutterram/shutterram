@@ -1,7 +1,11 @@
 import type { SeoRow } from "./seo.server";
 import { getSeo } from "./seo.functions";
 
-export const SITE_URL = "https://shutterram.lovable.app";
+// Social images and dynamic gallery routes must stay on the same production
+// deployment as the page. The separate Lovable URL can point at a different
+// backend after the project is exported and redeployed, which makes otherwise
+// valid gallery preview images return 404 to social crawlers.
+export const SITE_URL = "https://www.shutterram.com";
 
 export type SeoFallback = {
   path: string;

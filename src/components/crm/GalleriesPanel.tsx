@@ -153,38 +153,41 @@ async function drawTo(
   return { blob, width: w, height: h };
 }
 
+/** Lanes used when encoding + uploading photos in parallel. */
+const ENCODE_LANES = 5;
+/** Visually transparent for web viewing, roughly half the bytes of q92. */
+const PREVIEW_QUALITY = 84;
+const PREVIEW_QUALITY_MIN = 76;
+
 async function drawToByteLimit(
   img: ImageSource,
   maxBytes: number,
   watermark: { text: string; opacity: number; size: number } | null,
+  maxPx = 2560,
 ) {
-  // Everything is plain JPEG: universally supported, predictable quality
-  // control, and no surprise PNG/WebP behaviour.
-  let edge = Math.max(sourceSize(img).w, sourceSize(img).h);
-  let best = await drawTo(img, edge, 100, watermark, "image/jpeg");
-  if (best.blob.size <= maxBytes) return best;
+  // Previews are encoded at a web-friendly quality first (small files load
+  // fast on slow connections). If a frame is still over budget we shrink the
+  // frame using the square root of the overshoot, so it converges in one or
+  // two extra encodes rather than a slow search.
+  const { w: sw, h: sh } = sourceSize(img);
+  let edge = Math.min(Math.max(sw, sh), maxPx);
 
-  for (let pass = 0; pass < 6; pass += 1) {
-    let low = 72;
-    let high = 99;
-    let fitting: typeof best | null = null;
-    // A true binary search: it stops as soon as the range collapses instead of
-    // re-encoding the same quality over and over, which is the same result in
-    // roughly half the work.
-    while (low <= high) {
-      const quality = Math.round((low + high) / 2);
-      const candidate = await drawTo(img, edge, quality, watermark, "image/jpeg");
-      if (candidate.blob.size <= maxBytes) {
-        fitting = candidate;
-        low = quality + 1;
-      } else high = quality - 1;
-    }
-    if (fitting) return fitting;
-    edge = Math.max(1600, Math.round(edge * 0.9));
-    best = await drawTo(img, edge, 72, watermark, "image/jpeg");
+  let best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
+  for (let pass = 0; pass < 3 && best.blob.size > maxBytes && edge > 1200; pass += 1) {
+    const ratio = Math.sqrt(maxBytes / best.blob.size);
+    edge = Math.max(1200, Math.round(edge * Math.min(0.9, Math.max(0.6, ratio))));
+    best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
+  }
+  if (best.blob.size > maxBytes) {
+    // Last resort at the resolution floor: one lower-quality encode.
+    const fallback = await drawTo(img, edge, PREVIEW_QUALITY_MIN, watermark, "image/jpeg");
+    if (fallback.blob.size < best.blob.size) best = fallback;
   }
   return best;
 }
+
+
+
 
 export function GalleriesPanel({ contacts }: { contacts: { id: string; name: string }[] }) {
   const list = useServerFn(listGalleries);
@@ -508,21 +511,21 @@ function GalleryDetail({
     // Photos are handled in chunks so the signed upload slots are requested in
     // one round-trip per chunk instead of one per photo, and several photos
     // are encoded and uploaded at the same time.
-    const CHUNK = 20;
+    const CHUNK = 25;
     for (let start = 0; start < images.length; start += CHUNK) {
       if (cancelRef.current) break;
       const chunk = images.slice(start, start + CHUNK);
       const slots = await uploadTargetsBatch({
         data: { galleryId: gallery.id, names: chunk.map((f) => f.name) },
       });
-      const prepared = await runPool(chunk, 3, async (file, index) => {
+      const prepared = await runPool(chunk, ENCODE_LANES, async (file, index) => {
         if (cancelRef.current) return null;
         const t = slots.targets[index];
         if (!t) return null;
         try {
           const img = await decodeImage(file);
           const preview = form.downscalePreviews
-            ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark)
+            ? await drawToByteLimit(img, form.previewMaxKb * 1024, mark, Math.max(1600, form.previewMaxPx))
             : await drawTo(img, 12000, 100, mark);
           const thumb = await drawTo(img, thumbMax, 70, mark);
           releaseImage(img);
@@ -597,7 +600,7 @@ function GalleryDetail({
     let failed = 0;
     await startJob(total, "Rebuilding previews");
 
-    const CHUNK = 20;
+    const CHUNK = 25;
     for (let start = 0; start < missing.length; start += CHUNK) {
       if (cancelRef.current) break;
       const chunk = missing.slice(start, start + CHUNK);
@@ -607,7 +610,7 @@ function GalleryDetail({
           items: chunk.map((row) => ({ imageId: row.id, withPreview: form.downscalePreviews })),
         },
       });
-      const attachments = await runPool(chunk, 3, async (row, index) => {
+      const attachments = await runPool(chunk, ENCODE_LANES, async (row, index) => {
         if (cancelRef.current) return null;
         const slot = slots[index];
         if (!slot) return null;
@@ -616,7 +619,7 @@ function GalleryDetail({
           const thumb = await drawTo(image, 600, 70, null);
           const preview =
             form.downscalePreviews && slot.preview
-              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
+              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null, Math.max(1600, form.previewMaxPx))
               : null;
           releaseImage(image);
           const uploads = await Promise.all([
