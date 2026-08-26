@@ -109,6 +109,49 @@ function releaseImage(img: ImageSource) {
   if (!(img instanceof HTMLImageElement)) img.close();
 }
 
+/**
+ * Draws a photo down to `maxPx` on its longest edge using progressive halving,
+ * which keeps fine detail crisp instead of the soft/aliased result a single
+ * large downscale step produces.
+ */
+function scaledCanvas(img: ImageSource, w: number, h: number) {
+  const make = (cw: number, ch: number) => {
+    const off = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(cw, ch) : null;
+    const c = off ?? document.createElement("canvas");
+    if (!off) {
+      (c as HTMLCanvasElement).width = cw;
+      (c as HTMLCanvasElement).height = ch;
+    }
+    const cx = (c as HTMLCanvasElement).getContext("2d", { colorSpace: "srgb" }) as
+      | CanvasRenderingContext2D
+      | null;
+    if (!cx) throw new Error("Canvas unavailable");
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = "high";
+    return { c, cx };
+  };
+
+  const { w: sw, h: sh } = sourceSize(img);
+  let curW = sw;
+  let curH = sh;
+  let source: CanvasImageSource = img as CanvasImageSource;
+
+  // Halve repeatedly while we're more than 2x away from the target.
+  while (curW > w * 2 && curH > h * 2) {
+    const nextW = Math.max(w, Math.round(curW / 2));
+    const nextH = Math.max(h, Math.round(curH / 2));
+    const step = make(nextW, nextH);
+    step.cx.drawImage(source, 0, 0, nextW, nextH);
+    source = step.c as unknown as CanvasImageSource;
+    curW = nextW;
+    curH = nextH;
+  }
+
+  const final = make(w, h);
+  final.cx.drawImage(source, 0, 0, w, h);
+  return final;
+}
+
 async function drawTo(
   img: ImageSource,
   maxPx: number,
@@ -122,17 +165,7 @@ async function drawTo(
   const h = Math.round(sh * scale);
   // Standardise generated previews to browser-managed sRGB JPEG so their
   // appearance remains consistent across the gallery and downloaded preview.
-  const offscreen = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(w, h) : null;
-  const canvas = offscreen ?? document.createElement("canvas");
-  if (!offscreen) {
-    (canvas as HTMLCanvasElement).width = w;
-    (canvas as HTMLCanvasElement).height = h;
-  }
-  const ctx = (canvas as HTMLCanvasElement).getContext("2d", { colorSpace: "srgb" }) as
-    | CanvasRenderingContext2D
-    | null;
-  if (!ctx) throw new Error("Canvas unavailable");
-  ctx.drawImage(img as CanvasImageSource, 0, 0, w, h);
+  const { c: canvas, cx: ctx } = scaledCanvas(img, w, h);
   if (watermark?.text) {
     const size = Math.max(12, (w * watermark.size) / 100);
     ctx.font = `600 ${size}px sans-serif`;
@@ -145,20 +178,20 @@ async function drawTo(
     ctx.fillText(watermark.text, 0, 0);
     ctx.restore();
   }
-  const blob = offscreen
-    ? await offscreen.convertToBlob({ type: format, quality: quality / 100 })
-    : await new Promise<Blob | null>((res) =>
-        (canvas as HTMLCanvasElement).toBlob(res, format, quality / 100),
-      );
+  const blob =
+    typeof OffscreenCanvas === "function" && canvas instanceof OffscreenCanvas
+      ? await canvas.convertToBlob({ type: format, quality: quality / 100 })
+      : await new Promise<Blob | null>((res) =>
+          (canvas as HTMLCanvasElement).toBlob(res, format, quality / 100),
+        );
   if (!blob) throw new Error("Could not process image");
   return { blob, width: w, height: h };
 }
 
 /** Lanes used when encoding + uploading photos in parallel. */
 const ENCODE_LANES = 5;
-/** Visually transparent for web viewing, roughly half the bytes of q92. */
-const PREVIEW_QUALITY = 84;
-const PREVIEW_QUALITY_MIN = 76;
+/** Previews always encode at high quality; size is met by resolution only. */
+const PREVIEW_QUALITY = 92;
 
 async function drawToByteLimit(
   img: ImageSource,
@@ -166,26 +199,21 @@ async function drawToByteLimit(
   watermark: { text: string; opacity: number; size: number } | null,
   maxPx = 2560,
 ) {
-  // Previews are encoded at a web-friendly quality first (small files load
-  // fast on slow connections). If a frame is still over budget we shrink the
-  // frame using the square root of the overshoot, so it converges in one or
-  // two extra encodes rather than a slow search.
+  // Quality never drops below 92 — a preview that is over budget is made
+  // smaller in pixels, never crushed. The square-root overshoot ratio means
+  // it converges in one or two extra encodes, so rebuilds stay fast.
   const { w: sw, h: sh } = sourceSize(img);
   let edge = Math.min(Math.max(sw, sh), maxPx);
 
   let best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
-  for (let pass = 0; pass < 3 && best.blob.size > maxBytes && edge > 1200; pass += 1) {
+  for (let pass = 0; pass < 4 && best.blob.size > maxBytes && edge > 1000; pass += 1) {
     const ratio = Math.sqrt(maxBytes / best.blob.size);
-    edge = Math.max(1200, Math.round(edge * Math.min(0.9, Math.max(0.6, ratio))));
+    edge = Math.max(1000, Math.round(edge * Math.min(0.92, Math.max(0.6, ratio))));
     best = await drawTo(img, edge, PREVIEW_QUALITY, watermark, "image/jpeg");
-  }
-  if (best.blob.size > maxBytes) {
-    // Last resort at the resolution floor: one lower-quality encode.
-    const fallback = await drawTo(img, edge, PREVIEW_QUALITY_MIN, watermark, "image/jpeg");
-    if (fallback.blob.size < best.blob.size) best = fallback;
   }
   return best;
 }
+
 
 
 
@@ -721,7 +749,7 @@ function GalleryDetail({
         image.onerror = () => reject(new Error("Could not read image"));
         image.src = url;
       });
-      const rendered = await drawTo(image, 1600, 84, null);
+      const rendered = await drawTo(image, 1600, 90, null);
       URL.revokeObjectURL(url);
       const target = await ogTarget({ data: { galleryId: gallery.id } });
       const uploaded = await supabase.storage
