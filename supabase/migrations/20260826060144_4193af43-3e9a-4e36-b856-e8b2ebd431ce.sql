@@ -1,0 +1,1 @@
+ALTER TABLE public.crm_galleries ADD COLUMN IF NOT EXISTS pick_pin_hash text NOT NULL DEFAULT '';

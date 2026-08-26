@@ -4,6 +4,7 @@ import { Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { findOrphanFiles, deleteImageFiles, type OrphanReport } from "@/lib/storage.functions";
 import { Toggle } from "./Toggle";
+import { StorageBrowser } from "./StorageBrowser";
 
 function size(bytes: number) {
   if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -148,6 +149,8 @@ export function StorageCleanup() {
           )}
         </div>
       ) : null}
+
+      <StorageBrowser />
     </div>
   );
 }

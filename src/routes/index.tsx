@@ -19,6 +19,7 @@ import { StatsStrip } from "@/components/site/StatsStrip";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Testimonials } from "@/components/site/Testimonials";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSessionThumbnails } from "@/hooks/use-session-thumbnails";
 
 import {
   aboutShort,
@@ -94,6 +95,7 @@ function Home() {
   );
 
   const shown = isMobile ? visible.slice(0, mobileCount) : visible;
+  const sessionThumbs = useSessionThumbnails(shown.map((p) => ({ id: p.id, src: p.src })));
   const allShown = mobileCount >= visible.length;
 
   useEffect(() => {
@@ -262,9 +264,10 @@ function Home() {
 
               >
                 <img
-                  src={p.src}
+                  src={sessionThumbs.get(p.id) ?? p.src}
                   alt={p.caption}
-                  loading="lazy"
+                  loading="eager"
+                  decoding="async"
                   className="aspect-[4/5] w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.05] md:aspect-auto"
                 />
                 <div className="absolute inset-0 bg-background/55 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />

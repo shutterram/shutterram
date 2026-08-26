@@ -10,9 +10,14 @@ export interface GallerySummary {
   status: string;
   contact_id: string | null;
   drive_folder_id: string;
+  raw_folder_id: string;
+  source: string;
+  compression: string;
+  delivery_folder_link: string;
   access_code: string;
   has_password: boolean;
   has_client_password: boolean;
+  has_pick_pin: boolean;
   allow_client_password: boolean;
   allow_download: boolean;
   watermark: boolean;
@@ -23,7 +28,23 @@ export interface GallerySummary {
   image_count: number;
   picked_count: number;
   created_at: string;
+  grid_desktop: string;
+  grid_tablet: string;
+  grid_mobile: string;
+  og_image_id: string | null;
+  downscale_previews: boolean;
+  preview_max_px: number;
+  preview_max_bytes: number;
+  default_sort: string;
+  cover_url: string;
 }
+
+export const galleryMeta = createServerFn({ method: "GET" })
+  .inputValidator((input: { token: string }) => input)
+  .handler(async ({ data }) => {
+    const { loadPublicGalleryMeta } = await import("./gallery.server");
+    return loadPublicGalleryMeta(String(data.token).slice(0, 64));
+  });
 
 export const listGalleries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -55,9 +76,14 @@ export const listGalleries = createServerFn({ method: "POST" })
       status: String(g["status"] ?? "draft"),
       contact_id: (g["contact_id"] as string | null) ?? null,
       drive_folder_id: String(g["drive_folder_id"] ?? ""),
+      raw_folder_id: String(g["raw_folder_id"] ?? ""),
+      source: String(g["source"] ?? "upload"),
+      compression: String(g["compression"] ?? "balanced"),
+      delivery_folder_link: String(g["delivery_folder_link"] ?? ""),
       access_code: String(g["access_code"] ?? ""),
       has_password: Boolean(g["password_hash"]),
       has_client_password: Boolean(g["client_password_hash"]),
+      has_pick_pin: Boolean(g["pick_pin_hash"]),
       allow_client_password: Boolean(g["allow_client_password"]),
       allow_download: Boolean(g["allow_download"]),
       watermark: Boolean(g["watermark"]),
@@ -68,6 +94,15 @@ export const listGalleries = createServerFn({ method: "POST" })
       image_count: counts.get(String(g["id"])) ?? 0,
       picked_count: picked.get(String(g["id"])) ?? 0,
       created_at: String(g["created_at"] ?? ""),
+      grid_desktop: String(g["grid_desktop"] ?? "4"),
+      grid_tablet: String(g["grid_tablet"] ?? "3"),
+      grid_mobile: String(g["grid_mobile"] ?? "2"),
+      og_image_id: (g["og_image_id"] as string | null) ?? null,
+      downscale_previews: Boolean(g["downscale_previews"] ?? true),
+      preview_max_px: Number(g["preview_max_px"] ?? 1600),
+      preview_max_bytes: Number(g["preview_max_bytes"] ?? 10485760),
+      default_sort: String(g["default_sort"] ?? "default"),
+      cover_url: String(g["cover_url"] ?? ""),
     }));
   });
 
@@ -111,6 +146,7 @@ export const updateGallery = createServerFn({ method: "POST" })
       status?: string;
       accessCode?: string;
       password?: string | null;
+      pickPin?: string | null;
       clearClientPassword?: boolean;
       allowClientPassword?: boolean;
       allowDownload?: boolean;
@@ -118,7 +154,19 @@ export const updateGallery = createServerFn({ method: "POST" })
       maxPicks?: number;
       expiresAt?: string | null;
       driveFolderId?: string;
+      rawFolderId?: string;
+      source?: string;
+      compression?: string;
       contactId?: string | null;
+      gridDesktop?: string;
+      gridTablet?: string;
+      gridMobile?: string;
+      ogImageId?: string | null;
+      downscalePreviews?: boolean;
+      previewMaxPx?: number;
+      previewMaxBytes?: number;
+      defaultSort?: string;
+      coverUrl?: string;
     }) => input,
   )
   .handler(async ({ data, context }) => {
@@ -137,10 +185,47 @@ export const updateGallery = createServerFn({ method: "POST" })
     if (data.maxPicks !== undefined) patch["max_picks"] = data.maxPicks;
     if (data.expiresAt !== undefined) patch["expires_at"] = data.expiresAt || null;
     if (data.driveFolderId !== undefined) patch["drive_folder_id"] = data.driveFolderId.trim();
+    if (data.rawFolderId !== undefined) patch["raw_folder_id"] = data.rawFolderId.trim();
+    if (data.source !== undefined) patch["source"] = data.source;
+    if (data.compression !== undefined) patch["compression"] = data.compression;
     if (data.contactId !== undefined) patch["contact_id"] = data.contactId;
+    if (data.gridDesktop !== undefined) patch["grid_desktop"] = data.gridDesktop;
+    if (data.gridTablet !== undefined) patch["grid_tablet"] = data.gridTablet;
+    if (data.gridMobile !== undefined) patch["grid_mobile"] = data.gridMobile;
+    if (data.ogImageId !== undefined) {
+      // Re-syncing a Drive gallery replaces its image rows. The editor may still
+      // hold the former cover image id, so never write that stale foreign key.
+      if (data.ogImageId) {
+        const { data: coverImage } = await supabaseAdmin
+          .from("crm_gallery_images")
+          .select("id")
+          .eq("id", data.ogImageId)
+          .eq("gallery_id", data.id)
+          .maybeSingle();
+        patch["og_image_id"] = coverImage?.id ?? null;
+      } else {
+        patch["og_image_id"] = null;
+      }
+    }
+    if (data.downscalePreviews !== undefined) patch["downscale_previews"] = data.downscalePreviews;
+    if (data.previewMaxPx !== undefined)
+      patch["preview_max_px"] = Math.max(640, Math.min(3200, Math.round(data.previewMaxPx)));
+    if (data.previewMaxBytes !== undefined)
+      patch["preview_max_bytes"] = Math.max(
+        102400,
+        Math.min(5242880, Math.round(data.previewMaxBytes)),
+      );
+    if (
+      data.defaultSort !== undefined &&
+      ["default", "name", "name-desc", "picked"].includes(data.defaultSort)
+    )
+      patch["default_sort"] = data.defaultSort;
+    if (data.coverUrl !== undefined) patch["cover_url"] = data.coverUrl;
     if (data.clearClientPassword) patch["client_password_hash"] = "";
     if (data.password !== undefined)
       patch["password_hash"] = data.password ? await hashPassword(data.password) : "";
+    if (data.pickPin !== undefined)
+      patch["pick_pin_hash"] = data.pickPin ? await hashPassword(String(data.pickPin).trim()) : "";
     const { error } = await supabaseAdmin
       .from("crm_galleries")
       .update(patch as never)
@@ -159,21 +244,47 @@ export const galleryUploadTargets = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { GALLERY_BUCKET } = await import("./gallery.server");
     const stem = `${data.galleryId}/${crypto.randomUUID()}`;
-    const previewPath = `${stem}-preview.webp`;
-    const thumbPath = `${stem}-thumb.webp`;
-    const [preview, thumb] = await Promise.all([
+    const previewPath = `${stem}-preview.jpg`;
+    const thumbPath = `${stem}-thumb.jpg`;
+    const originalPath = `${stem}-original`;
+    const [preview, thumb, original] = await Promise.all([
       supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(previewPath),
       supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(thumbPath),
+      supabaseAdmin.storage.from(GALLERY_BUCKET).createSignedUploadUrl(originalPath),
     ]);
-    if (preview.error || thumb.error)
-      throw new Error(preview.error?.message ?? thumb.error?.message ?? "Upload failed");
+    if (preview.error || thumb.error || original.error)
+      throw new Error(
+        preview.error?.message ??
+          thumb.error?.message ??
+          original.error?.message ??
+          "Upload failed",
+      );
     return {
+      originalPath,
       previewPath,
       thumbPath,
+      originalToken: original.data.token,
       previewToken: preview.data.token,
       thumbToken: thumb.data.token,
       bucket: GALLERY_BUCKET,
     };
+  });
+
+/** Admin: upload slot for a gallery's standalone social preview image. */
+export const galleryOgUploadTarget = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { GALLERY_BUCKET } = await import("./gallery.server");
+    const path = `${data.galleryId}/og-${crypto.randomUUID()}.jpg`;
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from(GALLERY_BUCKET)
+      .createSignedUploadUrl(path);
+    if (error || !signed) throw new Error(error?.message ?? "Could not prepare link image upload");
+    return { bucket: GALLERY_BUCKET, path, token: signed.token };
   });
 
 export const registerGalleryImages = createServerFn({ method: "POST" })
@@ -183,6 +294,8 @@ export const registerGalleryImages = createServerFn({ method: "POST" })
       galleryId: string;
       images: {
         name: string;
+        originalName?: string;
+        originalPath?: string;
         previewPath?: string;
         thumbPath?: string;
         driveFileId?: string;
@@ -208,6 +321,8 @@ export const registerGalleryImages = createServerFn({ method: "POST" })
     const rows = data.images.map((img, i) => ({
       gallery_id: data.galleryId,
       name: img.name,
+      original_name: img.originalName ?? img.name,
+      original_path: img.originalPath ?? "",
       preview_path: img.previewPath ?? "",
       thumb_path: img.thumbPath ?? "",
       drive_file_id: img.driveFileId ?? "",
@@ -234,27 +349,50 @@ export const galleryResults = createServerFn({ method: "POST" })
     const { signImage } = await import("./gallery.server");
     const { data: images } = await supabaseAdmin
       .from("crm_gallery_images")
-      .select("id,name,sort_order")
+      .select(
+        "id,name,original_name,drive_file_id,drive_raw_file_id,thumb_path,preview_path,sort_order",
+      )
       .eq("gallery_id", data.galleryId)
       .order("sort_order");
     const { data: picks } = await supabaseAdmin
       .from("crm_gallery_picks")
-      .select("image_id,picked,rating,label,comment")
+      .select("image_id,picked,starred,rating,label,comment,done")
       .eq("gallery_id", data.galleryId);
     const map = new Map(
       ((picks ?? []) as { image_id: string }[]).map((p) => [p.image_id, p as never]),
     );
     const out = [];
-    for (const img of (images ?? []) as { id: string; name: string }[]) {
+    for (const img of (images ?? []) as {
+      id: string;
+      name: string;
+      original_name?: string;
+      drive_file_id?: string;
+      drive_raw_file_id?: string;
+      thumb_path?: string;
+      preview_path?: string;
+    }[]) {
       const p = map.get(img.id) as
-        | { picked: boolean; rating: number; label: string; comment: string }
+        | {
+            picked: boolean;
+            starred: boolean;
+            rating: number;
+            label: string;
+            comment: string;
+            done: boolean;
+          }
         | undefined;
       out.push({
         id: img.id,
-        name: img.name,
+        name: img.original_name || img.name,
+        hasThumb: Boolean(img.thumb_path),
+        hasPreview: Boolean(img.preview_path),
+        hasRaw: Boolean(img.drive_raw_file_id),
         thumb: await signImage(img.id, "thumb"),
         preview: await signImage(img.id, "preview"),
+        orig: await signImage(img.id, "orig"),
         picked: p?.picked ?? false,
+        starred: p?.starred ?? false,
+        done: p?.done ?? false,
         rating: p?.rating ?? 0,
         label: p?.label ?? "",
         comment: p?.comment ?? "",
@@ -281,8 +419,10 @@ export const saveGalleryPick = createServerFn({ method: "POST" })
       token: string;
       code?: string;
       password?: string;
+      pin?: string;
       imageId: string;
       picked?: boolean;
+      starred?: boolean;
       rating?: number;
       label?: string;
       comment?: string;
@@ -292,10 +432,11 @@ export const saveGalleryPick = createServerFn({ method: "POST" })
     const { savePick } = await import("./gallery.server");
     return savePick(
       String(data.token).slice(0, 64),
-      { code: data.code, password: data.password },
+      { code: data.code, password: data.password, pin: data.pin },
       {
         imageId: data.imageId,
         ...(data.picked !== undefined ? { picked: data.picked } : {}),
+        ...(data.starred !== undefined ? { starred: data.starred } : {}),
         ...(data.rating !== undefined ? { rating: data.rating } : {}),
         ...(data.label !== undefined ? { label: data.label } : {}),
         ...(data.comment !== undefined ? { comment: data.comment } : {}),
@@ -304,9 +445,13 @@ export const saveGalleryPick = createServerFn({ method: "POST" })
   });
 
 export const submitGallery = createServerFn({ method: "POST" })
-  .inputValidator((input: { token: string; code?: string; password?: string }) => input)
+  .inputValidator(
+    (input: { token: string; code?: string; password?: string; pin?: string }) => input,
+  )
   .handler(async ({ data }) => {
-    const { loadPublicGallery } = await import("./gallery.server");
+    const { loadPublicGallery, checkPickPin } = await import("./gallery.server");
+    const pinGate = await checkPickPin(String(data.token).slice(0, 64), data.pin);
+    if (!pinGate.ok) return { ok: false, reason: pinGate.reason };
     const { logActivity } = await import("./crm.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const gallery = await loadPublicGallery(String(data.token).slice(0, 64), {
@@ -338,4 +483,213 @@ export const setGalleryClientPassword = createServerFn({ method: "POST" })
       { code: data.code, password: data.password },
       String(data.newPassword),
     );
+  });
+
+/* ---------------- Google Drive linked galleries ---------------- */
+
+/**
+ * Admin: pull an entire Drive folder into a gallery. Optionally matches each
+ * preview to its RAW counterpart in a second folder, by file-name stem.
+ */
+export const importDriveFolder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { galleryId: string; folderId: string; rawFolderId?: string; replace?: boolean }) =>
+      input,
+  )
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { listFolderImages, listFolderFiles, matchByStem } =
+      await import("./google-drive.server");
+
+    const folderId = data.folderId.trim();
+    if (!folderId) throw new Error("Add a Google Drive folder ID first.");
+    const files = await listFolderImages(folderId);
+    if (!files.length) throw new Error("No images found in that Drive folder.");
+
+    const rawMatches = data.rawFolderId?.trim()
+      ? matchByStem(await listFolderFiles(data.rawFolderId.trim()))
+      : new Map<string, { id: string }>();
+
+    if (data.replace) {
+      await supabaseAdmin.from("crm_gallery_images").delete().eq("gallery_id", data.galleryId);
+    }
+    const { count } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("id", { count: "exact", head: true })
+      .eq("gallery_id", data.galleryId);
+    const base = count ?? 0;
+
+    let matched = 0;
+    const rows = files.map((f, i) => {
+      const stem = f.name.replace(/\.[^.]+$/, "").toLowerCase();
+      const raw = rawMatches.get(stem);
+      if (raw) matched += 1;
+      return {
+        gallery_id: data.galleryId,
+        name: f.name,
+        original_name: f.name,
+        drive_file_id: f.id,
+        drive_raw_file_id: raw?.id ?? "",
+        bytes: Number(f.size ?? 0),
+        sort_order: base + i,
+      };
+    });
+    const { error } = await supabaseAdmin.from("crm_gallery_images").insert(rows as never);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin
+      .from("crm_galleries")
+      .update({
+        source: "drive",
+        drive_folder_id: folderId,
+        ...(data.rawFolderId !== undefined ? { raw_folder_id: data.rawFolderId.trim() } : {}),
+      } as never)
+      .eq("id", data.galleryId);
+
+    return { added: rows.length, rawMatched: matched };
+  });
+
+/** Admin: attach a browser-generated thumbnail to an existing (Drive) image row. */
+export const attachImageThumb = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { imageId: string; thumbPath: string; previewPath?: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .update({
+        thumb_path: data.thumbPath,
+        ...(data.previewPath ? { preview_path: data.previewPath } : {}),
+      } as never)
+      .eq("id", data.imageId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Admin: signed upload slot for a single thumbnail. */
+export const thumbUploadTarget = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string; kind?: "thumb" | "preview" }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { GALLERY_BUCKET } = await import("./gallery.server");
+    const kind = data.kind === "preview" ? "preview" : "thumb";
+    const path = `${data.galleryId}/${crypto.randomUUID()}-${kind}.jpg`;
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from(GALLERY_BUCKET)
+      .createSignedUploadUrl(path);
+    if (error || !signed) throw new Error(error?.message ?? "Could not prepare upload");
+    return { bucket: GALLERY_BUCKET, path, token: signed.token };
+  });
+
+/** Admin: tick a photo off while editing. */
+export const setPickDone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string; imageId: string; done: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("crm_gallery_picks")
+      .upsert({ gallery_id: data.galleryId, image_id: data.imageId, done: data.done } as never, {
+        onConflict: "gallery_id,image_id",
+      });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Admin: copy the RAW files behind the client's picks into a fresh Drive folder
+ * and return its link. Copies happen inside Drive, so nothing is transferred.
+ */
+export const sendPicksToDrive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { ensureFolder, copyFileToFolder, driveFolderLink } =
+      await import("./google-drive.server");
+    const { getCrmSettings } = await import("./crm.server");
+
+    const { data: gallery } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("id,title,raw_folder_id,delivery_folder_id")
+      .eq("id", data.galleryId)
+      .maybeSingle();
+    if (!gallery) throw new Error("Gallery not found.");
+    if (!gallery.raw_folder_id)
+      throw new Error("Add the RAW files Drive folder to this gallery first.");
+
+    const { data: images } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("id,name,original_name,drive_raw_file_id")
+      .eq("gallery_id", data.galleryId);
+    const { data: picks } = await supabaseAdmin
+      .from("crm_gallery_picks")
+      .select("image_id,picked")
+      .eq("gallery_id", data.galleryId);
+    const pickedIds = new Set(
+      ((picks ?? []) as { image_id: string; picked: boolean }[])
+        .filter((p) => p.picked)
+        .map((p) => p.image_id),
+    );
+    const chosen = (
+      (images ?? []) as {
+        id: string;
+        name: string;
+        original_name: string;
+        drive_raw_file_id: string;
+      }[]
+    ).filter((i) => pickedIds.has(i.id));
+    if (!chosen.length) throw new Error("The client has not picked any photos yet.");
+
+    const settings = await getCrmSettings();
+    const parent = String(
+      (settings as Record<string, unknown> | null)?.["drive_raw_parent_folder_id"] ?? "",
+    );
+    const folderId = await ensureFolder(
+      `${gallery.title || "Gallery"} — SELECTED RAW`,
+      gallery.delivery_folder_id || parent,
+    );
+
+    let copied = 0;
+    const missing: string[] = [];
+    for (const img of chosen) {
+      if (!img.drive_raw_file_id) {
+        missing.push(img.original_name || img.name);
+        continue;
+      }
+      try {
+        await copyFileToFolder(img.drive_raw_file_id, folderId);
+        copied += 1;
+      } catch {
+        missing.push(img.original_name || img.name);
+      }
+    }
+
+    const link = driveFolderLink(folderId);
+    await supabaseAdmin
+      .from("crm_galleries")
+      .update({ delivery_folder_id: folderId, delivery_folder_link: link } as never)
+      .eq("id", data.galleryId);
+
+    return { copied, missing, link };
+  });
+
+/** Public: unlock selection mode with the photographer's selection PIN. */
+export const unlockGalleryPicking = createServerFn({ method: "POST" })
+  .inputValidator((input: { token: string; pin: string }) => input)
+  .handler(async ({ data }) => {
+    const { checkPickPin } = await import("./gallery.server");
+    return checkPickPin(String(data.token).slice(0, 64), String(data.pin));
   });

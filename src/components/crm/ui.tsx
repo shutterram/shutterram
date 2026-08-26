@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <div className={`border border-hairline bg-background p-5 ${className}`}>{children}</div>;
@@ -76,19 +78,39 @@ export function TextField({
   type?: string;
   placeholder?: string;
 }) {
+  const [reveal, setReveal] = useState(false);
+  const secret = type === "password";
   return (
     <label className="block">
       <Label>{label}</Label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
-      />
+      <span className="relative block">
+        <input
+          type={secret && reveal ? "text" : type}
+          value={value}
+          placeholder={placeholder ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${inputClass} ${secret ? "pr-9" : ""}`}
+        />
+        {secret ? (
+          <button
+            type="button"
+            onClick={() => setReveal((v) => !v)}
+            aria-label={reveal ? "Hide" : "Show"}
+            title={reveal ? "Hide" : "Show"}
+            className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+          >
+            {reveal ? (
+              <EyeOff className="size-4" strokeWidth={1.4} />
+            ) : (
+              <Eye className="size-4" strokeWidth={1.4} />
+            )}
+          </button>
+        ) : null}
+      </span>
     </label>
   );
 }
+
 
 export function AreaField({
   label,

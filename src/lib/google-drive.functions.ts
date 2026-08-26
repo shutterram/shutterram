@@ -11,7 +11,9 @@ export const startGoogleConnect = createServerFn({ method: "POST" })
     const { assertCrmAdmin } = await import("./crm.server");
     const userId = await assertCrmAdmin(context);
     const { authorizeUrl, signState } = await import("./google-drive.server");
-    const redirectUri = `${data.origin.replace(/\/$/, "")}${GOOGLE_REDIRECT_PATH}`;
+    const configuredRedirectUri = process.env["GOOGLE_REDIRECT_URI"]?.trim();
+    const redirectUri =
+      configuredRedirectUri || `${data.origin.replace(/\/$/, "")}${GOOGLE_REDIRECT_PATH}`;
     const state = await signState(`${userId}|${Date.now()}|${redirectUri}`);
     return { url: authorizeUrl(redirectUri, state) };
   });
