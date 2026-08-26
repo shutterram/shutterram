@@ -19,6 +19,7 @@ import {
 } from "@/data/portfolio";
 import { setHeroImage } from "@/lib/hero-glow";
 import { cn } from "@/lib/utils";
+import { useSessionThumbnails } from "@/hooks/use-session-thumbnails";
 import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/gallery/$category")({
@@ -73,6 +74,7 @@ export const Route = createFileRoute("/gallery/$category")({
 function CategoryGallery() {
   const { category } = Route.useLoaderData();
   const items = photosByCategory(category.slug);
+  const sessionThumbs = useSessionThumbnails(items.map((p) => ({ id: p.id, src: p.src })));
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [cols, setCols] = useGridView("category");
   const heroSrc = category.cover || category.hero;
@@ -135,9 +137,10 @@ function CategoryGallery() {
 
             >
               <img
-                src={p.src}
+                src={sessionThumbs.get(p.id) ?? p.src}
                 alt={p.caption}
-                loading="lazy"
+                loading="eager"
+                decoding="async"
                 className="w-full object-cover transition-all duration-[1200ms] ease-out group-hover:scale-[1.03]"
               />
               <div

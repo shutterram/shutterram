@@ -27,6 +27,7 @@ import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as ApiPublicGoogleCallbackRouteImport } from './routes/api/public/google/callback'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img.$'
+import { Route as ApiPublicCrmGalleryOgTokenRouteImport } from './routes/api/public/crm/gallery-og.$token'
 import { Route as ApiPublicCrmImgSplatRouteImport } from './routes/api/public/crm/img.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -118,6 +119,12 @@ const ApiPublicImgSplatRoute = ApiPublicImgSplatRouteImport.update({
   path: '/api/public/img/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCrmGalleryOgTokenRoute =
+  ApiPublicCrmGalleryOgTokenRouteImport.update({
+    id: '/api/public/crm/gallery-og/$token',
+    path: '/api/public/crm/gallery-og/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCrmImgSplatRoute = ApiPublicCrmImgSplatRouteImport.update({
   id: '/api/public/crm/img/$',
   path: '/api/public/crm/img/$',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRoutesByTo {
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRoutesById {
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
+  '/api/public/crm/gallery-og/$token': typeof ApiPublicCrmGalleryOgTokenRoute
   '/api/public/crm/img/$': typeof ApiPublicCrmImgSplatRoute
 }
 export interface FileRouteTypes {
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/gallery/'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   id:
     | '__root__'
@@ -247,6 +259,7 @@ export interface FileRouteTypes {
     | '/gallery/'
     | '/api/public/google/callback'
     | '/api/public/img/$'
+    | '/api/public/crm/gallery-og/$token'
     | '/api/public/crm/img/$'
   fileRoutesById: FileRoutesById
 }
@@ -267,6 +280,7 @@ export interface RootRouteChildren {
   GalleryIndexRoute: typeof GalleryIndexRoute
   ApiPublicGoogleCallbackRoute: typeof ApiPublicGoogleCallbackRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
+  ApiPublicCrmGalleryOgTokenRoute: typeof ApiPublicCrmGalleryOgTokenRoute
   ApiPublicCrmImgSplatRoute: typeof ApiPublicCrmImgSplatRoute
 }
 
@@ -398,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicImgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/crm/gallery-og/$token': {
+      id: '/api/public/crm/gallery-og/$token'
+      path: '/api/public/crm/gallery-og/$token'
+      fullPath: '/api/public/crm/gallery-og/$token'
+      preLoaderRoute: typeof ApiPublicCrmGalleryOgTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/crm/img/$': {
       id: '/api/public/crm/img/$'
       path: '/api/public/crm/img/$'
@@ -438,6 +459,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryIndexRoute: GalleryIndexRoute,
   ApiPublicGoogleCallbackRoute: ApiPublicGoogleCallbackRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
+  ApiPublicCrmGalleryOgTokenRoute: ApiPublicCrmGalleryOgTokenRoute,
   ApiPublicCrmImgSplatRoute: ApiPublicCrmImgSplatRoute,
 }
 export const routeTree = rootRouteImport

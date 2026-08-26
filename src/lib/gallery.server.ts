@@ -18,7 +18,10 @@ async function hmac(payload: string): Promise<string> {
 }
 
 /** Time-limited signature that lets a client load one image without an account. */
-export async function signImage(imageId: string, kind: "thumb" | "preview"): Promise<string> {
+export async function signImage(
+  imageId: string,
+  kind: "thumb" | "preview" | "orig",
+): Promise<string> {
   const exp = Date.now() + 6 * 60 * 60 * 1000;
   const sig = await hmac(`${imageId}|${kind}|${exp}`);
   return `/api/public/crm/img/${imageId}?k=${kind}&e=${exp}&s=${sig}`;
@@ -39,7 +42,9 @@ export interface PublicGalleryImage {
   name: string;
   thumb: string;
   preview: string;
+  orig: string;
   picked: boolean;
+  starred: boolean;
   rating: number;
   label: string;
   comment: string;
@@ -56,6 +61,7 @@ export interface PublicGallery {
   allowDownload: boolean;
   allowClientPassword: boolean;
   hasClientPassword: boolean;
+  requiresPickPin: boolean;
   maxPicks: number;
   showFilenames: boolean;
   allowRating: boolean;
@@ -64,12 +70,37 @@ export interface PublicGallery {
   gridDesktop: string;
   gridTablet: string;
   gridMobile: string;
+  ogImage: string;
+  defaultSort: string;
   images: PublicGalleryImage[];
 }
+
 
 export type PublicGalleryResult =
   | PublicGallery
   | { ok: false; need: "code" | "password" | "expired" | "missing"; reason: string };
+
+export async function loadPublicGalleryMeta(
+  token: string,
+): Promise<{ title: string; description: string; ogImage: string }> {
+  const { data } = await supabaseAdmin
+    .from("crm_galleries")
+    .select("title,message,og_image_id,cover_url,status")
+    .eq("token", token)
+    .maybeSingle();
+  if (!data || data.status === "draft" || data.status === "archived") {
+    return { title: "Your gallery | Shutter Ram", description: "Private client gallery.", ogImage: "" };
+  }
+  return {
+    title: `${data.title || "Your gallery"} | Shutter Ram`,
+    description: data.message || "View and choose your photographs from your private gallery.",
+    ogImage: data.cover_url
+      ? `/api/public/crm/gallery-og/${token}`
+      : data.og_image_id
+        ? await signImage(data.og_image_id, "preview")
+        : "",
+  };
+}
 
 export async function loadPublicGallery(
   token: string,
@@ -98,13 +129,13 @@ export async function loadPublicGallery(
 
   const { data: images } = await supabaseAdmin
     .from("crm_gallery_images")
-    .select("id,name,sort_order")
+    .select("id,name,original_name,sort_order")
     .eq("gallery_id", gallery.id)
     .order("sort_order");
 
   const { data: picks } = await supabaseAdmin
     .from("crm_gallery_picks")
-    .select("image_id,picked,rating,label,comment")
+    .select("image_id,picked,starred,rating,label,comment")
     .eq("gallery_id", gallery.id);
 
   const pickMap = new Map(
@@ -118,22 +149,28 @@ export async function loadPublicGallery(
     .update({ last_opened_at: new Date().toISOString() } as never)
     .eq("id", gallery.id);
 
-  const out: PublicGalleryImage[] = [];
-  for (const img of (images ?? []) as { id: string; name: string }[]) {
+  const out = await Promise.all(((images ?? []) as { id: string; name: string; original_name?: string }[]).map(async (img) => {
     const pick = pickMap.get(img.id) as
-      | { picked: boolean; rating: number; label: string; comment: string }
+      | { picked: boolean; starred: boolean; rating: number; label: string; comment: string }
       | undefined;
-    out.push({
+    const [thumb, preview, orig] = await Promise.all([
+      signImage(img.id, "thumb"),
+      signImage(img.id, "preview"),
+      signImage(img.id, "orig"),
+    ]);
+    return {
       id: img.id,
-      name: img.name,
-      thumb: await signImage(img.id, "thumb"),
-      preview: await signImage(img.id, "preview"),
+      name: img.original_name || img.name,
+      thumb,
+      preview,
+      orig,
       picked: pick?.picked ?? false,
+      starred: pick?.starred ?? false,
       rating: pick?.rating ?? 0,
       label: pick?.label ?? "",
       comment: pick?.comment ?? "",
-    });
-  }
+    };
+  }));
 
   return {
     ok: true,
@@ -146,23 +183,53 @@ export async function loadPublicGallery(
     allowDownload: gallery.allow_download ?? false,
     allowClientPassword: gallery.allow_client_password ?? true,
     hasClientPassword: Boolean(gallery.client_password_hash),
+    requiresPickPin: Boolean((gallery as { pick_pin_hash?: string }).pick_pin_hash),
+
     maxPicks: gallery.max_picks ?? 0,
     showFilenames: settings?.gallery_show_filenames ?? false,
     allowRating: settings?.cull_allow_rating ?? true,
     allowLabels: settings?.cull_allow_labels ?? true,
     allowComments: settings?.cull_allow_comments ?? true,
-    gridDesktop: settings?.gallery_grid_desktop ?? "masonry",
-    gridTablet: settings?.gallery_grid_tablet ?? "grid-2",
-    gridMobile: settings?.gallery_grid_mobile ?? "grid-1",
+    gridDesktop: gallery.grid_desktop ?? settings?.gallery_grid_desktop ?? "4",
+    gridTablet: gallery.grid_tablet ?? settings?.gallery_grid_tablet ?? "3",
+    gridMobile: gallery.grid_mobile ?? settings?.gallery_grid_mobile ?? "2",
+    ogImage: gallery.og_image_id ? await signImage(gallery.og_image_id, "preview") : "",
+    defaultSort: gallery.default_sort ?? "default",
     images: out,
   };
+}
+
+/** Checks the extra "selection PIN" that unlocks picking/commenting for the real client. */
+export async function checkPickPin(
+  token: string,
+  pin: string | undefined,
+): Promise<{ ok: boolean; reason?: string }> {
+  const { data } = await supabaseAdmin
+    .from("crm_galleries")
+    .select("pick_pin_hash")
+    .eq("token", token)
+    .maybeSingle();
+  const stored = (data as { pick_pin_hash?: string } | null)?.pick_pin_hash ?? "";
+  if (!stored) return { ok: true };
+  if (!pin) return { ok: false, reason: "Enter the selection PIN to make changes." };
+  const { verifyPassword } = await import("./crm.server");
+  if (!(await verifyPassword(pin.trim(), stored)))
+    return { ok: false, reason: "That selection PIN is not right." };
+  return { ok: true };
 }
 
 /** Client saves a pick/rating/label/comment on one image. */
 export async function savePick(
   token: string,
-  supplied: { code?: string | undefined; password?: string | undefined },
-  patch: { imageId: string; picked?: boolean; rating?: number; label?: string; comment?: string },
+  supplied: { code?: string | undefined; password?: string | undefined; pin?: string | undefined },
+  patch: {
+    imageId: string;
+    picked?: boolean;
+    starred?: boolean;
+    rating?: number;
+    label?: string;
+    comment?: string;
+  },
 ): Promise<{ ok: boolean; reason?: string }> {
   const { data: gallery } = await supabaseAdmin
     .from("crm_galleries")
@@ -185,8 +252,22 @@ export async function savePick(
   );
   if (!gate.ok) return { ok: false, reason: gate.reason };
 
+  // Starring is a harmless viewing aid; picks, ratings, labels and notes are
+  // gated behind the selection PIN so forwarded links stay read-only.
+  const changesSelection =
+    patch.picked !== undefined ||
+    patch.rating !== undefined ||
+    patch.label !== undefined ||
+    patch.comment !== undefined;
+  if (changesSelection) {
+    const pin = await checkPickPin(token, supplied.pin);
+    if (!pin.ok) return pin;
+  }
+
+
   const row: Record<string, unknown> = { gallery_id: gallery.id, image_id: patch.imageId };
   if (patch.picked !== undefined) row["picked"] = patch.picked;
+  if (patch.starred !== undefined) row["starred"] = patch.starred;
   if (patch.rating !== undefined) row["rating"] = Math.max(0, Math.min(5, patch.rating));
   if (patch.label !== undefined) row["label"] = patch.label.slice(0, 40);
   if (patch.comment !== undefined) row["comment"] = patch.comment.slice(0, 1000);

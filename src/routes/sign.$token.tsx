@@ -44,6 +44,16 @@ function SignPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const inputsRef = useRef<Record<string, HTMLDivElement | null>>({});
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const on = () => setIsDesktop(mql.matches);
+    on();
+    mql.addEventListener("change", on);
+    return () => mql.removeEventListener("change", on);
+  }, []);
+
 
   async function load(withCode = code, withPassword = password) {
     try {
@@ -302,7 +312,7 @@ function SignPage() {
   );
 
   return (
-    <main className="mx-auto max-w-6xl px-6 pb-24 pt-56">
+    <main className="mx-auto max-w-7xl px-6 pb-24 pt-56">
       <p className="eyebrow">Contract</p>
       <h1 className="mt-3 font-display text-[clamp(1.75rem,4vw,2.75rem)]">{doc.title}</h1>
       {doc.message ? (
@@ -311,7 +321,8 @@ function SignPage() {
         </p>
       ) : null}
 
-      <div className="mt-10">
+      <div className="mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-8">
+        <div className="min-w-0">
         <PdfViewer
           pages={pages}
           error={error}
@@ -324,6 +335,7 @@ function SignPage() {
               : undefined
           }
         >
+
           {(page) =>
             showSigned ? null : (
               <>
@@ -397,28 +409,59 @@ function SignPage() {
             )
           }
         </PdfViewer>
+        </div>
 
-        <FloatingPanel
-          open={sheetOpen}
-          onOpen={() => {
-            if (showSigned) setEditing(true);
-            setSheetOpen(true);
-          }}
-          onClose={() => setSheetOpen(false)}
-          openLabel={
-            showSigned
-              ? "Edit & re-sign"
-              : remaining
-                ? `Fill & sign · ${remaining} left`
-                : "Review & sign"
-          }
-          downloadUrl={doc.signedUrl || ""}
-          title={remaining ? `Sign · ${remaining} left` : "Review & sign"}
-        >
-          {panel}
-        </FloatingPanel>
+        {/* Desktop: classic sticky side panel */}
+        <aside className="hidden lg:block lg:sticky lg:top-32 lg:max-h-[calc(100dvh-10rem)] lg:space-y-5 lg:overflow-y-auto lg:pr-1">
+          {showSigned ? (
+            <Card>
+              <Label>Signed copy</Label>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Signed on {formatInZone(signedAt ?? new Date(), contract?.timezone)}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {doc.signedUrl ? (
+                  <a
+                    href={doc.signedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+                  >
+                    Download copy
+                  </a>
+                ) : null}
+                <Btn onClick={() => setEditing(true)}>Edit &amp; re-sign</Btn>
+              </div>
+            </Card>
+          ) : (
+            panel
+          )}
+        </aside>
 
+        {/* Mobile / tablet: floating draggable window */}
+        {isDesktop ? null : (
+          <FloatingPanel
+            open={sheetOpen}
+            onOpen={() => {
+              if (showSigned) setEditing(true);
+              setSheetOpen(true);
+            }}
+            onClose={() => setSheetOpen(false)}
+            openLabel={
+              showSigned
+                ? "Edit & re-sign"
+                : remaining
+                  ? `Fill & sign · ${remaining} left`
+                  : "Review & sign"
+            }
+            downloadUrl={doc.signedUrl || ""}
+            title={remaining ? `Sign · ${remaining} left` : "Review & sign"}
+          >
+            {panel}
+          </FloatingPanel>
+        )}
       </div>
+
     </main>
   );
 }
@@ -448,19 +491,25 @@ function FloatingPanel({
   const [mounted, setMounted] = useState(false);
   const [atEnd, setAtEnd] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [maxH, setMaxH] = useState(420);
   const dragRef = useRef<{ dx: number; dy: number } | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setMounted(true), []);
 
+  // Body height available below the window's top edge (minus its title bar).
+  const bodyMax = (y: number) => Math.max(180, window.innerHeight - y - 56 - 12);
+
   const clamp = (x: number, y: number) => {
     const el = boxRef.current;
     const w = el?.offsetWidth ?? Math.min(360, window.innerWidth - 24);
     const h = el?.offsetHeight ?? 320;
-    return {
+    const next = {
       x: Math.min(Math.max(8, x), Math.max(8, window.innerWidth - w - 8)),
-      y: Math.min(Math.max(8, y), Math.max(8, window.innerHeight - h - 8)),
+      y: Math.min(Math.max(8, y), Math.max(8, window.innerHeight - Math.min(h, 160) - 8)),
     };
+    setMaxH(bodyMax(next.y));
+    return next;
   };
 
   // Whenever the panel opens, place it fully inside the viewport.
@@ -471,11 +520,11 @@ function FloatingPanel({
       const w = el?.offsetWidth ?? Math.min(376, window.innerWidth - 24);
       // Spawn high on the screen so the tall window stays fully visible.
       setPos(clamp(window.innerWidth - w - 16, 72));
-
     };
     place();
     const t = window.setTimeout(place, 60);
     window.addEventListener("resize", place);
+
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("resize", place);
@@ -563,8 +612,10 @@ function FloatingPanel({
       <div className="relative">
         <div
           onScroll={(e) => setAtEnd(e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - 8)}
-          className="max-h-[calc(100dvh-11rem)] space-y-5 overflow-y-auto p-4 text-[0.95rem] md:text-sm"
+          style={{ maxHeight: maxH }}
+          className="space-y-5 overflow-y-auto p-4 text-[0.95rem] md:text-sm"
         >
+
           {children}
         </div>
         {atEnd ? null : (

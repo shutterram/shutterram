@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Photo } from "@/data/portfolio";
+import { ImageLoader } from "./ImageLoader";
 
 export function Lightbox({
   photos,
@@ -15,10 +16,33 @@ export function Lightbox({
   onIndexChange: (i: number) => void;
 }) {
   const open = index !== null;
+  const photo = index !== null ? photos[index] : undefined;
   const [mounted, setMounted] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const touchRef = useRef<number | null>(null);
 
   useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setLoaded(false);
+  }, [index]);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    if (img.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+    const onLoad = () => setLoaded(true);
+    const onError = () => setLoaded(true);
+    img.addEventListener("load", onLoad);
+    img.addEventListener("error", onError);
+    return () => {
+      img.removeEventListener("load", onLoad);
+      img.removeEventListener("error", onError);
+    };
+  }, [photo?.id, photo?.src]);
 
   const step = useCallback(
     (dir: number) => {
@@ -43,9 +67,28 @@ export function Lightbox({
     };
   }, [open, step, onClose]);
 
-  if (!mounted || !open) return null;
-  const photo = photos[index];
-  if (!photo) return null;
+  useEffect(() => {
+    // Warm the 5 photos on either side so arrow / swipe navigation is instant.
+    if (!open || index === null || photos.length < 2) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const order: number[] = [];
+    for (let s = 1; s <= 5; s++) order.push(index + s, index - s);
+    order.forEach((i, position) => {
+      const neighbor = photos[(i + photos.length * 6) % photos.length];
+      if (!neighbor?.src) return;
+      timers.push(
+        setTimeout(() => {
+          const preload = new Image();
+          preload.decoding = "async";
+          preload.fetchPriority = position < 2 ? "high" : "low";
+          preload.src = neighbor.src;
+        }, position * 60),
+      );
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [open, index, photos]);
+
+  if (!mounted || !open || !photo) return null;
 
   // Rendered in a portal on <body> so no transformed / will-change ancestor
   // can turn `position: fixed` into a document-relative box.
@@ -94,13 +137,19 @@ export function Lightbox({
           <ChevronLeft className="size-7 md:size-9" strokeWidth={1} />
         </button>
 
-        <img
-          key={photo.id}
-          src={photo.src}
-          alt={photo.caption}
-          className="mx-auto h-full max-h-[62dvh] w-auto max-w-full object-contain fade-up md:max-h-full"
-          draggable={false}
-        />
+        <div className="relative flex min-h-0 flex-col items-center justify-center">
+          {!loaded ? <ImageLoader label="Loading" /> : null}
+          <img
+            ref={imgRef}
+            key={photo.id}
+            src={photo.src}
+            alt={photo.caption}
+            className="mx-auto h-full max-h-[62dvh] w-auto max-w-full object-contain fade-up md:max-h-full"
+            draggable={false}
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
+          />
+        </div>
 
         <button
           type="button"

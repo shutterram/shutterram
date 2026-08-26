@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SecretInput } from "@/components/site/SecretInput";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,25 +67,11 @@ function ResetPasswordPage() {
         <form onSubmit={onSubmit} className="mt-10 space-y-8">
           <label className="block">
             <span className="eyebrow">New password</span>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
-            />
+            <SecretInput required minLength={8} value={password} onChange={setPassword} />
           </label>
           <label className="block">
             <span className="eyebrow">Confirm password</span>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
-            />
+            <SecretInput required minLength={8} value={confirm} onChange={setConfirm} />
           </label>
           <button
             type="submit"

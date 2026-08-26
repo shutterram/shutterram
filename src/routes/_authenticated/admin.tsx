@@ -19,6 +19,7 @@ import { TemplatesStudio } from "@/components/admin/TemplatesStudio";
 import { HistoryPanel } from "@/components/admin/HistoryPanel";
 import { HistoryDock } from "@/components/admin/HistoryDock";
 import { StorageCleanup } from "@/components/admin/StorageCleanup";
+import { StorageUsage } from "@/components/admin/StorageUsage";
 import { TemplateBar } from "@/components/admin/TemplateBar";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -418,6 +419,14 @@ const SECTIONS = [
     fields: [] satisfies FieldSpec[],
   },
   {
+    id: "storage-usage",
+    panel: "backup",
+    label: "Storage usage",
+    kind: "storage-usage" as const,
+    table: "photos",
+    fields: [] satisfies FieldSpec[],
+  },
+  {
     id: "storage",
     panel: "backup",
     label: "Storage cleanup",
@@ -627,7 +636,9 @@ function AdminPage() {
 
 
       <div className="mt-12">
-        {section.kind === "storage" ? (
+        {section.kind === "storage-usage" ? (
+          <StorageUsage />
+        ) : section.kind === "storage" ? (
           <StorageCleanup />
         ) : section.kind === "templates" ? (
           <TemplatesStudio />

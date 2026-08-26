@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -443,17 +443,31 @@ export type Database = {
           allow_download: boolean
           booking_id: string | null
           client_password_hash: string
+          compression: string
           contact_id: string | null
           cover_url: string
           created_at: string
+          default_sort: string
+          delivery_folder_id: string
+          delivery_folder_link: string
+          downscale_previews: boolean
           drive_folder_id: string
           expires_at: string | null
+          grid_desktop: string
+          grid_mobile: string
+          grid_tablet: string
           id: string
           kind: string
           last_opened_at: string | null
           max_picks: number
           message: string
+          og_image_id: string | null
           password_hash: string
+          pick_pin_hash: string
+          preview_max_bytes: number
+          preview_max_px: number
+          raw_folder_id: string
+          source: string
           status: string
           submitted_at: string | null
           title: string
@@ -467,17 +481,31 @@ export type Database = {
           allow_download?: boolean
           booking_id?: string | null
           client_password_hash?: string
+          compression?: string
           contact_id?: string | null
           cover_url?: string
           created_at?: string
+          default_sort?: string
+          delivery_folder_id?: string
+          delivery_folder_link?: string
+          downscale_previews?: boolean
           drive_folder_id?: string
           expires_at?: string | null
+          grid_desktop?: string
+          grid_mobile?: string
+          grid_tablet?: string
           id?: string
           kind?: string
           last_opened_at?: string | null
           max_picks?: number
           message?: string
+          og_image_id?: string | null
           password_hash?: string
+          pick_pin_hash?: string
+          preview_max_bytes?: number
+          preview_max_px?: number
+          raw_folder_id?: string
+          source?: string
           status?: string
           submitted_at?: string | null
           title?: string
@@ -491,17 +519,31 @@ export type Database = {
           allow_download?: boolean
           booking_id?: string | null
           client_password_hash?: string
+          compression?: string
           contact_id?: string | null
           cover_url?: string
           created_at?: string
+          default_sort?: string
+          delivery_folder_id?: string
+          delivery_folder_link?: string
+          downscale_previews?: boolean
           drive_folder_id?: string
           expires_at?: string | null
+          grid_desktop?: string
+          grid_mobile?: string
+          grid_tablet?: string
           id?: string
           kind?: string
           last_opened_at?: string | null
           max_picks?: number
           message?: string
+          og_image_id?: string | null
           password_hash?: string
+          pick_pin_hash?: string
+          preview_max_bytes?: number
+          preview_max_px?: number
+          raw_folder_id?: string
+          source?: string
           status?: string
           submitted_at?: string | null
           title?: string
@@ -524,6 +566,13 @@ export type Database = {
             referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "crm_galleries_og_image_id_fkey"
+            columns: ["og_image_id"]
+            isOneToOne: false
+            referencedRelation: "crm_gallery_images"
+            referencedColumns: ["id"]
+          },
         ]
       }
       crm_gallery_images: {
@@ -531,10 +580,13 @@ export type Database = {
           bytes: number
           created_at: string
           drive_file_id: string
+          drive_raw_file_id: string
           gallery_id: string
           height: number
           id: string
           name: string
+          original_name: string
+          original_path: string
           preview_path: string
           sort_order: number
           thumb_path: string
@@ -545,10 +597,13 @@ export type Database = {
           bytes?: number
           created_at?: string
           drive_file_id?: string
+          drive_raw_file_id?: string
           gallery_id: string
           height?: number
           id?: string
           name?: string
+          original_name?: string
+          original_path?: string
           preview_path?: string
           sort_order?: number
           thumb_path?: string
@@ -559,10 +614,13 @@ export type Database = {
           bytes?: number
           created_at?: string
           drive_file_id?: string
+          drive_raw_file_id?: string
           gallery_id?: string
           height?: number
           id?: string
           name?: string
+          original_name?: string
+          original_path?: string
           preview_path?: string
           sort_order?: number
           thumb_path?: string
@@ -583,34 +641,40 @@ export type Database = {
         Row: {
           comment: string
           created_at: string
+          done: boolean
           gallery_id: string
           id: string
           image_id: string
           label: string
           picked: boolean
           rating: number
+          starred: boolean
           updated_at: string
         }
         Insert: {
           comment?: string
           created_at?: string
+          done?: boolean
           gallery_id: string
           id?: string
           image_id: string
           label?: string
           picked?: boolean
           rating?: number
+          starred?: boolean
           updated_at?: string
         }
         Update: {
           comment?: string
           created_at?: string
+          done?: boolean
           gallery_id?: string
           id?: string
           image_id?: string
           label?: string
           picked?: boolean
           rating?: number
+          starred?: boolean
           updated_at?: string
         }
         Relationships: [

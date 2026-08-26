@@ -276,3 +276,69 @@ export async function fetchDriveFile(fileId: string): Promise<Response> {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+/** Fetches Google's small generated thumbnail without downloading the original. */
+export async function fetchDriveThumbnail(fileId: string): Promise<Response | null> {
+  const token = await getAccessToken();
+  const metadata = await fetch(
+    `${DRIVE}/files/${encodeURIComponent(fileId)}?fields=thumbnailLink`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!metadata.ok) return null;
+  const { thumbnailLink } = (await metadata.json()) as { thumbnailLink?: string };
+  if (!thumbnailLink) return null;
+  const thumbnailUrl = thumbnailLink.replace(/=s\d+(?:-c)?$/, "=w600");
+  const response = await fetch(thumbnailUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.ok ? response : null;
+}
+
+/** Lists every non-trashed file in a folder (used for RAW folders, which are not images). */
+export async function listFolderFiles(folderId: string): Promise<DriveFile[]> {
+  const out: DriveFile[] = [];
+  let pageToken = "";
+  do {
+    const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+    const page = (await driveFetch(
+      `/files?q=${q}&pageSize=200&orderBy=name&fields=nextPageToken,files(id,name,mimeType,size)${
+        pageToken ? `&pageToken=${pageToken}` : ""
+      }`,
+    )) as { files?: DriveFile[]; nextPageToken?: string };
+    out.push(...(page.files ?? []));
+    pageToken = page.nextPageToken ?? "";
+  } while (pageToken && out.length < 5000);
+  return out.filter((f) => f.mimeType !== "application/vnd.google-apps.folder");
+}
+
+/** Copies a file into another folder — instant inside Drive, no bandwidth cost. */
+export async function copyFileToFolder(fileId: string, parentId: string, name?: string) {
+  return (await driveFetch(`/files/${encodeURIComponent(fileId)}/copy?fields=id,name`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ parents: [parentId], ...(name ? { name } : {}) }),
+  })) as { id: string; name: string };
+}
+
+/** Turns on "anyone with the link can view" for a folder we created. */
+export async function setFolderLinkSharing(folderId: string) {
+  await driveFetch(`/files/${encodeURIComponent(folderId)}/permissions?fields=id`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role: "reader", type: "anyone" }),
+  });
+}
+
+export function driveFolderLink(folderId: string) {
+  return `https://drive.google.com/drive/folders/${folderId}`;
+}
+
+/** Matches preview file names to RAW file names by their stem (IMG_01.jpg ↔ IMG_01.CR2). */
+export function matchByStem(files: DriveFile[]): Map<string, DriveFile> {
+  const map = new Map<string, DriveFile>();
+  for (const f of files) {
+    const stem = f.name.replace(/\.[^.]+$/, "").toLowerCase();
+    if (!map.has(stem)) map.set(stem, f);
+  }
+  return map;
+}

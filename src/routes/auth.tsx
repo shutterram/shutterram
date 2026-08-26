@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SecretInput } from "@/components/site/SecretInput";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,14 +97,7 @@ function AuthPage() {
         {mode === "reset" ? null : (
           <label className="block">
             <span className="eyebrow">Password</span>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full border-b border-hairline bg-transparent py-2 text-sm outline-none transition-colors focus:border-foreground"
-            />
+            <SecretInput required minLength={8} value={password} onChange={setPassword} />
           </label>
         )}
 
