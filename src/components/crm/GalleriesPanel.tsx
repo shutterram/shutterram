@@ -404,6 +404,22 @@ function GalleryDetail({
   const [picked, setPicked] = useState<Awaited<ReturnType<typeof galleryResults>> | null>(null);
   const [choosingOg, setChoosingOg] = useState(false);
   const [choosingCover, setChoosingCover] = useState(false);
+  const [driveMove, setDriveMove] = useState<{
+    open: boolean;
+    mode: "copy" | "move";
+    destination: "raw" | "delivery";
+    folderName: string;
+    link: string;
+    results: { imageId: string; name: string; ok: boolean }[];
+  }>({
+    open: false,
+    mode: "copy",
+    destination: "raw",
+    folderName: "",
+    link: "",
+    results: [],
+  });
+
 
   useEffect(() => {
     void (async () => {
@@ -578,14 +594,17 @@ function GalleryDetail({
   }
 
   /** Builds colour-consistent JPEG thumbs and previews for Drive-linked photos. */
-  async function buildThumbs(rows: NonNullable<typeof picked>, force = false) {
+  async function buildThumbs(rows: NonNullable<typeof picked>, force = false, skip = 0) {
     // A Drive row is only fully processed when it has both the grid thumbnail
     // and, when compression is enabled, the dedicated opened-preview JPEG.
     // Older imports often had only a thumbnail, which made the viewer fall
     // back to that tiny file instead of generating the configured preview.
-    const missing = force
+    const all = force
       ? rows
       : rows.filter((row) => !row.hasThumb || (form.downscalePreviews && !row.hasPreview));
+    // Resuming an interrupted run keeps the same photo order and simply skips
+    // the ones the previous run already finished.
+    const missing = skip > 0 ? all.slice(skip) : all;
     if (!missing.length) return;
 
     cancelRef.current = false;
@@ -593,6 +612,7 @@ function GalleryDetail({
     let finished = 0;
     let failed = 0;
     await startJob(total, "Rebuilding previews");
+
 
     const CHUNK = 25;
     for (let start = 0; start < missing.length; start += CHUNK) {
@@ -692,16 +712,21 @@ function GalleryDetail({
     }
   }
 
-  async function rebuildDrivePreviews() {
+  async function rebuildDrivePreviews(skip = 0) {
     if (!picked?.length) return;
     try {
-      await buildThumbs(picked, true);
-      toast.success("Opened previews rebuilt with the current limits");
+      await buildThumbs(picked, true, skip);
+      toast.success(
+        skip
+          ? "Rebuild resumed and finished from where it stopped"
+          : "Opened previews rebuilt with the current limits",
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not rebuild previews");
       setBusy("");
     }
   }
+
 
   async function uploadOg(file: File) {
     if (!file.type.startsWith("image/")) return;
@@ -756,18 +781,35 @@ function GalleryDetail({
 
   async function sendRawsToDrive() {
     try {
-      setBusy("Copying RAW files inside Drive…");
-      const res = await pushToDrive({ data: { galleryId: gallery.id } });
-      toast.success(
-        `${res.copied} RAW files copied${res.missing.length ? ` · ${res.missing.length} without a match` : ""}`,
+      setBusy(
+        driveMove.mode === "move"
+          ? "Moving RAW files inside Drive…"
+          : "Copying RAW files inside Drive…",
       );
-      window.open(res.link, "_blank", "noopener");
+      const res = await pushToDrive({
+        data: {
+          galleryId: gallery.id,
+          mode: driveMove.mode,
+          destination: driveMove.destination,
+          folderName: driveMove.folderName,
+        },
+      });
+      toast.success(
+        `${res.copied} RAW files ${res.mode === "move" ? "moved" : "copied"}${res.missing.length ? ` · ${res.missing.length} without a match` : ""}`,
+      );
+      setDriveMove((s) => ({
+        ...s,
+        link: res.link,
+        folderName: res.folderName,
+        results: res.results,
+      }));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not copy to Drive");
     } finally {
       setBusy("");
     }
   }
+
 
   function downloadWorksheet() {
     const rows = (picked ?? []).filter((p) => p.picked);
@@ -855,8 +897,21 @@ function GalleryDetail({
             <>
               <Btn onClick={downloadWorksheet}>Download worksheet</Btn>
               {form.rawFolderId ? (
-                <Btn onClick={() => void sendRawsToDrive()}>Send picks to Drive</Btn>
+                <Btn
+                  onClick={() =>
+                    setDriveMove((s) => ({
+                      ...s,
+                      open: true,
+                      link: "",
+                      results: [],
+                      folderName: s.folderName || `${form.title || "Gallery"} — SELECTED`,
+                    }))
+                  }
+                >
+                  Send picks to Drive
+                </Btn>
               ) : null}
+
             </>
           ) : null}
           {pickedOnly.length ? (
@@ -889,6 +944,118 @@ function GalleryDetail({
         </div>
       </div>
 
+      {driveMove.open ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/90 p-4 backdrop-blur-sm">
+          <div className="my-8 w-full max-w-3xl border border-border bg-background p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-display text-xl">Send picks to Drive</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {pickedOnly.length} picked photo{pickedOnly.length === 1 ? "" : "s"} · files stay
+                  inside Drive, nothing is re-uploaded.
+                </p>
+              </div>
+              <Btn onClick={() => setDriveMove((s) => ({ ...s, open: false }))}>Close</Btn>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <SelectField
+                label="Action"
+                value={driveMove.mode}
+                onChange={(v) => setDriveMove((s) => ({ ...s, mode: v as "copy" | "move" }))}
+                options={[
+                  { value: "copy", label: "Copy files" },
+                  { value: "move", label: "Move files" },
+                ]}
+              />
+              <SelectField
+                label="New folder inside"
+                value={driveMove.destination}
+                onChange={(v) =>
+                  setDriveMove((s) => ({ ...s, destination: v as "raw" | "delivery" }))
+                }
+                options={[
+                  { value: "raw", label: "The RAW folder itself" },
+                  { value: "delivery", label: "Delivery / parent folder" },
+                ]}
+              />
+              <TextField
+                label="Folder name"
+                value={driveMove.folderName}
+                onChange={(v) => setDriveMove((s) => ({ ...s, folderName: v }))}
+              />
+            </div>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              {driveMove.mode === "move"
+                ? "Moving re-parents the original RAW files — they will no longer appear in their current folder."
+                : "Copying leaves the originals where they are."}
+            </p>
+
+            <div className="mt-6 max-h-[45vh] overflow-y-auto border border-border p-3">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {pickedOnly.map((p) => {
+                  const result = driveMove.results.find((r) => r.imageId === p.id);
+                  return (
+                    <figure key={p.id} className="relative">
+                      <img
+                        src={p.thumb}
+                        alt={p.name}
+                        className={
+                          "aspect-square w-full object-cover " +
+                          (result && !result.ok ? "opacity-40" : "")
+                        }
+                      />
+                      {result ? (
+                        <span
+                          className={
+                            "absolute left-0 top-0 px-1.5 py-0.5 text-[0.5rem] tracking-[0.2em] uppercase " +
+                            (result.ok
+                              ? "bg-foreground text-background"
+                              : "bg-destructive text-destructive-foreground")
+                          }
+                        >
+                          {result.ok ? (driveMove.mode === "move" ? "Moved" : "Copied") : "No RAW"}
+                        </span>
+                      ) : !p.hasRaw ? (
+                        <span className="absolute left-0 top-0 bg-destructive px-1.5 py-0.5 text-[0.5rem] tracking-[0.2em] uppercase text-destructive-foreground">
+                          No RAW
+                        </span>
+                      ) : null}
+                      <figcaption className="truncate pt-1 text-[0.6rem] text-muted-foreground">
+                        {p.name}
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Btn variant="solid" onClick={() => void sendRawsToDrive()}>
+                {busy
+                  ? "Working…"
+                  : driveMove.mode === "move"
+                    ? "Move picked files"
+                    : "Copy picked files"}
+              </Btn>
+              {driveMove.link ? (
+                <a
+                  className="text-xs underline underline-offset-4"
+                  href={driveMove.link}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Open the new folder in Google Drive
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+
+
       {job && (job.status === "running" || job.status === "stalled") ? (
         <div className="mt-4 border border-border p-3">
           <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -909,6 +1076,25 @@ function GalleryDetail({
                 Cancel
               </button>
             ) : null}
+            {job.status === "stalled" && !busy && !progress ? (
+              <span className="flex gap-3">
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => void rebuildDrivePreviews(job.done)}
+                >
+                  Resume from {job.done}
+                </button>
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => void rebuildDrivePreviews(0)}
+                >
+                  Restart
+                </button>
+              </span>
+            ) : null}
+
           </div>
           <div className="mt-2 h-1 w-full bg-muted">
             <div

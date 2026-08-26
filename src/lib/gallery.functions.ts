@@ -744,19 +744,30 @@ export const setPickDone = createServerFn({ method: "POST" })
   });
 
 /**
- * Admin: copy the RAW files behind the client's picks into a fresh Drive folder
- * and return its link. Copies happen inside Drive, so nothing is transferred.
+ * Admin: copy (or move) the RAW files behind the client's picks into a Drive
+ * sub-folder. Everything happens inside Drive, so nothing is transferred.
+ * `destination: "raw"` puts the new folder inside the gallery's own RAW folder.
  */
 export const sendPicksToDrive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { galleryId: string }) => input)
+  .inputValidator(
+    (input: {
+      galleryId: string;
+      mode?: "copy" | "move";
+      destination?: "raw" | "delivery";
+      folderName?: string;
+    }) => input,
+  )
   .handler(async ({ data, context }) => {
     const { assertCrmAdmin } = await import("./crm.server");
     await assertCrmAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { ensureFolder, copyFileToFolder, driveFolderLink } =
+    const { ensureFolder, copyFileToFolder, moveFileToFolder, driveFolderLink } =
       await import("./google-drive.server");
     const { getCrmSettings } = await import("./crm.server");
+
+    const mode = data.mode === "move" ? "move" : "copy";
+    const destination = data.destination === "raw" ? "raw" : "delivery";
 
     const { data: gallery } = await supabaseAdmin
       .from("crm_galleries")
@@ -769,7 +780,7 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
 
     const { data: images } = await supabaseAdmin
       .from("crm_gallery_images")
-      .select("id,name,original_name,drive_raw_file_id")
+      .select("id,name,original_name,drive_raw_file_id,thumb_path")
       .eq("gallery_id", data.galleryId);
     const { data: picks } = await supabaseAdmin
       .from("crm_gallery_picks")
@@ -794,34 +805,44 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
     const parent = String(
       (settings as Record<string, unknown> | null)?.["drive_raw_parent_folder_id"] ?? "",
     );
-    const folderId = await ensureFolder(
-      `${gallery.title || "Gallery"} — SELECTED RAW`,
-      gallery.delivery_folder_id || parent,
-    );
+    const parentFolder =
+      destination === "raw" ? gallery.raw_folder_id : gallery.delivery_folder_id || parent;
+    const folderName =
+      (data.folderName ?? "").trim() || `${gallery.title || "Gallery"} — SELECTED RAW`;
+    const folderId = await ensureFolder(folderName, parentFolder);
 
     let copied = 0;
     const missing: string[] = [];
+    const results: { imageId: string; name: string; ok: boolean }[] = [];
     for (const img of chosen) {
+      const label = img.original_name || img.name;
       if (!img.drive_raw_file_id) {
-        missing.push(img.original_name || img.name);
+        missing.push(label);
+        results.push({ imageId: img.id, name: label, ok: false });
         continue;
       }
       try {
-        await copyFileToFolder(img.drive_raw_file_id, folderId);
+        if (mode === "move") await moveFileToFolder(img.drive_raw_file_id, folderId);
+        else await copyFileToFolder(img.drive_raw_file_id, folderId);
         copied += 1;
+        results.push({ imageId: img.id, name: label, ok: true });
       } catch {
-        missing.push(img.original_name || img.name);
+        missing.push(label);
+        results.push({ imageId: img.id, name: label, ok: false });
       }
     }
 
     const link = driveFolderLink(folderId);
-    await supabaseAdmin
-      .from("crm_galleries")
-      .update({ delivery_folder_id: folderId, delivery_folder_link: link } as never)
-      .eq("id", data.galleryId);
+    if (destination === "delivery") {
+      await supabaseAdmin
+        .from("crm_galleries")
+        .update({ delivery_folder_id: folderId, delivery_folder_link: link } as never)
+        .eq("id", data.galleryId);
+    }
 
-    return { copied, missing, link };
+    return { copied, missing, link, mode, destination, folderName, results };
   });
+
 
 /** Public: unlock selection mode with the photographer's selection PIN. */
 export const unlockGalleryPicking = createServerFn({ method: "POST" })

@@ -320,6 +320,23 @@ export async function copyFileToFolder(fileId: string, parentId: string, name?: 
   })) as { id: string; name: string };
 }
 
+/** Moves a file into another folder by re-parenting it — no copy is made. */
+export async function moveFileToFolder(fileId: string, parentId: string) {
+  const current = (await driveFetch(
+    `/files/${encodeURIComponent(fileId)}?fields=id,name,parents`,
+  )) as { id: string; name: string; parents?: string[] };
+  const remove = (current.parents ?? []).filter((p) => p !== parentId);
+  if (!remove.length && (current.parents ?? []).includes(parentId)) return current;
+  const params = new URLSearchParams({ addParents: parentId, fields: "id,name,parents" });
+  if (remove.length) params.set("removeParents", remove.join(","));
+  return (await driveFetch(`/files/${encodeURIComponent(fileId)}?${params.toString()}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  })) as { id: string; name: string };
+}
+
+
 /** Turns on "anyone with the link can view" for a folder we created. */
 export async function setFolderLinkSharing(folderId: string) {
   await driveFetch(`/files/${encodeURIComponent(folderId)}/permissions?fields=id`, {
