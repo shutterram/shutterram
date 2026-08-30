@@ -756,6 +756,7 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
       mode?: "copy" | "move";
       destination?: "raw" | "delivery";
       folderName?: string;
+      imageIds?: string[];
     }) => input,
   )
   .handler(async ({ data, context }) => {
@@ -786,10 +787,13 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
       .from("crm_gallery_picks")
       .select("image_id,picked")
       .eq("gallery_id", data.galleryId);
+    const explicit = (data.imageIds ?? []).filter(Boolean);
     const pickedIds = new Set(
-      ((picks ?? []) as { image_id: string; picked: boolean }[])
-        .filter((p) => p.picked)
-        .map((p) => p.image_id),
+      explicit.length
+        ? explicit
+        : ((picks ?? []) as { image_id: string; picked: boolean }[])
+            .filter((p) => p.picked)
+            .map((p) => p.image_id),
     );
     const chosen = (
       (images ?? []) as {
@@ -799,7 +803,10 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
         drive_raw_file_id: string;
       }[]
     ).filter((i) => pickedIds.has(i.id));
-    if (!chosen.length) throw new Error("The client has not picked any photos yet.");
+    if (!chosen.length)
+      throw new Error(
+        explicit.length ? "No matching photos found." : "The client has not picked any photos yet.",
+      );
 
     const settings = await getCrmSettings();
     const parent = String(

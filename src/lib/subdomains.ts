@@ -40,6 +40,24 @@ function isNonSubdomainHost(hostname: string): boolean {
 }
 
 /**
+ * Full URL to a section's subdomain (crm.shutterram.com/crm etc.) so
+ * cross-section nav links leave the current subdomain instead of being
+ * bounced back by subdomainRedirect. On hosts without subdomains
+ * (preview, localhost) it returns the plain same-origin path.
+ */
+export function subdomainSectionUrl(hostname: string, label: string): string {
+  const path = SUBDOMAIN_SECTIONS[label] ?? `/${label}`;
+  if (isNonSubdomainHost(hostname)) return path;
+  const parts = hostname.split(".");
+  const apex = SUBDOMAIN_SECTIONS[parts[0]?.toLowerCase() ?? ""]
+    ? parts.slice(1).join(".")
+    : hostname;
+  const protocol =
+    typeof window !== "undefined" ? window.location.protocol : "https:";
+  return `${protocol}//${label}.${apex}${path}`;
+}
+
+/**
  * Reverse rule: on the apex domain, section paths (/admin, /crm, /auth)
  * bounce to their dedicated subdomain so the public site never serves them.
  * Returns a full URL, or "" when no redirect is needed.

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { subdomainSectionUrl } from "@/lib/subdomains";
 import { crmList, crmOverview } from "@/lib/crm.functions";
 import { ContractsPanel } from "@/components/crm/ContractsPanel";
 import { GalleriesPanel } from "@/components/crm/GalleriesPanel";
@@ -212,12 +213,12 @@ function CrmPage() {
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link
-            to="/admin"
+          <a
+            href={subdomainSectionUrl(window.location.hostname, "admin")}
             className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
           >
             Content studio
-          </Link>
+          </a>
           <Link
             to="/"
             className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"

@@ -25,6 +25,8 @@ import {
 import { crmSettingsGet } from "@/lib/crm.functions";
 import { GalleryViewer } from "@/components/site/GalleryViewer";
 import { EmailButton } from "@/components/crm/EmailButton";
+import { downloadMany } from "@/lib/download";
+import { createPortal } from "react-dom";
 import { Btn, Card, CheckField, Empty, Label, SelectField, TextField, copyLink } from "./ui";
 
 /** Preview compression presets, with a rough per-photo size so you can judge before uploading. */
@@ -439,7 +441,9 @@ function GalleryDetail({
     "all" | "picked" | "starred" | "rated" | "labelled" | "noted" | "nopreview" | "done"
   >("all");
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
   const anchorRef = useRef<number | null>(null);
+  const anchorAddRef = useRef(true);
   const [driveMove, setDriveMove] = useState<{
     open: boolean;
     mode: "copy" | "move";
@@ -447,6 +451,7 @@ function GalleryDetail({
     folderName: string;
     link: string;
     results: { imageId: string; name: string; ok: boolean }[];
+    imageIds: string[];
   }>({
     open: false,
     mode: "copy",
@@ -454,6 +459,7 @@ function GalleryDetail({
     folderName: "",
     link: "",
     results: [],
+    imageIds: [],
   });
 
 
@@ -466,6 +472,15 @@ function GalleryDetail({
       }
     })();
   }, [results, gallery.id]);
+
+  // Esc deselects everything, like a desktop file manager.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSel(new Set());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // Any device that opens this gallery follows the same rebuild, because the
   // progress lives in the database rather than in this browser tab.
@@ -739,7 +754,10 @@ function GalleryDetail({
       if (replace && form.ogImageId && !rows.some((row) => row.id === form.ogImageId)) {
         setForm((current) => ({ ...current, ogImageId: "" }));
       }
-      await buildThumbs(rows);
+      // Previews are no longer built automatically after an import — use the
+      // "Rebuild previews" button whenever you're ready so saving and syncing
+      // stay instant.
+      toast.message("Photos linked — click Rebuild previews when you're ready to build them");
       await onSaved();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not import from Drive");
@@ -828,6 +846,7 @@ function GalleryDetail({
           mode: driveMove.mode,
           destination: driveMove.destination,
           folderName: driveMove.folderName,
+          imageIds: driveMove.imageIds,
         },
       });
       toast.success(
@@ -846,11 +865,21 @@ function GalleryDetail({
     }
   }
 
+  const fileBase = () => (form.title || "gallery").replace(/[^a-z0-9\-_ ]/gi, "");
 
-  function downloadWorksheet() {
-    const rows = (picked ?? []).filter((p) => p.picked);
+  function saveTextFile(text: string, name: string, type: string) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadWorksheet(rows?: NonNullable<typeof picked>) {
+    const list = rows?.length ? rows : (picked ?? []).filter((p) => p.picked);
     const header = ["File name", "Stars", "Label", "Comment", "Starred", "RAW matched", "Done"];
-    const body = rows.map((r) =>
+    const body = list.map((r) =>
       [
         r.name,
         r.rating || "",
@@ -864,12 +893,35 @@ function GalleryDetail({
         .join(","),
     );
     const csv = [header.join(","), ...body].join("\r\n");
-    const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(form.title || "gallery").replace(/[^a-z0-9\-_ ]/gi, "")}-worksheet.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveTextFile("\uFEFF" + csv, `${fileBase()}-worksheet.csv`, "text/csv;charset=utf-8");
+  }
+
+  function downloadNames(rows: NonNullable<typeof picked>) {
+    const lines = rows
+      .map((p) =>
+        [p.name, p.rating ? `★${p.rating}` : "", p.label ?? "", p.comment ?? ""]
+          .filter(Boolean)
+          .join(" · "),
+      )
+      .join("\n");
+    saveTextFile(lines, `${fileBase()}-names.txt`, "text/plain;charset=utf-8");
+  }
+
+  /** Zips the chosen photos in the browser and saves them in one archive. */
+  async function downloadFiles(rows: NonNullable<typeof picked>) {
+    if (!rows.length) return;
+    try {
+      setBusy(`Preparing ${rows.length} photo${rows.length === 1 ? "" : "s"}…`);
+      await downloadMany(
+        rows.map((r) => ({ url: r.orig || r.preview || r.thumb, name: r.name })),
+        `${fileBase()}-photos.zip`,
+        (done, total) => setBusy(`Packing ${done} of ${total}…`),
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not download those photos");
+    } finally {
+      setBusy("");
+    }
   }
 
   const pickedOnly = (picked ?? []).filter((p) => p.picked);
@@ -887,6 +939,47 @@ function GalleryDetail({
       return !p.hasThumb || (form.downscalePreviews && !p.hasPreview);
     return true;
   });
+  const selectedRows = (picked ?? []).filter((r) => sel.has(r.id));
+
+  /** Windows-style click behaviour: plain toggle, shift extends from the anchor. */
+  function selectAt(index: number, shift: boolean) {
+    const row = visible[index];
+    if (!row) return;
+    if (shift && anchorRef.current !== null) {
+      const [from, to] = [anchorRef.current, index].sort((a, b) => a - b) as [number, number];
+      const add = anchorAddRef.current;
+      setSel((prev) => {
+        const next = new Set(prev);
+        for (const r of visible.slice(from, to + 1)) {
+          if (add) next.add(r.id);
+          else next.delete(r.id);
+        }
+        return next;
+      });
+      return;
+    }
+    const add = !sel.has(row.id);
+    anchorRef.current = index;
+    anchorAddRef.current = add;
+    setSel((prev) => {
+      const next = new Set(prev);
+      if (add) next.add(row.id);
+      else next.delete(row.id);
+      return next;
+    });
+  }
+
+  /** Opens the Drive copy/move dialog for a chosen set (empty = the client's picks). */
+  function openDriveMove(ids: string[]) {
+    setDriveMove((s) => ({
+      ...s,
+      open: true,
+      link: "",
+      results: [],
+      imageIds: ids,
+      folderName: s.folderName || `${form.title || "Gallery"} — SELECTED`,
+    }));
+  }
 
   /** Rebuild just the photos handed in, so a failed tail can be retried on its own. */
   async function rebuildRows(rows: NonNullable<typeof picked>, message: string) {
@@ -894,6 +987,7 @@ function GalleryDetail({
     try {
       await buildThumbs(rows, true, 0);
       setSel(new Set());
+      setSelectMode(false);
       toast.success(message);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not rebuild previews");
@@ -936,7 +1030,12 @@ function GalleryDetail({
             <>
               <Btn onClick={() => void importDrive(false)}>Import from Drive</Btn>
               {picked?.length ? (
-                <Btn onClick={() => void rebuildDrivePreviews()}>Rebuild previews</Btn>
+                <Btn
+                  variant={selectMode ? "solid" : "ghost"}
+                  onClick={() => setSelectMode((v) => !v)}
+                >
+                  {selectMode ? "Exit rebuild mode" : "Rebuild previews"}
+                </Btn>
               ) : null}
               <Btn
                 onClick={() => {
@@ -952,52 +1051,21 @@ function GalleryDetail({
             <>
               <Btn onClick={() => fileRef.current?.click()}>Add photos</Btn>
               {picked?.length ? (
-                <Btn onClick={() => void rebuildDrivePreviews()}>Rebuild previews</Btn>
+                <Btn
+                  variant={selectMode ? "solid" : "ghost"}
+                  onClick={() => setSelectMode((v) => !v)}
+                >
+                  {selectMode ? "Exit rebuild mode" : "Rebuild previews"}
+                </Btn>
               ) : null}
             </>
           )}
           {pickedOnly.length ? (
             <>
-              <Btn onClick={downloadWorksheet}>Download worksheet</Btn>
-              <Btn
-                onClick={() =>
-                  setDriveMove((s) => ({
-                    ...s,
-                    open: true,
-                    link: "",
-                    results: [],
-                    folderName: s.folderName || `${form.title || "Gallery"} — SELECTED`,
-                  }))
-                }
-              >
-                Send picks to Drive
-              </Btn>
-
-
+              <Btn onClick={() => downloadWorksheet()}>Download worksheet</Btn>
+              <Btn onClick={() => openDriveMove([])}>Send picks to Drive</Btn>
+              <Btn onClick={() => downloadNames(pickedOnly)}>Download picked names</Btn>
             </>
-          ) : null}
-          {pickedOnly.length ? (
-            <Btn
-              onClick={() => {
-                const lines = pickedOnly
-                  .map((p) =>
-                    [p.name, p.rating ? `★${p.rating}` : "", p.label ?? "", p.comment ?? ""]
-                      .filter(Boolean)
-                      .join(" · "),
-                  )
-                  .join("\n");
-                const url = URL.createObjectURL(
-                  new Blob([lines], { type: "text/plain;charset=utf-8" }),
-                );
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${(form.title || "gallery").replace(/[^a-z0-9\-_ ]/gi, "")}-picks.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              Download picked names
-            </Btn>
           ) : null}
 
           <Btn variant="solid" onClick={() => void save()}>
@@ -1244,27 +1312,14 @@ function GalleryDetail({
                 <span className="text-xs text-muted-foreground">
                   {sel.size
                     ? `${sel.size} selected`
-                    : "Click a photo to open it · Shift-click to select a range"}
+                    : selectMode
+                      ? "Selection mode — click photos, shift-click for a range"
+                      : "Click a photo to open it · right-click or shift-click to select"}
                 </span>
                 <Btn onClick={() => setSel(new Set(visible.map((r) => r.id)))}>
                   Select all shown
                 </Btn>
-                {sel.size ? (
-                  <>
-                    <Btn onClick={() => setSel(new Set())}>Clear</Btn>
-                    <Btn
-                      variant="solid"
-                      onClick={() =>
-                        void rebuildRows(
-                          picked.filter((r) => sel.has(r.id)),
-                          `${sel.size} photo${sel.size === 1 ? "" : "s"} rebuilt`,
-                        )
-                      }
-                    >
-                      Rebuild selected
-                    </Btn>
-                  </>
-                ) : null}
+                <Btn onClick={() => setSel(new Set())}>Deselect all</Btn>
                 {missingPreview.length ? (
                   <Btn
                     onClick={() =>
@@ -1275,6 +1330,7 @@ function GalleryDetail({
                   </Btn>
                 ) : null}
               </div>
+
 
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {visible.map((p, index) => {
@@ -1291,6 +1347,11 @@ function GalleryDetail({
                             ? "outline-offset-2 hover:outline hover:outline-1 hover:outline-foreground"
                             : "")
                       }
+                      onContextMenu={(event) => {
+                        if (choosingOg || choosingCover) return;
+                        event.preventDefault();
+                        selectAt(index, event.shiftKey);
+                      }}
                       onClick={(event) => {
                         if (choosingCover) {
                           setForm((current) => ({
@@ -1308,26 +1369,14 @@ function GalleryDetail({
                           toast.success("Link preview selected — save the gallery to apply it");
                           return;
                         }
-                        if (event.shiftKey && anchorRef.current !== null) {
-                          const [from, to] = [anchorRef.current, index].sort((a, b) => a - b) as [
-                            number,
-                            number,
-                          ];
-                          setSel((prev) => {
-                            const next = new Set(prev);
-                            for (const row of visible.slice(from, to + 1)) next.add(row.id);
-                            return next;
-                          });
-                          return;
-                        }
-                        if (event.metaKey || event.ctrlKey || sel.size > 0) {
-                          anchorRef.current = index;
-                          setSel((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(p.id)) next.delete(p.id);
-                            else next.add(p.id);
-                            return next;
-                          });
+                        if (
+                          selectMode ||
+                          event.shiftKey ||
+                          event.metaKey ||
+                          event.ctrlKey ||
+                          sel.size > 0
+                        ) {
+                          selectAt(index, event.shiftKey);
                           return;
                         }
                         anchorRef.current = index;
@@ -1735,6 +1784,50 @@ function GalleryDetail({
           }}
         />
       ) : null}
+
+      {(selectMode || sel.size > 0) && viewer === null
+        ? createPortal(
+            <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex justify-center px-4 pb-4">
+              <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 border border-hairline bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+                <span className="text-[0.625rem] tracking-[0.2em] uppercase text-muted-foreground">
+                  {sel.size ? `${sel.size} selected` : "Select photos"}
+                </span>
+                {sel.size ? (
+                  <>
+                    <Btn
+                      variant="solid"
+                      onClick={() =>
+                        void rebuildRows(
+                          selectedRows,
+                          `${selectedRows.length} photo${selectedRows.length === 1 ? "" : "s"} rebuilt`,
+                        )
+                      }
+                    >
+                      Rebuild ({sel.size})
+                    </Btn>
+                    <Btn onClick={() => downloadNames(selectedRows)}>Download names</Btn>
+                    <Btn onClick={() => downloadWorksheet(selectedRows)}>Worksheet</Btn>
+                    <Btn onClick={() => void downloadFiles(selectedRows)}>Download</Btn>
+                    <Btn onClick={() => openDriveMove(selectedRows.map((r) => r.id))}>
+                      Send to Drive
+                    </Btn>
+                    <Btn onClick={() => setSel(new Set())}>Clear</Btn>
+                  </>
+                ) : null}
+                <Btn
+                  onClick={() => {
+                    setSel(new Set());
+                    setSelectMode(false);
+                  }}
+                >
+                  Done
+                </Btn>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
+
   );
 }

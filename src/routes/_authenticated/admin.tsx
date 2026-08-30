@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { subdomainSectionUrl } from "@/lib/subdomains";
 import { ListEditor, SingletonEditor, type FieldSpec } from "@/components/admin/ContentEditor";
 import { CopyEditor } from "@/components/admin/CopyEditor";
 import { LogoStudio } from "@/components/admin/LogoStudio";
@@ -549,12 +550,12 @@ function AdminPage() {
           >
             Refresh site
           </button>
-          <Link
-            to="/crm"
+          <a
+            href={subdomainSectionUrl(window.location.hostname, "crm")}
             className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
           >
             Studio CRM
-          </Link>
+          </a>
           <Link
             to="/"
             className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
