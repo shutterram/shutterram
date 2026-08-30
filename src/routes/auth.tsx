@@ -19,7 +19,9 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
+  // No public sign-up: studio accounts are provisioned by an existing admin
+  // from the Admins & Users panel, so strangers cannot self-register.
+  const [mode, setMode] = useState<"signin" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,21 +46,8 @@ function AuthPage() {
         setNotice("Check your email for a link to set a new password.");
         return;
       }
-      if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/admin` },
-        });
-        if (error) throw error;
-        if (!data.session) {
-          setNotice("Check your email to confirm your account, then sign in.");
-          return;
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
       navigate({ to: "/admin", replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not sign you in.");
@@ -71,11 +60,7 @@ function AuthPage() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 pb-24 pt-20">
       <p className="eyebrow">Studio</p>
       <h1 className="mt-4 font-display text-[clamp(2rem,5vw,3rem)] leading-tight">
-        {mode === "signin"
-          ? "Sign in"
-          : mode === "signup"
-            ? "Create your account"
-            : "Reset password"}
+        {mode === "signin" ? "Sign in" : "Reset password"}
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
         {mode === "reset"
@@ -108,27 +93,11 @@ function AuthPage() {
           disabled={busy}
           className="w-full border border-foreground bg-foreground px-6 py-3 text-[0.6875rem] tracking-[0.24em] uppercase text-background transition-opacity hover:opacity-85 disabled:opacity-50"
         >
-          {busy
-            ? "Please wait…"
-            : mode === "signin"
-              ? "Sign in"
-              : mode === "signup"
-                ? "Create account"
-                : "Send reset link"}
+          {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Send reset link"}
         </button>
       </form>
 
       <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            setNotice("");
-            setMode(mode === "signup" ? "signin" : "signup");
-          }}
-          className="text-[0.6875rem] tracking-[0.24em] uppercase text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {mode === "signup" ? "Already have an account?" : "Need an account?"}
-        </button>
         <button
           type="button"
           onClick={() => {

@@ -18,4 +18,4 @@ Disallow: /auth
 Disallow: /review
 Disallow: /reset-password
 
-Sitemap: https://shutterram.lovable.app/sitemap.xml
+Sitemap: https://www.shutterram.com/sitemap.xml

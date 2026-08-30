@@ -25,6 +25,7 @@ export const CRM_TABLES = [
   "crm_leads",
   "crm_bookings",
   "crm_invoices",
+  "crm_bills",
   "crm_tasks",
   "crm_activity",
   "crm_contracts",

@@ -4,7 +4,7 @@ import { sectionFor, services, t } from "@/data/portfolio";
 import { Reveal } from "@/components/site/Reveal";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { cn } from "@/lib/utils";
-import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
+import { SITE_URL, buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/services")({
   loader: ({ location }) => loadSeo("/services", tokenOf(location.search)),
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/services")({
           "@context": "https://schema.org",
           "@type": "OfferCatalog",
           name: "Photography services — Shutter Ram",
-          url: "https://shutterram.lovable.app/services",
+          url: `${SITE_URL}/services`,
           itemListElement: services.map((s, i) => ({
             "@type": "Offer",
             position: i + 1,

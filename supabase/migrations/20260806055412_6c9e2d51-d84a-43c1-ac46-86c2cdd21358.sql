@@ -1,1 +1,0 @@
-ALTER TABLE public.photos ADD COLUMN IF NOT EXISTS in_gallery boolean NOT NULL DEFAULT true;

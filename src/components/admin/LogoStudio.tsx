@@ -9,10 +9,11 @@ import { Toggle } from "@/components/admin/Toggle";
 type Row = Record<string, unknown>;
 
 const SLOTS = [
-  { key: "header", label: "Header logo", defaultHeight: 96 },
-  { key: "mobile", label: "Mobile menu logo", defaultHeight: 80 },
-  { key: "footer", label: "Footer logo", defaultHeight: 80 },
-  { key: "loader", label: "Loading screen logo", defaultHeight: 36 },
+  { key: "header", label: "Header logo", defaultHeight: 96, offsets: true },
+  { key: "mobile", label: "Mobile menu logo", defaultHeight: 80, offsets: true },
+  { key: "footer", label: "Footer logo", defaultHeight: 80, offsets: true },
+  { key: "loader", label: "Loading screen logo", defaultHeight: 36, offsets: true },
+  { key: "invoice", label: "Invoice & bill logo", defaultHeight: 64, offsets: false },
 ] as const;
 
 const num = (v: unknown) => (typeof v === "number" ? v : Number(v) || 0);
@@ -93,41 +94,49 @@ export function LogoStudio() {
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-6">
-                <label className="block">
-                  <span className="eyebrow">Nudge left / right — {offsetX}px</span>
-                  <input
-                    type="range"
-                    min={-60}
-                    max={60}
-                    value={offsetX}
-                    onChange={(e) => set(`logo_${slot.key}_offset_x`, Number(e.target.value))}
-                    className="mt-3 w-full accent-current"
-                  />
-                </label>
-                <label className="block">
-                  <span className="eyebrow">Nudge up / down — {offsetY}px</span>
-                  <input
-                    type="range"
-                    min={-60}
-                    max={60}
-                    value={offsetY}
-                    onChange={(e) => set(`logo_${slot.key}_offset_y`, Number(e.target.value))}
-                    className="mt-3 w-full accent-current"
-                  />
-                </label>
-              </div>
+              {slot.offsets ? (
+                <>
+                  <div className="grid grid-cols-2 gap-6">
+                    <label className="block">
+                      <span className="eyebrow">Nudge left / right — {offsetX}px</span>
+                      <input
+                        type="range"
+                        min={-60}
+                        max={60}
+                        value={offsetX}
+                        onChange={(e) => set(`logo_${slot.key}_offset_x`, Number(e.target.value))}
+                        className="mt-3 w-full accent-current"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="eyebrow">Nudge up / down — {offsetY}px</span>
+                      <input
+                        type="range"
+                        min={-60}
+                        max={60}
+                        value={offsetY}
+                        onChange={(e) => set(`logo_${slot.key}_offset_y`, Number(e.target.value))}
+                        className="mt-3 w-full accent-current"
+                      />
+                    </label>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  set(`logo_${slot.key}_offset_x`, 0);
-                  setRow((r) => ({ ...(r as Row), [`logo_${slot.key}_offset_y`]: 0 }));
-                }}
-                className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
-              >
-                Reset placement
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      set(`logo_${slot.key}_offset_x`, 0);
+                      setRow((r) => ({ ...(r as Row), [`logo_${slot.key}_offset_y`]: 0 }));
+                    }}
+                    className="border border-hairline px-4 py-2 text-[0.625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground"
+                  >
+                    Reset placement
+                  </button>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Used at the top of invoices and bills, centred as a header.
+                </p>
+              )}
             </div>
 
             <div>
@@ -143,7 +152,7 @@ export function LogoStudio() {
                     }}
                     className={"w-auto " + (invert ? "invert" : "")}
                   />
-                  {slot.key !== "loader" ? (
+                  {slot.key !== "loader" && slot.key !== "invoice" ? (
                     <span className="eyebrow mt-3">{String(row["tagline"] ?? "")}</span>
                   ) : null}
                 </div>

@@ -29,9 +29,16 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
 
         const { data: gallery } = await supabaseAdmin
           .from("crm_galleries")
-          .select("downscale_previews")
+          .select("downscale_previews,allow_download")
           .eq("id", image.gallery_id)
           .maybeSingle();
+
+        // Downloads are a per-gallery privilege: a valid signature alone must
+        // never be enough to stream the unwatermarked full-resolution file.
+        if (kind === "orig" && gallery?.allow_download !== true) {
+          return new Response("Not found", { status: 404 });
+        }
+
         const serveOriginal =
           kind === "orig" || (kind === "preview" && gallery?.downscale_previews === false);
 

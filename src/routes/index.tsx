@@ -42,9 +42,9 @@ export const Route = createFileRoute("/")({
   head: ({ loaderData }) => {
     const head = buildSeoHead(loaderData, {
       path: "/",
-      title: "Shutter Ram — Wedding, Portrait & Corporate Photography",
+      title: "Shutter Ram — Wedding & Portrait Photographer NYC",
       description:
-        "Shutter Ram is a one-person photography studio covering weddings, corporate brands, portraits and headshots. Clicking today, for a memory that lives forever.",
+        "Shutter Ram is a one-person photography studio in New York covering weddings, corporate brands, portraits and headshots. Clicking today, for a memory that lives forever.",
       image: categories[0]!.hero,
     });
     return {

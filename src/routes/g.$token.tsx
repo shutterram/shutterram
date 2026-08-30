@@ -26,7 +26,7 @@ interface RememberedGalleryState {
   code?: string;
   password?: string;
   pin?: string;
-  editing?: boolean;
+  
   passwordChoiceMade?: boolean;
   selected?: string[];
 }
@@ -194,7 +194,9 @@ function ClientGalleryPage() {
     setCode(savedCode);
     setPasswordValue(savedPassword);
     setPin(savedPin);
-    setEditing(Boolean(remembered.editing));
+    // Selection mode is deliberately not restored: closing the tab ends the
+    // editing session, so a returning visitor starts in view-only mode.
+    setEditing(false);
     setAskedOnce(Boolean(remembered.passwordChoiceMade));
     setSelected(new Set(remembered.selected ?? []));
 
@@ -216,12 +218,11 @@ function ClientGalleryPage() {
       code,
       password,
       pin: pinUnlocked ? pin : "",
-      editing,
       passwordChoiceMade: askedOnce,
       selected: Array.from(selected),
     };
     window.localStorage.setItem(storageKey, JSON.stringify(state));
-  }, [askedOnce, code, editing, password, pin, pinUnlocked, selected, storageKey]);
+  }, [askedOnce, code, password, pin, pinUnlocked, selected, storageKey]);
 
   const thumbnailSet = images.map((image) => `${image.id}:${image.thumb}`).join("|");
 
@@ -307,6 +308,12 @@ function ClientGalleryPage() {
 
   const isCull = gallery.kind === "cull";
   const pickedCount = images.filter((i) => i.picked).length;
+  const stats = {
+    starred: images.filter((i) => i.starred).length,
+    rated: images.filter((i) => i.rating > 0).length,
+    labelled: images.filter((i) => i.label.trim().length > 0).length,
+    noted: images.filter((i) => i.comment.trim().length > 0).length,
+  };
   const submitted = gallery.submitted;
   // After submitting, picks are locked until the client explicitly re-opens editing.
   const pinLocked = isCull && gallery.requiresPickPin && !pinUnlocked;
@@ -508,11 +515,6 @@ function ClientGalleryPage() {
         <Btn onClick={() => setOnlyStarred((v) => !v)}>
           {onlyStarred ? "Show all" : "Starred only"}
         </Btn>
-        {isCull && !locked ? (
-            <Btn variant="solid" onClick={() => setConfirming(true)}>
-              {submitted ? "Update selection" : "Submit selection"}
-            </Btn>
-        ) : null}
         {gallery.allowDownload ? (
           <Btn onClick={() => void downloadList(shown)}>Download all</Btn>
         ) : null}
@@ -652,15 +654,39 @@ function ClientGalleryPage() {
 
       <ScrollRail />
 
-      {isCull && locked && mounted
+      {isCull && !selectMode && mounted
         ? createPortal(
-            <button
-              type="button"
-              onClick={enterSelection}
-              className="fixed bottom-6 left-1/2 z-[75] -translate-x-1/2 border border-foreground bg-foreground px-6 py-3 text-[0.625rem] tracking-[0.2em] uppercase text-background shadow-lg"
-            >
-              {submitted ? "Edit selection" : "Select images"}
-            </button>,
+            <div className="fixed bottom-6 left-1/2 z-[75] flex -translate-x-1/2 gap-2 shadow-lg">
+              {locked ? (
+                <button
+                  type="button"
+                  onClick={enterSelection}
+                  className="border border-foreground bg-foreground px-6 py-3 text-[0.625rem] tracking-[0.2em] uppercase text-background"
+                >
+                  {submitted ? "Edit selection" : "Select images"}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(false);
+                      toast.success("Selection saved");
+                    }}
+                    className="border border-foreground bg-background px-6 py-3 text-[0.625rem] tracking-[0.2em] uppercase text-foreground"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(true)}
+                    className="border border-foreground bg-foreground px-6 py-3 text-[0.625rem] tracking-[0.2em] uppercase text-background"
+                  >
+                    {submitted ? "Update selection" : "Submit selection"}
+                  </button>
+                </>
+              )}
+            </div>,
             document.body,
           )
         : null}
@@ -845,15 +871,45 @@ function ClientGalleryPage() {
       {confirming && mounted
         ? createPortal(
             <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/85 p-6 backdrop-blur-sm">
-              <Card className="w-full max-w-sm">
+              <Card className="w-full max-w-md">
                 <Label>{submitted ? "Update your selection" : "Submit your selection"}</Label>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  You're sending {pickedCount} picked photo{pickedCount === 1 ? "" : "s"}
-                  {gallery.maxPicks ? ` of ${gallery.maxPicks}` : ""}. You can still edit and
-                  update afterwards.
+                  Here’s a summary of what you’re sending. You can still edit and update
+                  afterwards.
                 </p>
-                <div className="mt-6 flex gap-2">
+                <dl className="mt-5 grid grid-cols-2 gap-px border border-hairline bg-hairline">
+                  {[
+                    {
+                      label: gallery.maxPicks ? `Picked of ${gallery.maxPicks}` : "Picked",
+                      value: pickedCount,
+                    },
+                    { label: "Total photos", value: images.length },
+                    { label: "Starred", value: stats.starred },
+                    { label: "Rated", value: stats.rated },
+                    { label: "Labelled", value: stats.labelled },
+                    { label: "With notes", value: stats.noted },
+                  ].map((row) => (
+                    <div key={row.label} className="bg-background px-4 py-3">
+                      <dt className="text-[0.6rem] tracking-[0.18em] uppercase text-muted-foreground">
+                        {row.label}
+                      </dt>
+                      <dd className="mt-1 font-display text-2xl">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-6 flex flex-wrap gap-2">
                   <Btn onClick={() => setConfirming(false)}>Cancel</Btn>
+                  <Btn
+                    onClick={() => {
+                      setConfirming(false);
+                      setOnlyPicked(true);
+                      setOnlyStarred(false);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={pickedCount === 0}
+                  >
+                    Preview selections
+                  </Btn>
                   <Btn
                     variant="solid"
                     onClick={() => {

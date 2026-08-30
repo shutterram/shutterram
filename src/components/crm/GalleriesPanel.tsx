@@ -23,6 +23,8 @@ import {
   type PreviewJob,
 } from "@/lib/gallery.functions";
 import { crmSettingsGet } from "@/lib/crm.functions";
+import { GalleryViewer } from "@/components/site/GalleryViewer";
+import { EmailButton } from "@/components/crm/EmailButton";
 import { Btn, Card, CheckField, Empty, Label, SelectField, TextField, copyLink } from "./ui";
 
 /** Preview compression presets, with a rough per-photo size so you can judge before uploading. */
@@ -182,18 +184,31 @@ async function drawToByteLimit(
   return best;
 }
 
-export function GalleriesPanel({ contacts }: { contacts: { id: string; name: string }[] }) {
+export function GalleriesPanel({
+  contacts,
+}: {
+  contacts: { id: string; name: string; email?: string }[];
+}) {
   const list = useServerFn(listGalleries);
   const create = useServerFn(createGallery);
   const remove = useServerFn(deleteGallery);
 
   const [rows, setRows] = useState<GallerySummary[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const restoredRef = useRef(false);
 
   const load = useMemo(
     () => async () => {
       try {
-        setRows(await list({ data: {} as never }));
+        const next = (await list({ data: {} as never })) as GallerySummary[];
+        setRows(next);
+        // Restore the gallery that was open before a reload, once per mount.
+        if (!restoredRef.current) {
+          restoredRef.current = true;
+          const stored = window.localStorage.getItem("crm:gallery") ?? "";
+          if (stored && next.some((g) => g.id === stored)) setOpenId(stored);
+          else if (stored) window.localStorage.removeItem("crm:gallery");
+        }
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Could not load galleries");
         setRows([]);
@@ -205,6 +220,14 @@ export function GalleriesPanel({ contacts }: { contacts: { id: string; name: str
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Remember which gallery is open so a reload returns to it. Gated on the
+  // restore pass so the mount-time null doesn't wipe the stored key first.
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    if (openId) window.localStorage.setItem("crm:gallery", openId);
+    else window.localStorage.removeItem("crm:gallery");
+  }, [openId]);
 
   const open = rows?.find((g) => g.id === openId) ?? null;
   if (open) {
@@ -271,6 +294,13 @@ export function GalleriesPanel({ contacts }: { contacts: { id: string; name: str
                 >
                   Copy link
                 </Btn>
+                <EmailButton
+                  label="Email link"
+                  subject={`Your gallery: ${g.title}`}
+                  body={`Your ${g.kind === "cull" ? "selection" : "photo"} gallery is ready:\n${typeof window === "undefined" ? "" : window.location.origin}/g/${g.token}\n\nEnjoy!`}
+                  clientEmail={contacts.find((x) => x.id === g.contact_id)?.email}
+                  clientName={contacts.find((x) => x.id === g.contact_id)?.name}
+                />
                 <Btn onClick={() => setOpenId(g.id)}>Open</Btn>
                 <Btn
                   variant="danger"
@@ -298,7 +328,7 @@ function GalleryDetail({
   onSaved,
 }: {
   gallery: GallerySummary;
-  contacts: { id: string; name: string }[];
+  contacts: { id: string; name: string; email?: string }[];
   onBack: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -404,6 +434,12 @@ function GalleryDetail({
   const [picked, setPicked] = useState<Awaited<ReturnType<typeof galleryResults>> | null>(null);
   const [choosingOg, setChoosingOg] = useState(false);
   const [choosingCover, setChoosingCover] = useState(false);
+  const [viewer, setViewer] = useState<number | null>(null);
+  const [filter, setFilter] = useState<
+    "all" | "picked" | "starred" | "rated" | "labelled" | "noted" | "nopreview" | "done"
+  >("all");
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const anchorRef = useRef<number | null>(null);
   const [driveMove, setDriveMove] = useState<{
     open: boolean;
     mode: "copy" | "move";
@@ -837,6 +873,33 @@ function GalleryDetail({
   }
 
   const pickedOnly = (picked ?? []).filter((p) => p.picked);
+  const missingPreview = (picked ?? []).filter(
+    (p) => !p.hasThumb || (form.downscalePreviews && !p.hasPreview),
+  );
+  const visible = (picked ?? []).filter((p) => {
+    if (filter === "picked") return p.picked;
+    if (filter === "starred") return p.starred;
+    if (filter === "rated") return p.rating > 0;
+    if (filter === "labelled") return Boolean(p.label);
+    if (filter === "noted") return Boolean(p.comment);
+    if (filter === "done") return p.done;
+    if (filter === "nopreview")
+      return !p.hasThumb || (form.downscalePreviews && !p.hasPreview);
+    return true;
+  });
+
+  /** Rebuild just the photos handed in, so a failed tail can be retried on its own. */
+  async function rebuildRows(rows: NonNullable<typeof picked>, message: string) {
+    if (!rows.length) return;
+    try {
+      await buildThumbs(rows, true, 0);
+      setSel(new Set());
+      toast.success(message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not rebuild previews");
+      setBusy("");
+    }
+  }
 
   return (
     <div>
@@ -896,21 +959,20 @@ function GalleryDetail({
           {pickedOnly.length ? (
             <>
               <Btn onClick={downloadWorksheet}>Download worksheet</Btn>
-              {form.rawFolderId ? (
-                <Btn
-                  onClick={() =>
-                    setDriveMove((s) => ({
-                      ...s,
-                      open: true,
-                      link: "",
-                      results: [],
-                      folderName: s.folderName || `${form.title || "Gallery"} — SELECTED`,
-                    }))
-                  }
-                >
-                  Send picks to Drive
-                </Btn>
-              ) : null}
+              <Btn
+                onClick={() =>
+                  setDriveMove((s) => ({
+                    ...s,
+                    open: true,
+                    link: "",
+                    results: [],
+                    folderName: s.folderName || `${form.title || "Gallery"} — SELECTED`,
+                  }))
+                }
+              >
+                Send picks to Drive
+              </Btn>
+
 
             </>
           ) : null}
@@ -991,6 +1053,13 @@ function GalleryDetail({
                 ? "Moving re-parents the original RAW files — they will no longer appear in their current folder."
                 : "Copying leaves the originals where they are."}
             </p>
+            {!form.rawFolderId ? (
+              <p className="mt-2 text-xs text-destructive">
+                Add the RAW files Drive folder in this gallery's settings first, then save — the
+                picks are matched against the RAW originals.
+              </p>
+            ) : null}
+
 
             <div className="mt-6 max-h-[45vh] overflow-y-auto border border-border p-3">
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
@@ -1141,79 +1210,202 @@ function GalleryDetail({
               <Empty>No photos uploaded yet.</Empty>
             </div>
           ) : (
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {picked.map((p) => (
-                <figure
-                  key={p.id}
-                  className={
-                    "relative " +
-                    (choosingOg || choosingCover
-                      ? "cursor-pointer outline-offset-2 hover:outline hover:outline-1 hover:outline-foreground"
-                      : "")
-                  }
-                  onClick={() => {
-                    if (choosingCover) {
-                      setForm((current) => ({
-                        ...current,
-                        coverMode: "pick",
-                        coverImageId: p.id,
-                      }));
-                      setChoosingCover(false);
-                      toast.success("Cover picture selected — save the gallery to apply it");
-                      return;
+            <>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {(
+                  [
+                    ["all", `All ${picked.length}`],
+                    ["picked", `Picked ${pickedOnly.length}`],
+                    ["starred", `Starred ${picked.filter((r) => r.starred).length}`],
+                    ["rated", `Rated ${picked.filter((r) => r.rating > 0).length}`],
+                    ["labelled", `Labelled ${picked.filter((r) => r.label).length}`],
+                    ["noted", `Noted ${picked.filter((r) => r.comment).length}`],
+                    ["done", `Done ${picked.filter((r) => r.done).length}`],
+                    ["nopreview", `No preview ${missingPreview.length}`],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFilter(key)}
+                    className={
+                      "border px-3 py-1.5 text-[0.6rem] tracking-[0.18em] uppercase transition-colors " +
+                      (filter === key
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-hairline text-muted-foreground hover:text-foreground")
                     }
-                    if (!choosingOg) return;
-                    setForm((current) => ({ ...current, ogImageId: p.id, coverUrl: "" }));
-                    setChoosingOg(false);
-                    toast.success("Link preview selected — save the gallery to apply it");
-                  }}
-                >
-                  <img src={p.thumb} alt={p.name} className="aspect-square w-full object-cover" />
-                  {choosingOg || choosingCover ? (
-                    <span className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-2 text-center text-[0.55rem] tracking-[0.2em] uppercase">
-                      {choosingCover ? "Use as cover" : "Use as link preview"}
-                    </span>
-                  ) : null}
-                  {p.picked ? (
-                    <span className="absolute left-0 top-0 bg-foreground px-2 py-1 text-[0.55rem] tracking-[0.2em] uppercase text-background">
-                      Picked
-                    </span>
-                  ) : null}
-                  {p.rating ? (
-                    <span className="absolute right-1 top-1 text-xs text-white drop-shadow">
-                      {"★".repeat(p.rating)}
-                    </span>
-                  ) : null}
-                  {p.picked ? (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const next = !p.done;
-                        setPicked(
-                          (rows) =>
-                            rows?.map((r) => (r.id === p.id ? { ...r, done: next } : r)) ?? rows,
-                        );
-                        void markDone({
-                          data: { galleryId: gallery.id, imageId: p.id, done: next },
-                        });
-                      }}
-                      className={
-                        "absolute bottom-0 left-0 px-2 py-1 text-[0.55rem] tracking-[0.2em] uppercase " +
-                        (p.done ? "bg-foreground text-background" : "bg-background/80")
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {sel.size
+                    ? `${sel.size} selected`
+                    : "Click a photo to open it · Shift-click to select a range"}
+                </span>
+                <Btn onClick={() => setSel(new Set(visible.map((r) => r.id)))}>
+                  Select all shown
+                </Btn>
+                {sel.size ? (
+                  <>
+                    <Btn onClick={() => setSel(new Set())}>Clear</Btn>
+                    <Btn
+                      variant="solid"
+                      onClick={() =>
+                        void rebuildRows(
+                          picked.filter((r) => sel.has(r.id)),
+                          `${sel.size} photo${sel.size === 1 ? "" : "s"} rebuilt`,
+                        )
                       }
                     >
-                      {p.done ? "Done" : "Mark done"}
-                    </button>
-                  ) : null}
-                  {p.comment ? (
-                    <figcaption className="mt-1 line-clamp-2 text-[0.65rem] text-muted-foreground">
-                      {p.comment}
-                    </figcaption>
-                  ) : null}
-                </figure>
-              ))}
-            </div>
+                      Rebuild selected
+                    </Btn>
+                  </>
+                ) : null}
+                {missingPreview.length ? (
+                  <Btn
+                    onClick={() =>
+                      void rebuildRows(missingPreview, "Missing previews rebuilt")
+                    }
+                  >
+                    Rebuild missing only ({missingPreview.length})
+                  </Btn>
+                ) : null}
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {visible.map((p, index) => {
+                  const isSel = sel.has(p.id);
+                  const built = p.hasThumb && (!form.downscalePreviews || p.hasPreview);
+                  return (
+                    <figure
+                      key={p.id}
+                      className={
+                        "relative cursor-pointer " +
+                        (isSel
+                          ? "outline outline-2 outline-offset-2 outline-foreground"
+                          : choosingOg || choosingCover
+                            ? "outline-offset-2 hover:outline hover:outline-1 hover:outline-foreground"
+                            : "")
+                      }
+                      onClick={(event) => {
+                        if (choosingCover) {
+                          setForm((current) => ({
+                            ...current,
+                            coverMode: "pick",
+                            coverImageId: p.id,
+                          }));
+                          setChoosingCover(false);
+                          toast.success("Cover picture selected — save the gallery to apply it");
+                          return;
+                        }
+                        if (choosingOg) {
+                          setForm((current) => ({ ...current, ogImageId: p.id, coverUrl: "" }));
+                          setChoosingOg(false);
+                          toast.success("Link preview selected — save the gallery to apply it");
+                          return;
+                        }
+                        if (event.shiftKey && anchorRef.current !== null) {
+                          const [from, to] = [anchorRef.current, index].sort((a, b) => a - b) as [
+                            number,
+                            number,
+                          ];
+                          setSel((prev) => {
+                            const next = new Set(prev);
+                            for (const row of visible.slice(from, to + 1)) next.add(row.id);
+                            return next;
+                          });
+                          return;
+                        }
+                        if (event.metaKey || event.ctrlKey || sel.size > 0) {
+                          anchorRef.current = index;
+                          setSel((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(p.id)) next.delete(p.id);
+                            else next.add(p.id);
+                            return next;
+                          });
+                          return;
+                        }
+                        anchorRef.current = index;
+                        setViewer(index);
+                      }}
+                    >
+                      <div className="relative">
+                        <img
+                          src={p.thumb}
+                          alt={p.name}
+                          className="aspect-square w-full object-cover"
+                        />
+                        {choosingOg || choosingCover ? (
+                          <span className="absolute inset-x-0 bottom-0 bg-background/90 px-2 py-2 text-center text-[0.55rem] tracking-[0.2em] uppercase">
+                            {choosingCover ? "Use as cover" : "Use as link preview"}
+                          </span>
+                        ) : null}
+                        <span
+                          className={
+                            "absolute right-0 top-0 px-2 py-1 text-[0.5rem] tracking-[0.18em] uppercase " +
+                            (built
+                              ? "bg-background/85 text-muted-foreground"
+                              : "bg-destructive text-destructive-foreground")
+                          }
+                        >
+                          {built ? "Built" : p.hasThumb ? "No preview" : "Not built"}
+                        </span>
+                        {p.picked ? (
+                          <span className="absolute left-0 top-0 bg-foreground px-2 py-1 text-[0.55rem] tracking-[0.2em] uppercase text-background">
+                            Picked
+                          </span>
+                        ) : null}
+                        {p.picked && !choosingOg && !choosingCover ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              const next = !p.done;
+                              setPicked(
+                                (rows) =>
+                                  rows?.map((r) => (r.id === p.id ? { ...r, done: next } : r)) ??
+                                  rows,
+                              );
+                              void markDone({
+                                data: { galleryId: gallery.id, imageId: p.id, done: next },
+                              });
+                            }}
+                            className={
+                              "absolute bottom-0 left-0 px-2 py-1 text-[0.55rem] tracking-[0.2em] uppercase " +
+                              (p.done ? "bg-foreground text-background" : "bg-background/80")
+                            }
+                          >
+                            {p.done ? "Done" : "Mark done"}
+                          </button>
+                        ) : null}
+                      </div>
+                      <figcaption className="mt-1 space-y-0.5">
+
+                        <span className="block truncate text-[0.65rem]">{p.name}</span>
+                        <span className="flex flex-wrap items-center gap-1 text-[0.6rem] text-muted-foreground">
+                          {p.starred ? <span title="Starred">★</span> : null}
+                          {p.rating ? <span>{"★".repeat(p.rating)}</span> : null}
+                          {p.label ? (
+                            <span className="border border-hairline px-1">{p.label}</span>
+                          ) : null}
+                          {p.comment ? <span title={p.comment}>Note</span> : null}
+                        </span>
+                        {p.comment ? (
+                          <span className="block line-clamp-2 text-[0.65rem] text-muted-foreground">
+                            {p.comment}
+                          </span>
+                        ) : null}
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 
@@ -1518,6 +1710,31 @@ function GalleryDetail({
           </div>
         </Card>
       </div>
+
+      {viewer !== null && visible[viewer] ? (
+        <GalleryViewer
+          images={visible.map((r) => ({ id: r.id, name: r.name, preview: r.preview, orig: r.orig }))}
+          index={viewer}
+          onIndex={setViewer}
+          onClose={() => setViewer(null)}
+          showFilenames
+          allowDownload
+          footer={(image) => {
+            const row = visible.find((r) => r.id === image.id);
+            if (!row) return null;
+            return (
+              <span className="flex flex-wrap items-center justify-center gap-3 text-[0.65rem] tracking-[0.14em] uppercase">
+                {row.picked ? <span>Picked</span> : null}
+                {row.starred ? <span>Starred</span> : null}
+                {row.rating ? <span>{"\u2605".repeat(row.rating)}</span> : null}
+                {row.label ? <span>{row.label}</span> : null}
+                {row.done ? <span>Done</span> : null}
+                {row.comment ? <span className="normal-case">{row.comment}</span> : null}
+              </span>
+            );
+          }}
+        />
+      ) : null}
     </div>
   );
 }

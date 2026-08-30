@@ -7,6 +7,9 @@ import { crmList, crmOverview } from "@/lib/crm.functions";
 import { ContractsPanel } from "@/components/crm/ContractsPanel";
 import { GalleriesPanel } from "@/components/crm/GalleriesPanel";
 import { CrmSettingsPanel } from "@/components/crm/CrmSettingsPanel";
+import { InvoicesPanel } from "@/components/crm/InvoicesPanel";
+import { ActivityDock } from "@/components/crm/ActivityDock";
+
 import { RecordPanel, type RecordField } from "@/components/crm/RecordPanel";
 import { Btn, Card, Empty, Stat } from "@/components/crm/ui";
 
@@ -26,7 +29,8 @@ export const Route = createFileRoute("/_authenticated/crm")({
 const PANELS = [
   { id: "dashboard", label: "Dashboard", hint: "A quick pulse of the studio." },
   { id: "clients", label: "Clients", hint: "People and enquiries in your pipeline." },
-  { id: "work", label: "Work", hint: "Shoots, tasks and client galleries." },
+  { id: "work", label: "Work", hint: "Shoots and tasks." },
+  { id: "galleries", label: "Galleries", hint: "Client selection and delivery galleries." },
   { id: "money", label: "Money", hint: "Invoices, payments and expenses." },
   { id: "documents", label: "Documents", hint: "Contracts and signatures." },
   { id: "setup", label: "Setup", hint: "Drive connection and CRM preferences." },
@@ -38,12 +42,14 @@ const TABS = [
   { id: "leads", panel: "clients", label: "Pipeline" },
   { id: "bookings", panel: "work", label: "Bookings" },
   { id: "tasks", panel: "work", label: "Tasks" },
-  { id: "galleries", panel: "work", label: "Galleries" },
+  { id: "galleries", panel: "galleries", label: "Galleries" },
   { id: "invoices", panel: "money", label: "Invoices" },
+  { id: "bills", panel: "money", label: "Bills" },
   { id: "expenses", panel: "money", label: "Expenses" },
   { id: "contracts", panel: "documents", label: "Contracts" },
   { id: "settings", panel: "setup", label: "Settings" },
 ] as const;
+
 
 const CONTACT_FIELDS: RecordField[] = [
   { key: "name", label: "Name" },
@@ -94,25 +100,6 @@ const BOOKING_FIELDS: RecordField[] = [
   { key: "notes", label: "Notes", type: "textarea" },
 ];
 
-const INVOICE_FIELDS: RecordField[] = [
-  { key: "number", label: "Invoice number" },
-  { key: "contact_id", label: "Client", type: "contact" },
-  { key: "amount", label: "Amount", type: "number" },
-  { key: "tax", label: "Tax", type: "number" },
-  {
-    key: "status",
-    label: "Status",
-    type: "select",
-    options: ["draft", "sent", "paid", "overdue", "void"].map((s) => ({
-      value: s,
-      label: s[0]!.toUpperCase() + s.slice(1),
-    })),
-  },
-  { key: "issued_on", label: "Issued", type: "date" },
-  { key: "due_on", label: "Due", type: "date" },
-  { key: "paid_on", label: "Paid", type: "date" },
-  { key: "notes", label: "Notes", type: "textarea" },
-];
 
 const EXPENSE_FIELDS: RecordField[] = [
   { key: "title", label: "Expense" },
@@ -147,7 +134,7 @@ function CrmPage() {
 
   const [panel, setPanel] = useState<string>("dashboard");
   const [tab, setTab] = useState<string>("overview");
-  const [contacts, setContacts] = useState<{ id: string; name: string }[]>([]);
+  const [contacts, setContacts] = useState<{ id: string; name: string; email?: string }[]>([]);
   const [overview, setOverview] = useState<Awaited<ReturnType<typeof crmOverview>> | null>(null);
   const [denied, setDenied] = useState(false);
 
@@ -156,7 +143,13 @@ function CrmPage() {
       const rows = await listFn({
         data: { table: "crm_contacts", orderBy: "name", ascending: true },
       });
-      setContacts(rows.map((r) => ({ id: String(r["id"]), name: String(r["name"] ?? "") })));
+      setContacts(
+        rows.map((r) => ({
+          id: String(r["id"]),
+          name: String(r["name"] ?? ""),
+          email: String(r["email"] ?? ""),
+        })),
+      );
     } catch {
       /* handled by overview error */
     }
@@ -175,21 +168,29 @@ function CrmPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [restored, setRestored] = useState(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.replace(/^#/, "");
-    const [maybePanel, maybeTab] = hash.includes("/") ? hash.split("/") : [null, hash];
+    const stored = window.localStorage.getItem("crm:place") ?? "";
+    const source = hash || stored;
+    const [maybePanel, maybeTab] = source.includes("/") ? source.split("/") : [null, source];
     const found = TABS.find((t) => t.id === (maybeTab ?? ""));
     if (found) {
       setTab(found.id);
       setPanel(maybePanel && PANELS.some((p) => p.id === maybePanel) ? maybePanel : found.panel);
     }
+    setRestored(true);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !restored) return;
     window.history.replaceState(null, "", `${window.location.pathname}#${panel}/${tab}`);
-  }, [panel, tab]);
+    window.localStorage.setItem("crm:place", `${panel}/${tab}`);
+  }, [panel, tab, restored]);
+
+
 
   if (denied) {
     return (
@@ -394,18 +395,9 @@ function CrmPage() {
             defaults={{ status: "pencilled" }}
           />
         ) : null}
-        {tab === "invoices" ? (
-          <RecordPanel
-            table="crm_invoices"
-            title="Invoices"
-            itemLabel="invoice"
-            titleKey="number"
-            subtitleKeys={["contact_id", "amount", "status", "due_on"]}
-            fields={INVOICE_FIELDS}
-            contacts={contacts}
-            defaults={{ status: "draft" }}
-          />
-        ) : null}
+        {tab === "invoices" ? <InvoicesPanel contacts={contacts} /> : null}
+        {tab === "bills" ? <InvoicesPanel contacts={contacts} mode="bills" /> : null}
+
         {tab === "expenses" ? (
           <RecordPanel
             table="crm_expenses"
@@ -434,6 +426,7 @@ function CrmPage() {
           </div>
         </div>
       </div>
+      <ActivityDock />
     </div>
   );
 }

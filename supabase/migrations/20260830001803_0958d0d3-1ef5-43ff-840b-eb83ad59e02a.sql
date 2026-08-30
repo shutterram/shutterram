@@ -1,0 +1,11 @@
+REVOKE EXECUTE ON FUNCTION public.apply_row(text, jsonb) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.content_snapshot(text[]) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.delete_row(text, jsonb) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.log_content_change() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.pk_where_clause(text) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.record_view_duration(uuid, integer) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.resolve_share_link(text) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.restore_snapshot(jsonb, text[]) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.share_link_og_image(text) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.timeline_goto(uuid) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.timeline_state() FROM anon, authenticated;

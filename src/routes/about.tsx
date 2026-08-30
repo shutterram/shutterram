@@ -13,7 +13,7 @@ import { SocialLinks } from "@/components/site/SocialLinks";
 import { ExperienceSection } from "@/components/site/ExperienceSection";
 import { Reveal } from "@/components/site/Reveal";
 import { StatValue } from "@/components/site/StatsStrip";
-import { buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
+import { SITE_URL, buildSeoHead, loadSeo, tokenOf } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   loader: ({ location }) => loadSeo("/about", tokenOf(location.search)),
@@ -33,11 +33,11 @@ export const Route = createFileRoute("/about")({
           "@type": "Person",
           name: "Ram",
           jobTitle: "Photographer",
-          url: "https://shutterram.lovable.app/about",
+          url: `${SITE_URL}/about`,
           worksFor: {
             "@type": "LocalBusiness",
             name: "Shutter Ram",
-            url: "https://shutterram.lovable.app",
+            url: SITE_URL,
           },
           knowsAbout: [
             "Wedding photography",

@@ -15,6 +15,7 @@ import { usePdfPages, countPdfPages } from "./PdfPages";
 import { PdfViewer } from "./PdfViewer";
 import { SignatureInput } from "./SignatureInput";
 import { AreaField, Btn, Card, Empty, Label, SelectField, TextField, copyLink } from "./ui";
+import { EmailButton } from "@/components/crm/EmailButton";
 import { DEFAULT_TIMEZONE, TIMEZONE_OPTIONS, formatInZone, todayInZone } from "@/lib/timezones";
 import { DEFAULT_FIELD_PT, fieldDisplay, fieldFontCss } from "@/lib/contract-fields";
 
@@ -91,7 +92,11 @@ function Accordion({
   );
 }
 
-export function ContractsPanel({ contacts }: { contacts: { id: string; name: string }[] }) {
+export function ContractsPanel({
+  contacts,
+}: {
+  contacts: { id: string; name: string; email?: string }[];
+}) {
   const list = useServerFn(listContracts);
   const create = useServerFn(createContract);
   const remove = useServerFn(crmDelete);
@@ -197,7 +202,7 @@ function ContractsTable({
   onDelete,
 }: {
   rows: ContractSummary[] | null;
-  contacts: { id: string; name: string }[];
+  contacts: { id: string; name: string; email?: string }[];
   uploading: boolean;
   fileRef: React.RefObject<HTMLInputElement | null>;
   onUpload: (file: File) => void;
@@ -364,6 +369,13 @@ function ContractsTable({
                       >
                         Copy link
                       </Btn>
+                      <EmailButton
+                        label="Email link"
+                        subject={`Contract to sign: ${c.title || "Agreement"}`}
+                        body={`Please sign the contract here:\n${typeof window === "undefined" ? "" : window.location.origin}/sign/${c.token}\n\nThank you.`}
+                        clientEmail={contacts.find((x) => x.id === c.contact_id)?.email}
+                        clientName={nameOf(c.contact_id) || c.signer_name}
+                      />
                       <Btn onClick={() => onOpen(c.id)}>Open</Btn>
                       {c.drive_link ? (
                         <a
@@ -399,7 +411,7 @@ function ContractEditor({
   onBack,
 }: {
   id: string;
-  contacts: { id: string; name: string }[];
+  contacts: { id: string; name: string; email?: string }[];
   onBack: () => void;
 }) {
   const detailFn = useServerFn(getContractDetail);

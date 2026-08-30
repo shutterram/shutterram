@@ -1,7 +1,0 @@
-ALTER TABLE public.settings
-  ADD COLUMN IF NOT EXISTS logo_header text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS logo_footer text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS logo_mobile text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS logo_loader text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS logo_favicon text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS logo_invert boolean NOT NULL DEFAULT true;

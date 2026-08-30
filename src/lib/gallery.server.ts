@@ -180,6 +180,7 @@ export async function loadPublicGallery(
   );
 
   const settings = await getCrmSettings();
+  const allowDownload = gallery.allow_download ?? false;
 
   await supabaseAdmin
     .from("crm_galleries")
@@ -190,10 +191,12 @@ export async function loadPublicGallery(
     const pick = pickMap.get(img.id) as
       | { picked: boolean; starred: boolean; rating: number; label: string; comment: string }
       | undefined;
+    // Only issue a signed original URL when the photographer enabled downloads;
+    // the image route re-checks this server-side before streaming originals.
     const [thumb, preview, orig] = await Promise.all([
       signImage(img.id, "thumb"),
       signImage(img.id, "preview"),
-      signImage(img.id, "orig"),
+      allowDownload ? signImage(img.id, "orig") : Promise.resolve(""),
     ]);
     return {
       id: img.id,
@@ -217,7 +220,7 @@ export async function loadPublicGallery(
     message: gallery.message ?? "",
     welcome: settings?.gallery_welcome ?? "",
     submitted: Boolean(gallery.submitted_at),
-    allowDownload: gallery.allow_download ?? false,
+    allowDownload,
     allowClientPassword: gallery.allow_client_password ?? true,
     hasClientPassword: Boolean(gallery.client_password_hash),
     requiresPickPin: Boolean((gallery as { pick_pin_hash?: string }).pick_pin_hash),

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -160,6 +160,75 @@ export type Database = {
           meta?: Json
         }
         Relationships: []
+      }
+      crm_bills: {
+        Row: {
+          amount: number
+          contact_id: string | null
+          created_at: string
+          currency: string
+          footer: string
+          header_info: string
+          id: string
+          invoice_id: string | null
+          line_items: Json
+          method: string
+          notes: string
+          number: string
+          paid_on: string | null
+          tax: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          footer?: string
+          header_info?: string
+          id?: string
+          invoice_id?: string | null
+          line_items?: Json
+          method?: string
+          notes?: string
+          number?: string
+          paid_on?: string | null
+          tax?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contact_id?: string | null
+          created_at?: string
+          currency?: string
+          footer?: string
+          header_info?: string
+          id?: string
+          invoice_id?: string | null
+          line_items?: Json
+          method?: string
+          notes?: string
+          number?: string
+          paid_on?: string | null
+          tax?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_bills_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_bills_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "crm_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_bookings: {
         Row: {
@@ -757,6 +826,7 @@ export type Database = {
           created_at: string
           currency: string
           due_on: string | null
+          header_info: string
           id: string
           issued_on: string | null
           line_items: Json
@@ -774,6 +844,7 @@ export type Database = {
           created_at?: string
           currency?: string
           due_on?: string | null
+          header_info?: string
           id?: string
           issued_on?: string | null
           line_items?: Json
@@ -791,6 +862,7 @@ export type Database = {
           created_at?: string
           currency?: string
           due_on?: string | null
+          header_info?: string
           id?: string
           issued_on?: string | null
           line_items?: Json
@@ -914,6 +986,9 @@ export type Database = {
       }
       crm_settings: {
         Row: {
+          bill_footer: string
+          bill_next_number: number
+          bill_prefix: string
           contract_date_font_size: number
           contract_field_font_size: number
           contract_footer_note: string
@@ -932,8 +1007,12 @@ export type Database = {
           gallery_show_filenames: boolean
           gallery_welcome: string
           id: boolean
+          invoice_footer: string
+          invoice_from: string
+          invoice_header_info: string
           invoice_next_number: number
           invoice_prefix: string
+          invoice_terms: string
           lead_sources: string[]
           pipeline_stages: string[]
           preview_max_px: number
@@ -945,6 +1024,9 @@ export type Database = {
           watermark_text: string
         }
         Insert: {
+          bill_footer?: string
+          bill_next_number?: number
+          bill_prefix?: string
           contract_date_font_size?: number
           contract_field_font_size?: number
           contract_footer_note?: string
@@ -963,8 +1045,12 @@ export type Database = {
           gallery_show_filenames?: boolean
           gallery_welcome?: string
           id?: boolean
+          invoice_footer?: string
+          invoice_from?: string
+          invoice_header_info?: string
           invoice_next_number?: number
           invoice_prefix?: string
+          invoice_terms?: string
           lead_sources?: string[]
           pipeline_stages?: string[]
           preview_max_px?: number
@@ -976,6 +1062,9 @@ export type Database = {
           watermark_text?: string
         }
         Update: {
+          bill_footer?: string
+          bill_next_number?: number
+          bill_prefix?: string
           contract_date_font_size?: number
           contract_field_font_size?: number
           contract_footer_note?: string
@@ -994,8 +1083,12 @@ export type Database = {
           gallery_show_filenames?: boolean
           gallery_welcome?: string
           id?: boolean
+          invoice_footer?: string
+          invoice_from?: string
+          invoice_header_info?: string
           invoice_next_number?: number
           invoice_prefix?: string
+          invoice_terms?: string
           lead_sources?: string[]
           pipeline_stages?: string[]
           preview_max_px?: number
@@ -1509,6 +1602,8 @@ export type Database = {
           logo_header_offset_x: number
           logo_header_offset_y: number
           logo_invert: boolean
+          logo_invoice: string
+          logo_invoice_height: number
           logo_loader: string
           logo_loader_height: number
           logo_loader_offset_x: number
@@ -1564,6 +1659,8 @@ export type Database = {
           logo_header_offset_x?: number
           logo_header_offset_y?: number
           logo_invert?: boolean
+          logo_invoice?: string
+          logo_invoice_height?: number
           logo_loader?: string
           logo_loader_height?: number
           logo_loader_offset_x?: number
@@ -1619,6 +1716,8 @@ export type Database = {
           logo_header_offset_x?: number
           logo_header_offset_y?: number
           logo_invert?: boolean
+          logo_invoice?: string
+          logo_invoice_height?: number
           logo_loader?: string
           logo_loader_height?: number
           logo_loader_offset_x?: number

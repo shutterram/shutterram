@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
   ScriptOnce,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -30,6 +31,7 @@ import {
 import { themeCss } from "@/lib/theme-css";
 import { fontStylesheetHrefs, typographyCss } from "@/lib/type-css";
 import { recordViewDuration, trackPageView } from "@/lib/analytics.functions";
+import { apexSectionRedirect, subdomainRedirect } from "@/lib/subdomains";
 
 function NotFoundComponent() {
   return (
@@ -90,6 +92,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // admin./crm./auth. subdomains land on their section of the app, and the
+  // apex domain bounces section paths (/admin, /crm, /auth) to subdomains.
+  beforeLoad: ({ location }) => {
+    if (typeof window === "undefined") return;
+    const apexUrl = apexSectionRedirect(window.location.hostname, location.pathname);
+    if (apexUrl) {
+      window.location.replace(apexUrl);
+      return;
+    }
+    const to = subdomainRedirect(window.location.hostname, location.pathname);
+    if (to) throw redirect({ to });
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
