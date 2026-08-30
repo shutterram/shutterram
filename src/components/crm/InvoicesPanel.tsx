@@ -10,13 +10,25 @@ import {
   type CrmRow,
 } from "@/lib/crm.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { AreaField, Btn, Card, Empty, Label, SelectField, TextField } from "@/components/crm/ui";
+import {
+  AreaField,
+  Btn,
+  Card,
+  Empty,
+  Label,
+  SelectField,
+  TextField,
+  copyLink,
+} from "@/components/crm/ui";
 import { EmailButton } from "@/components/crm/EmailButton";
+import { financialDocumentShortLink } from "@/lib/financial-documents.functions";
+import { SITE_URL } from "@/lib/seo";
 
 type Line = { description: string; qty: number; rate: number };
 
 type Invoice = {
   id?: string;
+  public_token?: string;
   number: string;
   contact_id: string | null;
   currency: string;
@@ -33,6 +45,7 @@ type Invoice = {
 
 type Bill = {
   id?: string;
+  public_token?: string;
   invoice_id: string | null;
   contact_id: string | null;
   number: string;
@@ -185,7 +198,9 @@ function Paper({
         <div style={{ whiteSpace: "pre-wrap", fontSize: 13, textAlign: "right" }}>{from}</div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24, fontSize: 13 }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", marginTop: 24, fontSize: 13 }}
+      >
         <div>
           <p style={{ color: "#666", fontSize: 11, textTransform: "uppercase", margin: 0 }}>
             Billed to
@@ -264,6 +279,7 @@ export function InvoicesPanel({
   const deleteFn = useServerFn(crmDelete);
   const settingsGet = useServerFn(crmSettingsGet);
   const settingsSave = useServerFn(crmSettingsSave);
+  const shortLink = useServerFn(financialDocumentShortLink);
 
   const [rows, setRows] = useState<Invoice[] | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -293,6 +309,7 @@ export function InvoicesPanel({
       setRows(
         invoiceRows.map((r) => ({
           id: String(r["id"]),
+          public_token: String(r["public_token"] ?? ""),
           number: String(r["number"] ?? ""),
           contact_id: (r["contact_id"] as string | null) ?? null,
           currency: String(r["currency"] ?? "USD"),
@@ -310,6 +327,7 @@ export function InvoicesPanel({
       setBills(
         billRows.map((r) => ({
           id: String(r["id"]),
+          public_token: String(r["public_token"] ?? ""),
           invoice_id: (r["invoice_id"] as string | null) ?? null,
           contact_id: (r["contact_id"] as string | null) ?? null,
           number: String(r["number"] ?? ""),
@@ -358,6 +376,19 @@ export function InvoicesPanel({
   const terms = String(settings?.["invoice_terms"] ?? "");
   const footer = String(settings?.["invoice_footer"] ?? "");
   const billFooter = String(settings?.["bill_footer"] ?? "");
+
+  async function copyDocumentLink(kind: "invoice" | "bill", id?: string) {
+    if (!id) {
+      toast.error("Save this document before copying its link");
+      return;
+    }
+    try {
+      const { code } = await shortLink({ data: { kind, id } });
+      await copyLink(`${SITE_URL}/${code}`, (message) => toast.success(message));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create link");
+    }
+  }
 
   /** Creates a receipt from an invoice (used on "mark paid" and manually). */
   async function generateBill(inv: Invoice, silent = false) {
@@ -477,13 +508,19 @@ export function InvoicesPanel({
             Save bill
           </Btn>
           <Btn onClick={() => printNode(billRef.current, editingBill.number)}>Download / print</Btn>
+          <Btn
+            disabled={!editingBill.id}
+            onClick={() => void copyDocumentLink("bill", editingBill.id)}
+          >
+            Copy client link
+          </Btn>
           <EmailButton
             label="Email bill"
             subject={`Receipt ${editingBill.number}`}
             body={`Here is your receipt ${editingBill.number} for ${money(
               totalsOf(editingBill.line_items, editingBill.tax).total,
               editingBill.currency,
-            )}${editingBill.paid_on ? `, paid on ${editingBill.paid_on}` : ""}.\n\nThank you.`}
+            )}${editingBill.paid_on ? `, paid on ${editingBill.paid_on}` : ""}.${editingBill.public_token ? `\n${SITE_URL}/bill/${editingBill.public_token}` : ""}\n\nThank you.`}
             clientEmail={contactEmail(editingBill.contact_id)}
             clientName={contacts.find((c) => c.id === editingBill.contact_id)?.name}
           />
@@ -594,10 +631,7 @@ export function InvoicesPanel({
                   onClick={() =>
                     setEditingBill({
                       ...editingBill,
-                      line_items: [
-                        ...editingBill.line_items,
-                        { description: "", qty: 1, rate: 0 },
-                      ],
+                      line_items: [...editingBill.line_items, { description: "", qty: 1, rate: 0 }],
                     })
                   }
                 >
@@ -663,6 +697,9 @@ export function InvoicesPanel({
             Save
           </Btn>
           <Btn onClick={() => printNode(printRef.current, editing.number)}>Download / print</Btn>
+          <Btn disabled={!editing.id} onClick={() => void copyDocumentLink("invoice", editing.id)}>
+            Copy client link
+          </Btn>
           <Btn
             disabled={!editing.id || busy}
             onClick={() => {
@@ -682,7 +719,7 @@ export function InvoicesPanel({
             subject={`Invoice ${editing.number}`}
             body={`Please find invoice ${editing.number} for ${money(total, editing.currency)}${
               editing.due_on ? `, due ${editing.due_on}` : ""
-            }.\n\nThank you.`}
+            }.${editing.public_token ? `\n${SITE_URL}/invoice/${editing.public_token}` : ""}\n\nThank you.`}
             clientEmail={contactEmail(editing.contact_id)}
             clientName={contacts.find((c) => c.id === editing.contact_id)?.name}
           />
@@ -714,7 +751,10 @@ export function InvoicesPanel({
                 label="Status"
                 value={editing.status}
                 onChange={(v) => setEditing({ ...editing, status: v })}
-                options={STATUSES.map((s) => ({ value: s, label: s[0]!.toUpperCase() + s.slice(1) }))}
+                options={STATUSES.map((s) => ({
+                  value: s,
+                  label: s[0]!.toUpperCase() + s.slice(1),
+                }))}
               />
               <TextField
                 label="Issued on"
@@ -919,7 +959,8 @@ export function InvoicesPanel({
               />
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              Subtotal {money(subtotal, editing.currency)} · Tax {money(taxAmount, editing.currency)}
+              Subtotal {money(subtotal, editing.currency)} · Tax{" "}
+              {money(taxAmount, editing.currency)}
             </p>
           </Card>
         </div>
@@ -975,12 +1016,13 @@ export function InvoicesPanel({
                   </div>
                   <div className="flex gap-2">
                     <Btn onClick={() => setEditingBill(bill)}>Open</Btn>
+                    <Btn onClick={() => void copyDocumentLink("bill", bill.id)}>Copy link</Btn>
                     <EmailButton
                       subject={`Receipt ${bill.number}`}
                       body={`Here is your receipt ${bill.number} for ${money(
                         bill.amount,
                         bill.currency,
-                      )}${bill.paid_on ? `, paid on ${bill.paid_on}` : ""}.\n\nThank you.`}
+                      )}${bill.paid_on ? `, paid on ${bill.paid_on}` : ""}.${bill.public_token ? `\n${SITE_URL}/bill/${bill.public_token}` : ""}\n\nThank you.`}
                       clientEmail={contactEmail(bill.contact_id)}
                       clientName={contacts.find((c) => c.id === bill.contact_id)?.name}
                     />
@@ -1010,7 +1052,11 @@ export function InvoicesPanel({
           variant="solid"
           onClick={() =>
             setEditing(
-              emptyInvoice(`${prefix}${String(nextNumber).padStart(4, "0")}`, currency, defaultHeader),
+              emptyInvoice(
+                `${prefix}${String(nextNumber).padStart(4, "0")}`,
+                currency,
+                defaultHeader,
+              ),
             )
           }
         >
@@ -1036,11 +1082,12 @@ export function InvoicesPanel({
                 </div>
                 <div className="flex gap-2">
                   <Btn onClick={() => setEditing(inv)}>Open</Btn>
+                  <Btn onClick={() => void copyDocumentLink("invoice", inv.id)}>Copy link</Btn>
                   <EmailButton
                     subject={`Invoice ${inv.number}`}
                     body={`Please find invoice ${inv.number} for ${money(inv.amount, inv.currency)}${
                       inv.due_on ? `, due ${inv.due_on}` : ""
-                    }.\n\nThank you.`}
+                    }.${inv.public_token ? `\n${SITE_URL}/invoice/${inv.public_token}` : ""}\n\nThank you.`}
                     clientEmail={contactEmail(inv.contact_id)}
                     clientName={contacts.find((c) => c.id === inv.contact_id)?.name}
                   />

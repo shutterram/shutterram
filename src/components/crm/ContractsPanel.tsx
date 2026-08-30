@@ -18,6 +18,8 @@ import { AreaField, Btn, Card, Empty, Label, SelectField, TextField, copyLink } 
 import { EmailButton } from "@/components/crm/EmailButton";
 import { DEFAULT_TIMEZONE, TIMEZONE_OPTIONS, formatInZone, todayInZone } from "@/lib/timezones";
 import { DEFAULT_FIELD_PT, fieldDisplay, fieldFontCss } from "@/lib/contract-fields";
+import { SITE_URL } from "@/lib/seo";
+import { contractShortLink } from "@/lib/financial-documents.functions";
 
 const FIELD_KINDS = [
   { value: "signature", label: "Signature", hint: "Draw or type", w: 0.26, h: 0.07 },
@@ -59,7 +61,6 @@ function newField(
     bold: false,
   };
 }
-
 
 function Accordion({
   title,
@@ -209,12 +210,12 @@ function ContractsTable({
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const shortLink = useServerFn(contractShortLink);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState<"newest" | "oldest" | "title" | "status">("newest");
 
-  const nameOf = (id: string | null) =>
-    contacts.find((c) => c.id === id)?.name ?? "";
+  const nameOf = (id: string | null) => contacts.find((c) => c.id === id)?.name ?? "";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -222,7 +223,9 @@ function ContractsTable({
       if (status !== "all" && c.status !== status) return false;
       if (!q) return true;
       return [c.title, c.signer_name, nameOf(c.contact_id), c.status].some((v) =>
-        String(v ?? "").toLowerCase().includes(q),
+        String(v ?? "")
+          .toLowerCase()
+          .includes(q),
       );
     });
     const sorted = [...list];
@@ -354,7 +357,11 @@ function ContractsTable({
                       : "—"}
                   </td>
                   <td className="px-4 py-4 text-xs text-muted-foreground">
-                    {[c.has_password ? "Password" : "", c.access_code ? "Code" : "", c.expires_at ? "Expires" : ""]
+                    {[
+                      c.has_password ? "Password" : "",
+                      c.access_code ? "Code" : "",
+                      c.expires_at ? "Expires" : "",
+                    ]
                       .filter(Boolean)
                       .join(" · ") || "Open link"}
                   </td>
@@ -362,9 +369,15 @@ function ContractsTable({
                     <div className="flex flex-wrap gap-2">
                       <Btn
                         onClick={() =>
-                          copyLink(`${window.location.origin}/sign/${c.token}`, (m) =>
-                            toast.success(m),
-                          )
+                          void shortLink({ data: { id: c.id } })
+                            .then(({ code }) =>
+                              copyLink(`${SITE_URL}/${code}`, (m) => toast.success(m)),
+                            )
+                            .catch((error) =>
+                              toast.error(
+                                error instanceof Error ? error.message : "Could not create link",
+                              ),
+                            )
                         }
                       >
                         Copy link
@@ -372,7 +385,7 @@ function ContractsTable({
                       <EmailButton
                         label="Email link"
                         subject={`Contract to sign: ${c.title || "Agreement"}`}
-                        body={`Please sign the contract here:\n${typeof window === "undefined" ? "" : window.location.origin}/sign/${c.token}\n\nThank you.`}
+                        body={`Please sign the contract here:\n${SITE_URL}/sign/${c.token}\n\nThank you.`}
                         clientEmail={contacts.find((x) => x.id === c.contact_id)?.email}
                         clientName={nameOf(c.contact_id) || c.signer_name}
                       />
@@ -402,7 +415,6 @@ function ContractsTable({
   );
 }
 
-
 type Detail = Awaited<ReturnType<typeof getContractDetail>>;
 
 function ContractEditor({
@@ -418,6 +430,7 @@ function ContractEditor({
   const saveFields = useServerFn(saveContractFields);
   const saveSharing = useServerFn(updateContractSharing);
   const listRows = useServerFn(crmList);
+  const shortLink = useServerFn(contractShortLink);
 
   const [detail, setDetail] = useState<Detail | null>(null);
   const [fields, setFields] = useState<ContractField[]>([]);
@@ -425,9 +438,13 @@ function ContractEditor({
   const [role, setRole] = useState<"client" | "me">("client");
   const [open, setOpen] = useState<string>("add");
   const [currentPage, setCurrentPage] = useState(1);
-  const [menu, setMenu] = useState<{ sx: number; sy: number; page: number; x: number; y: number } | null>(
-    null,
-  );
+  const [menu, setMenu] = useState<{
+    sx: number;
+    sy: number;
+    page: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const [bookings, setBookings] = useState<{ id: string; label: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [share, setShare] = useState({
@@ -475,7 +492,10 @@ function ContractEditor({
         setBookings(
           rows.map((r) => ({
             id: String(r["id"]),
-            label: [String(r["title"] ?? "Booking"), r["starts_at"] ? String(r["starts_at"]).slice(0, 10) : ""]
+            label: [
+              String(r["title"] ?? "Booking"),
+              r["starts_at"] ? String(r["starts_at"]).slice(0, 10) : "",
+            ]
               .filter(Boolean)
               .join(" · "),
           })),
@@ -573,8 +593,14 @@ function ContractEditor({
     const rect = pageEl.getBoundingClientRect();
     const move = (ev: PointerEvent) => {
       patch(fieldId, {
-        w: Math.min(0.98, Math.max(0.03, (ev.clientX - (rect.left + start.x * rect.width)) / rect.width)),
-        h: Math.min(0.5, Math.max(0.015, (ev.clientY - (rect.top + start.y * rect.height)) / rect.height)),
+        w: Math.min(
+          0.98,
+          Math.max(0.03, (ev.clientX - (rect.left + start.x * rect.width)) / rect.width),
+        ),
+        h: Math.min(
+          0.5,
+          Math.max(0.015, (ev.clientY - (rect.top + start.y * rect.height)) / rect.height),
+        ),
       });
     };
     const up = () => {
@@ -716,7 +742,9 @@ function ContractEditor({
                   className="border border-hairline px-3 py-2 text-left transition-colors hover:border-foreground"
                 >
                   <span className="block text-xs">{k.label}</span>
-                  <span className="mt-0.5 block text-[0.625rem] text-muted-foreground">{k.hint}</span>
+                  <span className="mt-0.5 block text-[0.625rem] text-muted-foreground">
+                    {k.hint}
+                  </span>
                 </button>
               ))}
             </div>
@@ -764,20 +792,23 @@ function ContractEditor({
                 <div>
                   <Label>Page</Label>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {Array.from({ length: pages?.length ?? detail?.pageCount ?? 1 }, (_, i) => i + 1).map(
-                      (p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => patch(active.id, { page: p })}
-                          className={`size-8 border text-xs ${
-                            active.page === p ? "border-foreground bg-foreground text-background" : "border-hairline"
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      ),
-                    )}
+                    {Array.from(
+                      { length: pages?.length ?? detail?.pageCount ?? 1 },
+                      (_, i) => i + 1,
+                    ).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => patch(active.id, { page: p })}
+                        className={`size-8 border text-xs ${
+                          active.page === p
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-hairline"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div className="space-y-3">
@@ -804,9 +835,7 @@ function ContractEditor({
                     />
                   </div>
                   <div>
-                    <Label>
-                      Text size · {Number(active.font_size) || DEFAULT_FIELD_PT} pt
-                    </Label>
+                    <Label>Text size · {Number(active.font_size) || DEFAULT_FIELD_PT} pt</Label>
                     <input
                       type="range"
                       min={6}
@@ -954,7 +983,11 @@ function ContractEditor({
               <Btn
                 className="flex-1"
                 onClick={() =>
-                  copyLink(`${window.location.origin}/sign/${detail.token}`, (m) => toast.success(m))
+                  void shortLink({ data: { id } })
+                    .then(({ code }) => copyLink(`${SITE_URL}/${code}`, (m) => toast.success(m)))
+                    .catch((error) =>
+                      toast.error(error instanceof Error ? error.message : "Could not create link"),
+                    )
                 }
               >
                 Copy client link
@@ -966,7 +999,10 @@ function ContractEditor({
 
       {menu ? (
         <div
-          style={{ left: Math.min(menu.sx, window.innerWidth - 200), top: Math.min(menu.sy, window.innerHeight - 300) }}
+          style={{
+            left: Math.min(menu.sx, window.innerWidth - 200),
+            top: Math.min(menu.sy, window.innerHeight - 300),
+          }}
           onPointerDown={(e) => e.stopPropagation()}
           className="fixed z-[90] w-48 border border-hairline bg-background shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
         >
@@ -997,4 +1033,3 @@ function ContractEditor({
     </div>
   );
 }
-

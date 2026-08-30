@@ -27,6 +27,7 @@ import { crmSettingsGet } from "@/lib/crm.functions";
 import { GalleryViewer } from "@/components/site/GalleryViewer";
 import { EmailButton } from "@/components/crm/EmailButton";
 import { downloadMany } from "@/lib/download";
+import { SITE_URL } from "@/lib/seo";
 import { createPortal } from "react-dom";
 import { Btn, Card, CheckField, Empty, Label, SelectField, TextField, copyLink } from "./ui";
 
@@ -195,6 +196,7 @@ export function GalleriesPanel({
   const list = useServerFn(listGalleries);
   const create = useServerFn(createGallery);
   const remove = useServerFn(deleteGallery);
+  const shortLink = useServerFn(galleryShortLink);
 
   const [rows, setRows] = useState<GallerySummary[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -233,6 +235,15 @@ export function GalleriesPanel({
   }, [openId]);
 
   const open = rows?.find((g) => g.id === openId) ?? null;
+
+  async function getShortLinkForGallery(id: string) {
+    try {
+      const { code } = await shortLink({ data: { galleryId: id } });
+      await copyLink(`${SITE_URL}/${code}`, (message) => toast.success(message));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create link");
+    }
+  }
   if (open) {
     return (
       <GalleryDetail
@@ -290,17 +301,11 @@ export function GalleriesPanel({
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Btn
-                  onClick={() =>
-                    copyLink(`${window.location.origin}/g/${g.token}`, (m) => toast.success(m))
-                  }
-                >
-                  Copy link
-                </Btn>
+                <Btn onClick={() => void getShortLinkForGallery(g.id)}>Copy link</Btn>
                 <EmailButton
                   label="Email link"
                   subject={`Your gallery: ${g.title}`}
-                  body={`Your ${g.kind === "cull" ? "selection" : "photo"} gallery is ready:\n${typeof window === "undefined" ? "" : window.location.origin}/g/${g.token}\n\nEnjoy!`}
+                  body={`Your ${g.kind === "cull" ? "selection" : "photo"} gallery is ready:\n${SITE_URL}/g/${g.token}\n\nEnjoy!`}
                   clientEmail={contacts.find((x) => x.id === g.contact_id)?.email}
                   clientName={contacts.find((x) => x.id === g.contact_id)?.name}
                 />
@@ -358,12 +363,16 @@ function GalleryDetail({
   const lastReportRef = useRef(0);
   const [progress, setProgress] = useState("");
   const [job, setJob] = useState<PreviewJob | null>(null);
+  const jobRef = useRef<PreviewJob | null>(null);
+  const [busy, setBusy] = useState("");
 
   /** Publishes progress to the server so any device can follow the same run. */
   const startJob = async (total: number, message: string) => {
     cancelRef.current = false;
     lastReportRef.current = Date.now();
-    setJob({ status: "running", total, done: 0, failed: 0, message, updatedAt: "" });
+    const next = { status: "running" as const, total, done: 0, failed: 0, message, updatedAt: "" };
+    jobRef.current = next;
+    setJob(next);
     try {
       await jobSet({
         data: { galleryId: gallery.id, status: "running", total, done: 0, failed: 0, message },
@@ -374,9 +383,11 @@ function GalleryDetail({
   };
 
   const reportJob = async (total: number, done: number, failed: number, message: string) => {
-    setJob({ status: "running", total, done, failed, message, updatedAt: "" });
-    // Throttled: one write every couple of seconds, not one per photo.
-    if (Date.now() - lastReportRef.current < 2000 && done < total) return;
+    const next = { status: "running" as const, total, done, failed, message, updatedAt: "" };
+    jobRef.current = next;
+    setJob(next);
+    // Keep writes bounded while making progress visible on other devices.
+    if (Date.now() - lastReportRef.current < 1000 && done < total) return;
     lastReportRef.current = Date.now();
     try {
       await jobSet({
@@ -387,13 +398,36 @@ function GalleryDetail({
     }
   };
 
+  // Keep a genuinely active browser run alive even while one large image is
+  // decoding/uploading. A refresh stops this heartbeat, making Resume appear.
+  useEffect(() => {
+    if (!busy && !progress) return;
+    const timer = window.setInterval(() => {
+      const current = jobRef.current;
+      if (!current || current.status !== "running") return;
+      void jobSet({
+        data: {
+          galleryId: gallery.id,
+          status: "running",
+          total: current.total,
+          done: current.done,
+          failed: current.failed,
+          message: current.message,
+        },
+      }).catch(() => undefined);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [busy, progress, gallery.id, jobSet]);
+
   const endJob = async (
     total: number,
     done: number,
     failed: number,
     status: "done" | "cancelled",
   ) => {
-    setJob({ status, total, done, failed, message: "", updatedAt: "" });
+    const next = { status, total, done, failed, message: "", updatedAt: "" };
+    jobRef.current = next;
+    setJob(next);
     try {
       await jobSet({ data: { galleryId: gallery.id, status, total, done, failed, message: "" } });
     } catch {
@@ -434,7 +468,6 @@ function GalleryDetail({
     message: gallery.message || "",
     showMessage: gallery.show_message ?? true,
   });
-  const [busy, setBusy] = useState("");
   const [picked, setPicked] = useState<Awaited<ReturnType<typeof galleryResults>> | null>(null);
   const [choosingOg, setChoosingOg] = useState(false);
   const [choosingCover, setChoosingCover] = useState(false);
@@ -463,7 +496,6 @@ function GalleryDetail({
     results: [],
     imageIds: [],
   });
-
 
   useEffect(() => {
     void (async () => {
@@ -647,7 +679,7 @@ function GalleryDetail({
   }
 
   /** Builds colour-consistent JPEG thumbs and previews for Drive-linked photos. */
-  async function buildThumbs(rows: NonNullable<typeof picked>, force = false, skip = 0) {
+  async function buildThumbs(rows: NonNullable<typeof picked>, force = false) {
     if (!force) {
       // Never rebuild something we already hold for another gallery of the
       // same kind — link those rows to the existing files first.
@@ -669,9 +701,9 @@ function GalleryDetail({
     const all = force
       ? rows
       : rows.filter((row) => !row.hasThumb || (form.downscalePreviews && !row.hasPreview));
-    // Resuming an interrupted run keeps the same photo order and simply skips
-    // the ones the previous run already finished.
-    const missing = skip > 0 ? all.slice(skip) : all;
+    // Resume is based on database truth, never an array index, so failed or
+    // reordered photos cannot be skipped accidentally.
+    const missing = all;
     if (!missing.length) return;
 
     cancelRef.current = false;
@@ -680,7 +712,6 @@ function GalleryDetail({
     let failed = 0;
     let firstError = "";
     await startJob(total, "Rebuilding previews");
-
 
     const CHUNK = 25;
     for (let start = 0; start < missing.length; start += CHUNK) {
@@ -697,33 +728,45 @@ function GalleryDetail({
         const slot = slots[index];
         if (!slot) return null;
         try {
-          const image = await decodeImage(row.source || row.orig);
-          const thumb = await drawTo(image, 600, 70, null);
-          const preview =
-            form.downscalePreviews && slot.preview
-              ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
-              : null;
-          releaseImage(image);
-          const uploads = await Promise.all([
-            supabase.storage
-              .from(bucket)
-              .uploadToSignedUrl(slot.thumb.path, slot.thumb.token, thumb.blob, {
-                contentType: "image/jpeg",
-              }),
-            preview && slot.preview
-              ? supabase.storage
-                  .from(bucket)
-                  .uploadToSignedUrl(slot.preview.path, slot.preview.token, preview.blob, {
-                    contentType: preview.blob.type || "image/jpeg",
-                  })
-              : null,
-          ]);
-          if (uploads[0].error || uploads[1]?.error) throw new Error("upload failed");
-          return {
-            imageId: row.id,
-            thumbPath: slot.thumb.path,
-            ...(preview && slot.preview ? { previewPath: slot.preview.path } : {}),
-          };
+          const work = (async () => {
+            const image = await decodeImage(row.source || row.orig);
+            const thumb = await drawTo(image, 600, 70, null);
+            const preview =
+              form.downscalePreviews && slot.preview
+                ? await drawToByteLimit(image, form.previewMaxKb * 1024, null)
+                : null;
+            releaseImage(image);
+            const uploads = await Promise.all([
+              supabase.storage
+                .from(bucket)
+                .uploadToSignedUrl(slot.thumb.path, slot.thumb.token, thumb.blob, {
+                  contentType: "image/jpeg",
+                }),
+              preview && slot.preview
+                ? supabase.storage
+                    .from(bucket)
+                    .uploadToSignedUrl(slot.preview.path, slot.preview.token, preview.blob, {
+                      contentType: preview.blob.type || "image/jpeg",
+                    })
+                : null,
+            ]);
+            if (uploads[0].error || uploads[1]?.error) throw new Error("upload failed");
+            return {
+              imageId: row.id,
+              thumbPath: slot.thumb.path,
+              ...(preview && slot.preview ? { previewPath: slot.preview.path } : {}),
+            };
+          })();
+          const timeout = new Promise<never>((_, reject) => {
+            const started = Date.now();
+            const timer = window.setInterval(() => {
+              if (cancelRef.current || Date.now() - started > 45_000) {
+                window.clearInterval(timer);
+                reject(new Error(cancelRef.current ? "Rebuild cancelled" : "Photo timed out"));
+              }
+            }, 250);
+          });
+          return await Promise.race([work, timeout]);
         } catch (error) {
           // Remember why, so the run can explain itself instead of silently
           // reporting "skipped".
@@ -795,12 +838,13 @@ function GalleryDetail({
     }
   }
 
-  async function rebuildDrivePreviews(skip = 0) {
+  async function rebuildDrivePreviews(resume = false) {
     if (!picked?.length) return;
     try {
-      await buildThumbs(picked, true, skip);
+      const latest = resume ? await results({ data: { galleryId: gallery.id } }) : picked;
+      await buildThumbs(latest, !resume);
       toast.success(
-        skip
+        resume
           ? "Rebuild resumed and finished from where it stopped"
           : "Opened previews rebuilt with the current limits",
       );
@@ -809,7 +853,6 @@ function GalleryDetail({
       setBusy("");
     }
   }
-
 
   async function uploadOg(file: File) {
     if (!file.type.startsWith("image/")) return;
@@ -964,8 +1007,7 @@ function GalleryDetail({
     if (filter === "labelled") return Boolean(p.label);
     if (filter === "noted") return Boolean(p.comment);
     if (filter === "done") return p.done;
-    if (filter === "nopreview")
-      return !p.hasThumb || (form.downscalePreviews && !p.hasPreview);
+    if (filter === "nopreview") return !p.hasThumb || (form.downscalePreviews && !p.hasPreview);
     return true;
   });
   const selectedRows = (picked ?? []).filter((r) => sel.has(r.id));
@@ -1014,7 +1056,7 @@ function GalleryDetail({
   async function rebuildRows(rows: NonNullable<typeof picked>, message: string) {
     if (!rows.length) return;
     try {
-      await buildThumbs(rows, true, 0);
+      await buildThumbs(rows, true);
       setSel(new Set());
       setSelectMode(false);
       toast.success(message);
@@ -1035,9 +1077,7 @@ function GalleryDetail({
           <Btn
             onClick={() => {
               void getShortLink({ data: { galleryId: gallery.id } })
-                .then(({ code }) =>
-                  copyLink(`${window.location.origin}/${code}`, (m) => toast.success(m)),
-                )
+                .then(({ code }) => copyLink(`${SITE_URL}/${code}`, (m) => toast.success(m)))
                 .catch((error) =>
                   toast.error(error instanceof Error ? error.message : "Could not create link"),
                 );
@@ -1157,7 +1197,6 @@ function GalleryDetail({
               </p>
             ) : null}
 
-
             <div className="mt-6 max-h-[45vh] overflow-y-auto border border-border p-3">
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {pickedOnly.map((p) => {
@@ -1220,17 +1259,17 @@ function GalleryDetail({
         </div>
       ) : null}
 
-
-
       {job && (job.status === "running" || job.status === "stalled") ? (
         <div className="mt-4 border border-border p-3">
           <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>
               {job.message || "Processing"} · {job.done} of {job.total}
               {job.failed ? ` · ${job.failed} skipped` : ""}
-              {job.status === "stalled" ? " · interrupted" : ""}
+              {job.status === "stalled" || (job.status === "running" && !busy && !progress)
+                ? " · paused"
+                : ""}
             </span>
-            {job.status === "running" ? (
+            {job.status === "running" && (busy || progress) ? (
               <button
                 type="button"
                 className="underline"
@@ -1243,25 +1282,24 @@ function GalleryDetail({
                 Cancel
               </button>
             ) : null}
-            {job.status === "stalled" && !busy && !progress ? (
+            {(job.status === "stalled" || job.status === "running") && !busy && !progress ? (
               <span className="flex gap-3">
                 <button
                   type="button"
                   className="underline"
-                  onClick={() => void rebuildDrivePreviews(job.done)}
+                  onClick={() => void rebuildDrivePreviews(true)}
                 >
                   Resume from {job.done}
                 </button>
                 <button
                   type="button"
                   className="underline"
-                  onClick={() => void rebuildDrivePreviews(0)}
+                  onClick={() => void rebuildDrivePreviews(false)}
                 >
                   Restart
                 </button>
               </span>
             ) : null}
-
           </div>
           <div className="mt-2 h-1 w-full bg-muted">
             <div
@@ -1351,16 +1389,11 @@ function GalleryDetail({
                 </Btn>
                 <Btn onClick={() => setSel(new Set())}>Deselect all</Btn>
                 {missingPreview.length ? (
-                  <Btn
-                    onClick={() =>
-                      void rebuildRows(missingPreview, "Missing previews rebuilt")
-                    }
-                  >
+                  <Btn onClick={() => void rebuildRows(missingPreview, "Missing previews rebuilt")}>
                     Rebuild missing only ({missingPreview.length})
                   </Btn>
                 ) : null}
               </div>
-
 
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {visible.map((p, index) => {
@@ -1464,7 +1497,6 @@ function GalleryDetail({
                         ) : null}
                       </div>
                       <figcaption className="mt-1 space-y-0.5">
-
                         <span className="block truncate text-[0.65rem]">{p.name}</span>
                         <span className="flex flex-wrap items-center gap-1 text-[0.6rem] text-muted-foreground">
                           {p.starred ? <span title="Starred">★</span> : null}
@@ -1792,7 +1824,12 @@ function GalleryDetail({
 
       {viewer !== null && visible[viewer] ? (
         <GalleryViewer
-          images={visible.map((r) => ({ id: r.id, name: r.name, preview: r.preview, orig: r.orig }))}
+          images={visible.map((r) => ({
+            id: r.id,
+            name: r.name,
+            preview: r.preview,
+            orig: r.orig,
+          }))}
           index={viewer}
           onIndex={setViewer}
           onClose={() => setViewer(null)}
@@ -1858,6 +1895,5 @@ function GalleryDetail({
           )
         : null}
     </div>
-
   );
 }

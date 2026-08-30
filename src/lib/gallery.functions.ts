@@ -282,7 +282,10 @@ export const updateGallery = createServerFn({ method: "POST" })
     )
       patch["default_sort"] = data.defaultSort;
     if (data.coverUrl !== undefined) patch["cover_url"] = data.coverUrl;
-    if (data.coverMode !== undefined && ["none", "first", "og", "pick", "upload"].includes(data.coverMode))
+    if (
+      data.coverMode !== undefined &&
+      ["none", "first", "og", "pick", "upload"].includes(data.coverMode)
+    )
       patch["cover_mode"] = data.coverMode;
     if (data.coverPath !== undefined) patch["cover_path"] = data.coverPath;
     if (data.showMessage !== undefined) patch["show_message"] = data.showMessage;
@@ -361,11 +364,16 @@ export const deleteGallery = createServerFn({ method: "POST" })
 
     for (let i = 0; i < pathList.length; i += 100) {
       const batch = pathList.slice(i, i + 100);
-      const { error: storageError } = await supabaseAdmin.storage.from(GALLERY_BUCKET).remove(batch);
+      const { error: storageError } = await supabaseAdmin.storage
+        .from(GALLERY_BUCKET)
+        .remove(batch);
       if (storageError) throw new Error(storageError.message);
     }
 
-    await supabaseAdmin.from("crm_preview_jobs" as never).delete().eq("gallery_id", data.id);
+    await supabaseAdmin
+      .from("crm_preview_jobs" as never)
+      .delete()
+      .eq("gallery_id", data.id);
     await supabaseAdmin
       .from("short_links" as never)
       .delete()
@@ -634,7 +642,6 @@ export const reuseGalleryPreviews = createServerFn({ method: "POST" })
     }
     return { linked };
   });
-
 
 /* ---------------- public (client) side ---------------- */
 
@@ -948,7 +955,6 @@ export const sendPicksToDrive = createServerFn({ method: "POST" })
     return { copied, missing, link, mode, destination, folderName, results };
   });
 
-
 /** Public: unlock selection mode with the photographer's selection PIN. */
 export const unlockGalleryPicking = createServerFn({ method: "POST" })
   .inputValidator((input: { token: string; pin: string }) => input)
@@ -1090,9 +1096,9 @@ export const previewJobGet = createServerFn({ method: "POST" })
       .eq("gallery_id", data.galleryId)
       .maybeSingle();
     if (!row) return null;
-    // A run only lives inside the browser tab that started it, so a job that
-    // stopped reporting for two minutes is treated as interrupted.
-    const stale = Date.now() - new Date(row.updated_at as string).getTime() > 120_000;
+    // Active tabs heartbeat every five seconds; after 30 seconds without one,
+    // another device can safely offer to resume the unfinished rows.
+    const stale = Date.now() - new Date(row.updated_at as string).getTime() > 30_000;
     return {
       status: row.status === "running" && stale ? "stalled" : (row.status as PreviewJob["status"]),
       total: row.total as number,

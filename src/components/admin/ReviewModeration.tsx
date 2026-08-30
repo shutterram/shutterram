@@ -3,6 +3,7 @@ import { Check, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getReviewEmails } from "@/lib/review-emails.functions";
+import { SITE_URL } from "@/lib/seo";
 
 type ReviewRow = {
   id: string;
@@ -38,7 +39,6 @@ export function ReviewModeration() {
   useEffect(() => {
     void load();
   }, []);
-
 
   if (!rows) {
     return (
@@ -77,7 +77,7 @@ export function ReviewModeration() {
     toast.success("Review deleted");
   }
 
-  const link = typeof window !== "undefined" ? `${window.location.origin}/review` : "/review";
+  const link = `${SITE_URL}/review`;
   const visible = rows.filter((r) =>
     filter === "all" ? true : (r.status || "approved") === filter,
   );

@@ -5,6 +5,7 @@ import { categories } from "@/data/portfolio";
 import { supabase } from "@/integrations/supabase/client";
 import { ImageField } from "@/components/admin/ContentEditor";
 import { Toggle } from "@/components/admin/Toggle";
+import { SITE_URL } from "@/lib/seo";
 
 /** Every page a link can point at, beyond the gallery and its categories. */
 const SITE_PAGES = [
@@ -52,7 +53,7 @@ function makeCode() {
 }
 
 function origin() {
-  return typeof window === "undefined" ? "" : window.location.origin;
+  return SITE_URL;
 }
 
 /** The short, shareable URL for a link, e.g. https://site.com/a2kh3 */

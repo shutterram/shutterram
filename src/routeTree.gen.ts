@@ -21,9 +21,11 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
+import { Route as BillTokenRouteImport } from './routes/bill.$token'
 import { Route as GTokenRouteImport } from './routes/g.$token'
 import { Route as GalleryIndexRouteImport } from './routes/gallery.index'
 import { Route as GalleryCategoryRouteImport } from './routes/gallery.$category'
+import { Route as InvoiceTokenRouteImport } from './routes/invoice.$token'
 import { Route as SignTokenRouteImport } from './routes/sign.$token'
 import { Route as ApiPublicGoogleCallbackRouteImport } from './routes/api/public/google/callback'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img.$'
@@ -90,6 +92,11 @@ const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
   path: '/crm',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const BillTokenRoute = BillTokenRouteImport.update({
+  id: '/bill/$token',
+  path: '/bill/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GTokenRoute = GTokenRouteImport.update({
   id: '/g/$token',
   path: '/g/$token',
@@ -103,6 +110,11 @@ const GalleryIndexRoute = GalleryIndexRouteImport.update({
 const GalleryCategoryRoute = GalleryCategoryRouteImport.update({
   id: '/gallery/$category',
   path: '/gallery/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoiceTokenRoute = InvoiceTokenRouteImport.update({
+  id: '/invoice/$token',
+  path: '/invoice/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignTokenRoute = SignTokenRouteImport.update({
@@ -150,8 +162,10 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/crm': typeof AuthenticatedCrmRoute
+  '/bill/$token': typeof BillTokenRoute
   '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/invoice/$token': typeof InvoiceTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
@@ -172,8 +186,10 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/crm': typeof AuthenticatedCrmRoute
+  '/bill/$token': typeof BillTokenRoute
   '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/invoice/$token': typeof InvoiceTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/gallery': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
@@ -196,8 +212,10 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
+  '/bill/$token': typeof BillTokenRoute
   '/g/$token': typeof GTokenRoute
   '/gallery/$category': typeof GalleryCategoryRoute
+  '/invoice/$token': typeof InvoiceTokenRoute
   '/sign/$token': typeof SignTokenRoute
   '/gallery/': typeof GalleryIndexRoute
   '/api/public/google/callback': typeof ApiPublicGoogleCallbackRoute
@@ -220,8 +238,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/crm'
+    | '/bill/$token'
     | '/g/$token'
     | '/gallery/$category'
+    | '/invoice/$token'
     | '/sign/$token'
     | '/gallery/'
     | '/api/public/google/callback'
@@ -242,8 +262,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/crm'
+    | '/bill/$token'
     | '/g/$token'
     | '/gallery/$category'
+    | '/invoice/$token'
     | '/sign/$token'
     | '/gallery'
     | '/api/public/google/callback'
@@ -265,8 +287,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/crm'
+    | '/bill/$token'
     | '/g/$token'
     | '/gallery/$category'
+    | '/invoice/$token'
     | '/sign/$token'
     | '/gallery/'
     | '/api/public/google/callback'
@@ -287,8 +311,10 @@ export interface RootRouteChildren {
   ReviewRoute: typeof ReviewRoute
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  BillTokenRoute: typeof BillTokenRoute
   GTokenRoute: typeof GTokenRoute
   GalleryCategoryRoute: typeof GalleryCategoryRoute
+  InvoiceTokenRoute: typeof InvoiceTokenRoute
   SignTokenRoute: typeof SignTokenRoute
   GalleryIndexRoute: typeof GalleryIndexRoute
   ApiPublicGoogleCallbackRoute: typeof ApiPublicGoogleCallbackRoute
@@ -384,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCrmRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/bill/$token': {
+      id: '/bill/$token'
+      path: '/bill/$token'
+      fullPath: '/bill/$token'
+      preLoaderRoute: typeof BillTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/g/$token': {
       id: '/g/$token'
       path: '/g/$token'
@@ -403,6 +436,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery/$category'
       fullPath: '/gallery/$category'
       preLoaderRoute: typeof GalleryCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice/$token': {
+      id: '/invoice/$token'
+      path: '/invoice/$token'
+      fullPath: '/invoice/$token'
+      preLoaderRoute: typeof InvoiceTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sign/$token': {
@@ -474,8 +514,10 @@ const rootRouteChildren: RootRouteChildren = {
   ReviewRoute: ReviewRoute,
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  BillTokenRoute: BillTokenRoute,
   GTokenRoute: GTokenRoute,
   GalleryCategoryRoute: GalleryCategoryRoute,
+  InvoiceTokenRoute: InvoiceTokenRoute,
   SignTokenRoute: SignTokenRoute,
   GalleryIndexRoute: GalleryIndexRoute,
   ApiPublicGoogleCallbackRoute: ApiPublicGoogleCallbackRoute,

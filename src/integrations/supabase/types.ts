@@ -176,6 +176,7 @@ export type Database = {
           notes: string
           number: string
           paid_on: string | null
+          public_token: string
           tax: number
           updated_at: string
         }
@@ -193,6 +194,7 @@ export type Database = {
           notes?: string
           number?: string
           paid_on?: string | null
+          public_token?: string
           tax?: number
           updated_at?: string
         }
@@ -210,6 +212,7 @@ export type Database = {
           notes?: string
           number?: string
           paid_on?: string | null
+          public_token?: string
           tax?: number
           updated_at?: string
         }
@@ -833,6 +836,7 @@ export type Database = {
           notes: string
           number: string
           paid_on: string | null
+          public_token: string
           status: string
           tax: number
           updated_at: string
@@ -851,6 +855,7 @@ export type Database = {
           notes?: string
           number?: string
           paid_on?: string | null
+          public_token?: string
           status?: string
           tax?: number
           updated_at?: string
@@ -869,6 +874,7 @@ export type Database = {
           notes?: string
           number?: string
           paid_on?: string | null
+          public_token?: string
           status?: string
           tax?: number
           updated_at?: string
