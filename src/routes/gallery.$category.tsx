@@ -97,21 +97,23 @@ function CategoryGallery() {
         <div className="hero-scrim absolute inset-0" />
         {/* Always-on gradient so the category name stays legible over any cover. */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/60" />
-        <div
-          className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center px-6 text-center",
-            invertClass("category.cover"),
-            imageShadowClass(category.cover || category.hero),
-          )}
-          style={imageGlowStyle(category.cover || category.hero)}
-        >
-          <p className="eyebrow [text-shadow:0_2px_12px_rgba(0,0,0,0.65)]">{t("gallery.eyebrow")}</p>
-          <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight [text-shadow:0_4px_24px_rgba(0,0,0,0.7)]">
-            {category.title}
-          </h1>
-          <p className="mt-4 max-w-xl text-sm text-muted-foreground [text-shadow:0_2px_12px_rgba(0,0,0,0.6)] md:text-base">
-            {category.tagline}
-          </p>
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 text-center">
+          <div
+            className={cn(
+              "flex flex-col items-center",
+              invertClass("category.cover"),
+              imageShadowClass(category.cover || category.hero),
+            )}
+            style={imageGlowStyle(category.cover || category.hero)}
+          >
+            <p className="eyebrow [text-shadow:0_2px_12px_rgba(0,0,0,0.65)]">{t("gallery.eyebrow")}</p>
+            <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight [text-shadow:0_4px_24px_rgba(0,0,0,0.7)]">
+              {category.title}
+            </h1>
+            <p className="mt-4 max-w-xl text-sm text-muted-foreground [text-shadow:0_2px_12px_rgba(0,0,0,0.6)] md:text-base">
+              {category.tagline}
+            </p>
+          </div>
         </div>
       </div>
 
