@@ -10,7 +10,13 @@ import {
   ScriptOnce,
   redirect,
 } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { useEffect, type ReactNode } from "react";
+
+const resolveHostname = createIsomorphicFn()
+  .client(() => window.location.hostname)
+  .server(() => (getRequestHeader("host") ?? "").split(":")[0] ?? "");
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -94,14 +100,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   // admin./crm./auth. subdomains land on their section of the app, and the
   // apex domain bounces section paths (/admin, /crm, /auth) to subdomains.
-  beforeLoad: ({ location }) => {
-    if (typeof window === "undefined") return;
-    const apexUrl = apexSectionRedirect(window.location.hostname, location.pathname);
+  beforeLoad: async ({ location }) => {
+    // On first load beforeLoad only runs server-side, so resolve the host
+    // from the request there and from window on client-side navigations.
+    const hostname = resolveHostname() ?? "";
+
+    if (!hostname) return;
+    const apexUrl = apexSectionRedirect(hostname, location.pathname);
     if (apexUrl) {
-      window.location.replace(apexUrl);
-      return;
+      if (typeof window !== "undefined") {
+        window.location.replace(apexUrl);
+        return;
+      }
+      throw redirect({ href: apexUrl });
     }
-    const to = subdomainRedirect(window.location.hostname, location.pathname);
+    const to = subdomainRedirect(hostname, location.pathname);
     if (to) throw redirect({ to });
   },
   head: () => ({

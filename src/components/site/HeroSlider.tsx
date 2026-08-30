@@ -61,9 +61,10 @@ export function HeroSlider() {
         style={imageGlowStyle(categories[active]?.hero)}
       >
         <div className={cn("fade-up mb-8 flex flex-col items-center", invertClass("hero.brand"))}>
-          <span className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
+          <h1 className="fade-up font-display text-[clamp(2.75rem,9vw,7rem)] leading-[0.9] tracking-[0.02em]">
             Shutter<span className="italic text-muted-foreground">Ram</span>
-          </span>
+            <span className="sr-only"> — Wedding & Portrait Photographer in New York</span>
+          </h1>
           <span className="mt-7 flex items-center gap-4">
             <span className="h-px w-10 bg-foreground/30 md:w-16" />
             <span className="eyebrow">{site.tagline}</span>
@@ -74,14 +75,14 @@ export function HeroSlider() {
           <p className={cn("eyebrow", invertClass("hero.eyebrow"))}>
             {String(active + 1).padStart(2, "0")} — {categories[active]!.label}
           </p>
-          <h1
+          <h2
             className={cn(
               "mt-5 font-display text-[clamp(1.75rem,4.5vw,3.25rem)] leading-[1.05]",
               invertClass("hero.title"),
             )}
           >
             {categories[active]!.title}
-          </h1>
+          </h2>
           <p
             className={cn(
               "mx-auto mt-6 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base",

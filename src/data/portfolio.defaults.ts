@@ -133,7 +133,7 @@ export const defaultCopy: Record<string, string> = {
   "btn.work_with_me": "Work with me",
   "btn.close": "Close",
   "gallery.eyebrow": "Previous Works",
-  "gallery.title": "The Gallery",
+  "gallery.title": "Photography Portfolio",
   "gallery.intro":
     "Everything worth keeping from the last few years, in one place. Filter by category, or open any frame full screen and step through with the arrow keys.",
   "gallery.jump": "Jump to a category",
@@ -306,16 +306,15 @@ export interface EditSample {
   srcBefore: string;
 }
 
-/** Placeholder frames — replace both images from the studio. */
-const BEFORE_PLACEHOLDER = "/placeholders/before.svg";
-const AFTER_PLACEHOLDER = "/placeholders/after.svg";
+/** Real portfolio frames — the "before" is the straight-out-of-camera render. */
+const sample = (id: string) => ({ after: u(id), before: unedited(u(id)) });
 
 export const defaultEditSamples: EditSample[] = [
-  { id: "ed1", title: "Golden Hour Wedding", note: "Warmth recovered, skin tones balanced, sky graded back in.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
-  { id: "ed2", title: "Studio Portrait", note: "Dodge and burn, blemish work, subtle contrast curve.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
-  { id: "ed3", title: "Corporate Feature", note: "Colour cast removed, background cleaned, sharpening pass.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
-  { id: "ed4", title: "Evening Event", note: "Noise reduction, mixed lighting neutralised, highlight rescue.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
-  { id: "ed5", title: "Product Still Life", note: "Reflections tamed, dust removed, deep blacks restored.", src: AFTER_PLACEHOLDER, srcBefore: BEFORE_PLACEHOLDER },
+  { id: "ed1", title: "Golden Hour Wedding", note: "Warmth recovered, skin tones balanced, sky graded back in.", ...{ src: sample("1511285560929-80b456fea0bc").after, srcBefore: sample("1511285560929-80b456fea0bc").before } },
+  { id: "ed2", title: "Studio Portrait", note: "Dodge and burn, blemish work, subtle contrast curve.", ...{ src: sample("1544005313-94ddf0286df2").after, srcBefore: sample("1544005313-94ddf0286df2").before } },
+  { id: "ed3", title: "Corporate Feature", note: "Colour cast removed, background cleaned, sharpening pass.", ...{ src: sample("1521737711867-e3b97375f902").after, srcBefore: sample("1521737711867-e3b97375f902").before } },
+  { id: "ed4", title: "Evening Event", note: "Noise reduction, mixed lighting neutralised, highlight rescue.", ...{ src: sample("1492684223066-81342ee5ff30").after, srcBefore: sample("1492684223066-81342ee5ff30").before } },
+  { id: "ed5", title: "Product Still Life", note: "Reflections tamed, dust removed, deep blacks restored.", ...{ src: sample("1523275335684-37898b6baf30").after, srcBefore: sample("1523275335684-37898b6baf30").before } },
 ];
 
 export interface Service {

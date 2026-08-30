@@ -51,7 +51,7 @@ function ServicesPage() {
       <div className="mx-auto max-w-7xl px-6">
         <p className="eyebrow">Services</p>
         <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
-          How we can work together
+          Photography Services in New York
         </h1>
         <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
           Six ways I usually work, though nothing here is rigid. If your project sits somewhere
