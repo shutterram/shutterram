@@ -152,7 +152,7 @@ export const listGalleries = createServerFn({ method: "POST" })
       og_image_id: (g["og_image_id"] as string | null) ?? null,
       downscale_previews: Boolean(g["downscale_previews"] ?? true),
       preview_max_px: Number(g["preview_max_px"] ?? 1600),
-      preview_max_bytes: Number(g["preview_max_bytes"] ?? 10485760),
+      preview_max_bytes: Number(g["preview_max_bytes"] ?? 1048576),
       default_sort: String(g["default_sort"] ?? "default"),
       cover_url: String(g["cover_url"] ?? ""),
       cover_mode: String(g["cover_mode"] ?? "first"),
@@ -345,7 +345,20 @@ export const deleteGallery = createServerFn({ method: "POST" })
     }
     if (gallery.cover_path) paths.add(gallery.cover_path);
 
+    // Shared previews: a duplicate gallery can point at the same storage
+    // objects, so only delete files nothing else still references.
+    const { data: others } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("preview_path,thumb_path,original_path")
+      .neq("gallery_id", data.id);
+    for (const img of (others ?? []) as Record<string, string>[]) {
+      paths.delete(img["preview_path"] ?? "");
+      paths.delete(img["thumb_path"] ?? "");
+      paths.delete(img["original_path"] ?? "");
+    }
+
     const pathList = Array.from(paths).filter(Boolean);
+
     for (let i = 0; i < pathList.length; i += 100) {
       const batch = pathList.slice(i, i + 100);
       const { error: storageError } = await supabaseAdmin.storage.from(GALLERY_BUCKET).remove(batch);
@@ -527,6 +540,9 @@ export const galleryResults = createServerFn({ method: "POST" })
         thumb: await signImage(img.id, "thumb"),
         preview: await signImage(img.id, "preview"),
         orig: await signImage(img.id, "orig"),
+        // Admin-only source link: rebuilds must reach the full-size file even
+        // when client downloads are switched off for this gallery.
+        source: await signImage(img.id, "source"),
         picked: p?.picked ?? false,
         starred: p?.starred ?? false,
         done: p?.done ?? false,
@@ -537,6 +553,88 @@ export const galleryResults = createServerFn({ method: "POST" })
     }
     return out;
   });
+
+/**
+ * Admin: link previews that already exist elsewhere.
+ *
+ * When the same photo has already been built for another gallery of the same
+ * kind (selection previews are never reused for a final gallery, or the other
+ * way round), the new gallery simply points at the existing storage objects
+ * instead of encoding and uploading the bytes a second time.
+ */
+export const reuseGalleryPreviews = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { galleryId: string }) => ({
+    galleryId: String(input.galleryId).slice(0, 64),
+  }))
+  .handler(async ({ data, context }) => {
+    const { assertCrmAdmin } = await import("./crm.server");
+    await assertCrmAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: gallery } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("id,kind")
+      .eq("id", data.galleryId)
+      .maybeSingle();
+    if (!gallery) return { linked: 0 };
+
+    // Every gallery of the same kind is a valid donor.
+    const { data: siblings } = await supabaseAdmin
+      .from("crm_galleries")
+      .select("id")
+      .eq("kind", gallery.kind)
+      .neq("id", data.galleryId);
+    const siblingIds = ((siblings ?? []) as { id: string }[]).map((row) => row.id);
+    if (!siblingIds.length) return { linked: 0 };
+
+    const { data: mine } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("id,name,original_name,drive_file_id,bytes,thumb_path,preview_path")
+      .eq("gallery_id", data.galleryId);
+    type Row = {
+      id: string;
+      name: string;
+      original_name?: string;
+      drive_file_id?: string;
+      bytes?: number;
+      thumb_path?: string;
+      preview_path?: string;
+    };
+    const targets = ((mine ?? []) as Row[]).filter((row) => !row.thumb_path || !row.preview_path);
+    if (!targets.length) return { linked: 0 };
+
+    const { data: donors } = await supabaseAdmin
+      .from("crm_gallery_images")
+      .select("name,original_name,drive_file_id,bytes,thumb_path,preview_path")
+      .in("gallery_id", siblingIds)
+      .neq("thumb_path", "");
+
+    const byDrive = new Map<string, Row>();
+    const byName = new Map<string, Row>();
+    for (const donor of (donors ?? []) as Row[]) {
+      if (!donor.thumb_path || !donor.preview_path) continue;
+      if (donor.drive_file_id) byDrive.set(donor.drive_file_id, donor);
+      const label = donor.original_name || donor.name;
+      if (label) byName.set(`${label}|${donor.bytes ?? 0}`, donor);
+    }
+
+    let linked = 0;
+    for (const target of targets) {
+      const label = target.original_name || target.name;
+      const donor =
+        (target.drive_file_id ? byDrive.get(target.drive_file_id) : undefined) ??
+        byName.get(`${label}|${target.bytes ?? 0}`);
+      if (!donor) continue;
+      const { error } = await supabaseAdmin
+        .from("crm_gallery_images")
+        .update({ thumb_path: donor.thumb_path, preview_path: donor.preview_path } as never)
+        .eq("id", target.id);
+      if (!error) linked += 1;
+    }
+    return { linked };
+  });
+
 
 /* ---------------- public (client) side ---------------- */
 

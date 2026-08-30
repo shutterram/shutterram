@@ -20,7 +20,7 @@ async function hmac(payload: string): Promise<string> {
 /** Time-limited signature that lets a client load one image without an account. */
 export async function signImage(
   imageId: string,
-  kind: "thumb" | "preview" | "orig",
+  kind: "thumb" | "preview" | "orig" | "source",
 ): Promise<string> {
   const exp = Date.now() + 6 * 60 * 60 * 1000;
   const sig = await hmac(`${imageId}|${kind}|${exp}`);

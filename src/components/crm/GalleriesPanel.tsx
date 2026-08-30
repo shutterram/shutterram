@@ -7,6 +7,7 @@ import {
   createGallery,
   deleteGallery,
   galleryResults,
+  reuseGalleryPreviews,
   importDriveFolder,
   sendPicksToDrive,
   setPickDone,
@@ -343,6 +344,7 @@ function GalleryDetail({
   const pushToDrive = useServerFn(sendPicksToDrive);
   const ogTarget = useServerFn(galleryOgUploadTarget);
   const attachThumbs = useServerFn(attachImageThumbs);
+  const reusePreviews = useServerFn(reuseGalleryPreviews);
   const thumbSlots = useServerFn(thumbUploadSlots);
   const uploadTargetsBatch = useServerFn(galleryUploadTargetsBatch);
   const jobGet = useServerFn(previewJobGet);
@@ -422,7 +424,7 @@ function GalleryDetail({
     previewMaxPx: gallery.preview_max_px ?? 1600,
     previewMaxKb: Math.min(
       5120,
-      Math.max(100, Math.round((gallery.preview_max_bytes ?? 1572864) / 1024)),
+      Math.max(100, Math.round((gallery.preview_max_bytes ?? 1048576) / 1024)),
     ),
     defaultSort: gallery.default_sort || "default",
     coverUrl: gallery.cover_url || "",
@@ -646,6 +648,20 @@ function GalleryDetail({
 
   /** Builds colour-consistent JPEG thumbs and previews for Drive-linked photos. */
   async function buildThumbs(rows: NonNullable<typeof picked>, force = false, skip = 0) {
+    if (!force) {
+      // Never rebuild something we already hold for another gallery of the
+      // same kind — link those rows to the existing files first.
+      try {
+        const reused = await reusePreviews({ data: { galleryId: gallery.id } });
+        if (reused.linked) {
+          toast.success(`${reused.linked} previews reused from an existing gallery`);
+          rows = await results({ data: { galleryId: gallery.id } });
+          setPicked(rows);
+        }
+      } catch {
+        /* reuse is an optimisation, never a blocker */
+      }
+    }
     // A Drive row is only fully processed when it has both the grid thumbnail
     // and, when compression is enabled, the dedicated opened-preview JPEG.
     // Older imports often had only a thumbnail, which made the viewer fall
@@ -662,6 +678,7 @@ function GalleryDetail({
     const total = missing.length;
     let finished = 0;
     let failed = 0;
+    let firstError = "";
     await startJob(total, "Rebuilding previews");
 
 
@@ -680,7 +697,7 @@ function GalleryDetail({
         const slot = slots[index];
         if (!slot) return null;
         try {
-          const image = await decodeImage(row.orig);
+          const image = await decodeImage(row.source || row.orig);
           const thumb = await drawTo(image, 600, 70, null);
           const preview =
             form.downscalePreviews && slot.preview
@@ -707,8 +724,11 @@ function GalleryDetail({
             thumbPath: slot.thumb.path,
             ...(preview && slot.preview ? { previewPath: slot.preview.path } : {}),
           };
-        } catch {
-          /* skip photos Drive refuses to serve */
+        } catch (error) {
+          // Remember why, so the run can explain itself instead of silently
+          // reporting "skipped".
+          if (!firstError)
+            firstError = error instanceof Error ? error.message : "Could not read this photo";
           failed += 1;
           return null;
         } finally {
@@ -727,6 +747,8 @@ function GalleryDetail({
 
     await endJob(total, finished, failed, cancelRef.current ? "cancelled" : "done");
     setBusy("");
+    setProgress("");
+    if (failed) toast.error(`${failed} photos skipped — ${firstError || "unknown error"}`);
     setPicked(await results({ data: { galleryId: gallery.id } }));
   }
 
@@ -749,7 +771,14 @@ function GalleryDetail({
       toast.success(
         `${res.added} photos linked${res.rawMatched ? ` · ${res.rawMatched} RAW matches` : ""}`,
       );
-      const rows = await results({ data: { galleryId: gallery.id } });
+      let rows = await results({ data: { galleryId: gallery.id } });
+      // Duplicate galleries reuse previews already built for the same kind of
+      // gallery instead of re-encoding and re-storing the same photos.
+      const reused = await reusePreviews({ data: { galleryId: gallery.id } });
+      if (reused.linked) {
+        toast.success(`${reused.linked} previews reused from an existing gallery`);
+        rows = await results({ data: { galleryId: gallery.id } });
+      }
       setPicked(rows);
       if (replace && form.ogImageId && !rows.some((row) => row.id === form.ogImageId)) {
         setForm((current) => ({ ...current, ogImageId: "" }));
@@ -1201,13 +1230,14 @@ function GalleryDetail({
               {job.failed ? ` · ${job.failed} skipped` : ""}
               {job.status === "stalled" ? " · interrupted" : ""}
             </span>
-            {job.status === "running" && (progress || busy) ? (
+            {job.status === "running" ? (
               <button
                 type="button"
                 className="underline"
                 onClick={() => {
                   cancelRef.current = true;
-                  setProgress("Finishing current photos…");
+                  setBusy("");
+                  setProgress("Cancelling — finishing the photos already in flight…");
                 }}
               >
                 Cancel

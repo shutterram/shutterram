@@ -35,12 +35,17 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
 
         // Downloads are a per-gallery privilege: a valid signature alone must
         // never be enough to stream the unwatermarked full-resolution file.
+        // The `source` kind is only ever signed for the admin CRM (preview
+        // rebuilds), so it bypasses that client-facing switch.
         if (kind === "orig" && gallery?.allow_download !== true) {
           return new Response("Not found", { status: 404 });
         }
 
         const serveOriginal =
-          kind === "orig" || (kind === "preview" && gallery?.downscale_previews === false);
+          kind === "orig" ||
+          kind === "source" ||
+          (kind === "preview" && gallery?.downscale_previews === false);
+
 
         const fileName = (image.original_name || image.name || "photo.jpg") as string;
         const safeFileName = fileName.replace(/["\\/]/g, "");
@@ -86,7 +91,7 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
         const path =
           kind === "preview"
             ? image.preview_path || image.thumb_path
-            : kind === "orig"
+            : kind === "orig" || kind === "source"
               ? image.preview_path || image.thumb_path
               : image.thumb_path;
         if (path) {
@@ -101,7 +106,7 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
                   : file.data.type || "application/octet-stream",
                 "Cache-Control": "public, max-age=21600, s-maxage=21600",
                 "Content-Disposition": disposition
-                  ? `attachment; filename="${kind === "orig" ? safeFileName : previewName}"`
+                  ? `attachment; filename="${kind === "orig" || kind === "source" ? safeFileName : previewName}"`
                   : `inline; filename="${previewName}"`,
               },
             });
@@ -135,7 +140,7 @@ export const Route = createFileRoute("/api/public/crm/img/$")({
           });
         }
 
-        if (kind === "orig" && image.drive_file_id) {
+        if ((kind === "orig" || kind === "source") && image.drive_file_id) {
           const { fetchDriveFile } = await import("@/lib/google-drive.server");
           const res = await fetchDriveFile(image.drive_file_id);
           if (!res.ok) return new Response("Not found", { status: 404 });
