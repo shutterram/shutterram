@@ -1552,12 +1552,39 @@ function GalleryDetail({
               label="Access code (optional)"
               value={form.accessCode}
               onChange={(v) => setForm({ ...form, accessCode: v })}
+              onReset={() => {
+                if (!window.confirm("Clear the access code on this gallery?")) return;
+                void update({ data: { id: gallery.id, accessCode: "" } })
+                  .then(async () => {
+                    setForm({ ...form, accessCode: "" });
+                    toast.success("Access code reset");
+                    await onSaved();
+                  })
+                  .catch((error) =>
+                    toast.error(error instanceof Error ? error.message : "Could not reset"),
+                  );
+              }}
+              resetHint="Clears the code"
             />
             <TextField
               label="Password (leave blank to keep)"
               type="password"
               value={form.password}
               onChange={(v) => setForm({ ...form, password: v })}
+              onReset={() => {
+                if (!window.confirm("Clear the gallery password (and any password the client set)?"))
+                  return;
+                void update({ data: { id: gallery.id, password: "", clearClientPassword: true } })
+                  .then(async () => {
+                    setForm({ ...form, password: "" });
+                    toast.success("Password reset");
+                    await onSaved();
+                  })
+                  .catch((error) =>
+                    toast.error(error instanceof Error ? error.message : "Could not reset"),
+                  );
+              }}
+              resetHint="Opens without a password"
             />
             <div>
               <TextField
@@ -1567,29 +1594,26 @@ function GalleryDetail({
                 maxLength={12}
                 value={form.pickPin}
                 onChange={(v) => setForm({ ...form, pickPin: v })}
+                onReset={() => {
+                  if (!window.confirm("Clear the selection PIN on this gallery?")) return;
+                  void update({ data: { id: gallery.id, pickPin: "" } })
+                    .then(async () => {
+                      setForm({ ...form, pickPin: "" });
+                      toast.success("Selection PIN reset");
+                      await onSaved();
+                    })
+                    .catch((error) =>
+                      toast.error(error instanceof Error ? error.message : "Could not reset"),
+                    );
+                }}
+                resetHint="Anyone with the link can pick"
               />
               <p className="mt-2 text-xs text-muted-foreground">
                 Only people with this PIN can pick photos, rate or leave notes. Anyone with the link
                 (friends, family) can still view.
-                {gallery.has_pick_pin ? (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      className="underline"
-                      onClick={() => {
-                        void update({ data: { id: gallery.id, pickPin: "" } }).then(async () => {
-                          toast.success("Selection PIN removed");
-                          await onSaved();
-                        });
-                      }}
-                    >
-                      Remove PIN
-                    </button>
-                  </>
-                ) : null}
               </p>
             </div>
+
             <div className="border border-hairline p-3">
               <p className="text-xs text-muted-foreground">
                 Forgot the PIN or password? Clear every client lock on this gallery — access code,

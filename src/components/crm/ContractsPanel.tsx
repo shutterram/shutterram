@@ -951,13 +951,38 @@ function ContractEditor({
                 label="Access code (optional)"
                 value={share.accessCode}
                 onChange={(v) => setShare({ ...share, accessCode: v })}
+                onReset={() => {
+                  if (!window.confirm("Clear the access code on this contract?")) return;
+                  void saveSharing({ data: { id, accessCode: "" } })
+                    .then(() => {
+                      setShare({ ...share, accessCode: "" });
+                      toast.success("Access code reset");
+                    })
+                    .catch((err) =>
+                      toast.error(err instanceof Error ? err.message : "Could not reset"),
+                    );
+                }}
+                resetHint="Clears the code"
               />
               <TextField
                 label="Password (leave blank to keep)"
                 type="password"
                 value={share.password}
                 onChange={(v) => setShare({ ...share, password: v })}
+                onReset={() => {
+                  if (!window.confirm("Clear the password on this contract?")) return;
+                  void saveSharing({ data: { id, password: "" } })
+                    .then(() => {
+                      setShare({ ...share, password: "" });
+                      toast.success("Password reset");
+                    })
+                    .catch((err) =>
+                      toast.error(err instanceof Error ? err.message : "Could not reset"),
+                    );
+                }}
+                resetHint="Opens without a password"
               />
+
               <div className="border border-hairline p-3">
                 <p className="text-xs text-muted-foreground">
                   Forgot the code or password? Clear both so the client link opens without asking

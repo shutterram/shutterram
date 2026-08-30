@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, RotateCcw } from "lucide-react";
 
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -73,6 +73,9 @@ export function TextField({
   placeholder,
   numeric = false,
   maxLength,
+  onReset,
+  resetLabel = "Reset",
+  resetHint,
 }: {
   label: string;
   value: string;
@@ -82,6 +85,10 @@ export function TextField({
   /** Digits only — strips anything else as the user types or pastes. */
   numeric?: boolean;
   maxLength?: number;
+  /** Shows a small reset link under the field (for passwords / PINs). */
+  onReset?: () => void;
+  resetLabel?: string;
+  resetHint?: string;
 }) {
   const [reveal, setReveal] = useState(false);
   const secret = type === "password";
@@ -117,9 +124,23 @@ export function TextField({
           </button>
         ) : null}
       </span>
+
+      {onReset ? (
+        <span className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={onReset}
+            className="inline-flex items-center gap-1 border border-hairline px-2 py-1 text-[0.5625rem] tracking-[0.2em] uppercase transition-colors hover:border-foreground hover:text-foreground"
+          >
+            <RotateCcw className="size-3" strokeWidth={1.5} /> {resetLabel}
+          </button>
+          {resetHint ? <span>{resetHint}</span> : null}
+        </span>
+      ) : null}
     </label>
   );
 }
+
 
 
 export function AreaField({

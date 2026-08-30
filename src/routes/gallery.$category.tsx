@@ -91,10 +91,12 @@ function CategoryGallery() {
       <div id="category-hero" className="relative h-[60vh] w-full overflow-hidden">
         <img
           src={category.cover || category.hero}
-          alt={category.title}
+          alt={`${category.title} photography by Shutter Ram`}
           className="size-full object-cover"
         />
         <div className="hero-scrim absolute inset-0" />
+        {/* Always-on gradient so the category name stays legible over any cover. */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-black/60" />
         <div
           className={cn(
             "absolute inset-0 flex flex-col items-center justify-center px-6 text-center",
@@ -103,15 +105,16 @@ function CategoryGallery() {
           )}
           style={imageGlowStyle(category.cover || category.hero)}
         >
-          <p className="eyebrow">{t("gallery.eyebrow")}</p>
-          <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight">
+          <p className="eyebrow [text-shadow:0_2px_12px_rgba(0,0,0,0.65)]">{t("gallery.eyebrow")}</p>
+          <h1 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-tight [text-shadow:0_4px_24px_rgba(0,0,0,0.7)]">
             {category.title}
           </h1>
-          <p className="mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
+          <p className="mt-4 max-w-xl text-sm text-muted-foreground [text-shadow:0_2px_12px_rgba(0,0,0,0.6)] md:text-base">
             {category.tagline}
           </p>
         </div>
       </div>
+
 
       <div className="mx-auto max-w-7xl px-6 pb-28 pt-16">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
