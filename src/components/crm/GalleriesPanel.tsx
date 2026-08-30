@@ -1561,8 +1561,10 @@ function GalleryDetail({
             />
             <div>
               <TextField
-                label={`Selection PIN ${gallery.has_pick_pin ? "(set — leave blank to keep)" : "(optional)"}`}
+                label={`Selection PIN — numbers only ${gallery.has_pick_pin ? "(set — leave blank to keep)" : "(optional)"}`}
                 type="password"
+                numeric
+                maxLength={12}
                 value={form.pickPin}
                 onChange={(v) => setForm({ ...form, pickPin: v })}
               />
@@ -1588,6 +1590,40 @@ function GalleryDetail({
                 ) : null}
               </p>
             </div>
+            <div className="border border-hairline p-3">
+              <p className="text-xs text-muted-foreground">
+                Forgot the PIN or password? Clear every client lock on this gallery — access code,
+                gallery password, the password the client set, and the selection PIN. The link keeps
+                working; it just opens without asking for anything.
+              </p>
+              <Btn
+                className="mt-3"
+                onClick={() => {
+                  if (!window.confirm("Reset every access code, password and PIN on this gallery?"))
+                    return;
+                  void update({
+                    data: {
+                      id: gallery.id,
+                      accessCode: "",
+                      password: "",
+                      pickPin: "",
+                      clearClientPassword: true,
+                    },
+                  })
+                    .then(async () => {
+                      setForm({ ...form, accessCode: "", password: "", pickPin: "" });
+                      toast.success("All client locks reset");
+                      await onSaved();
+                    })
+                    .catch((error) =>
+                      toast.error(error instanceof Error ? error.message : "Could not reset"),
+                    );
+                }}
+              >
+                Reset all client locks
+              </Btn>
+            </div>
+
             <CheckField
               label="Let the client set their own password"
               checked={form.allowClientPassword}

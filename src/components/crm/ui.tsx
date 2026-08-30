@@ -71,12 +71,17 @@ export function TextField({
   onChange,
   type = "text",
   placeholder,
+  numeric = false,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  /** Digits only — strips anything else as the user types or pastes. */
+  numeric?: boolean;
+  maxLength?: number;
 }) {
   const [reveal, setReveal] = useState(false);
   const secret = type === "password";
@@ -88,9 +93,14 @@ export function TextField({
           type={secret && reveal ? "text" : type}
           value={value}
           placeholder={placeholder ?? ""}
-          onChange={(e) => onChange(e.target.value)}
+          {...(numeric ? { inputMode: "numeric" as const, pattern: "[0-9]*" } : {})}
+          {...(maxLength ? { maxLength } : {})}
+          onChange={(e) =>
+            onChange(numeric ? e.target.value.replace(/\D+/g, "") : e.target.value)
+          }
           className={`${inputClass} ${secret ? "pr-9" : ""}`}
         />
+
         {secret ? (
           <button
             type="button"

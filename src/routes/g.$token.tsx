@@ -840,7 +840,15 @@ function ClientGalleryPage() {
                   with you. Everyone else can still view the gallery.
                 </p>
                 <div className="mt-4">
-                  <TextField label="PIN" type="password" value={pinInput} onChange={setPinInput} />
+                  <TextField
+                    label="PIN"
+                    type="password"
+                    numeric
+                    maxLength={12}
+                    value={pinInput}
+                    onChange={setPinInput}
+                  />
+
                 </div>
                 <div className="mt-6 flex gap-2">
                   <Btn onClick={() => setPinOpen(false)}>Cancel</Btn>

@@ -954,9 +954,34 @@ function ContractEditor({
               />
               <TextField
                 label="Password (leave blank to keep)"
+                type="password"
                 value={share.password}
                 onChange={(v) => setShare({ ...share, password: v })}
               />
+              <div className="border border-hairline p-3">
+                <p className="text-xs text-muted-foreground">
+                  Forgot the code or password? Clear both so the client link opens without asking
+                  for anything.
+                </p>
+                <Btn
+                  className="mt-3"
+                  onClick={() => {
+                    if (!window.confirm("Reset the access code and password on this contract?"))
+                      return;
+                    void saveSharing({ data: { id, accessCode: "", password: "" } })
+                      .then(() => {
+                        setShare({ ...share, accessCode: "", password: "" });
+                        toast.success("Access code and password reset");
+                      })
+                      .catch((err) =>
+                        toast.error(err instanceof Error ? err.message : "Could not reset"),
+                      );
+                  }}
+                >
+                  Reset client access
+                </Btn>
+              </div>
+
               <TextField
                 label="Expires on"
                 type="date"
