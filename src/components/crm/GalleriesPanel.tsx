@@ -89,16 +89,38 @@ async function runPool<T, R>(
 
 /** Decodes a file or URL off the main thread when the browser supports it. */
 async function decodeImage(source: File | Blob | string): Promise<ImageSource> {
-  if (typeof source !== "string" && typeof createImageBitmap === "function") {
+  // URLs are fetched first so the bytes can be decoded off the main thread —
+  // and so a flaky fetch fails fast and can be retried, instead of an <img>
+  // element hanging until the run's timeout and reporting a "skip".
+  if (typeof source === "string") {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const res = await fetch(source, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Source unavailable (${res.status})`);
+        const blob = await res.blob();
+        if (typeof createImageBitmap === "function") return await createImageBitmap(blob);
+        return await decodeViaElement(URL.createObjectURL(blob), true);
+      } catch (error) {
+        lastError = error;
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Could not read image");
+  }
+  if (typeof createImageBitmap === "function") {
     try {
       return await createImageBitmap(source);
     } catch {
       /* fall through to the <img> path */
     }
   }
+  return decodeViaElement(URL.createObjectURL(source), true);
+}
+
+async function decodeViaElement(url: string, revoke: boolean): Promise<HTMLImageElement> {
   const img = new Image();
   img.crossOrigin = "anonymous";
-  const url = typeof source === "string" ? source : URL.createObjectURL(source);
   try {
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
@@ -106,22 +128,22 @@ async function decodeImage(source: File | Blob | string): Promise<ImageSource> {
       img.src = url;
     });
   } finally {
-    if (typeof source !== "string") setTimeout(() => URL.revokeObjectURL(url), 0);
+    if (revoke) setTimeout(() => URL.revokeObjectURL(url), 0);
   }
   return img;
 }
+
 
 function releaseImage(img: ImageSource) {
   if (!(img instanceof HTMLImageElement)) img.close();
 }
 
-async function drawTo(
+/** Paints the photo once at a chosen size; the pixels are then re-encoded cheaply. */
+function renderCanvas(
   img: ImageSource,
   maxPx: number,
-  quality: number,
   watermark: { text: string; opacity: number; size: number } | null,
-  format: "image/jpeg" = "image/jpeg",
-): Promise<{ blob: Blob; width: number; height: number }> {
+): { canvas: HTMLCanvasElement; width: number; height: number } {
   const { w: sw, h: sh } = sourceSize(img);
   const scale = Math.min(1, maxPx / Math.max(sw, sh));
   const w = Math.round(sw * scale);
@@ -146,47 +168,79 @@ async function drawTo(
     ctx.fillText(watermark.text, 0, 0);
     ctx.restore();
   }
+  return { canvas, width: w, height: h };
+}
+
+async function encodeCanvas(
+  canvas: HTMLCanvasElement,
+  quality: number,
+  format: "image/jpeg" = "image/jpeg",
+): Promise<Blob> {
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, format, quality / 100));
   if (!blob) throw new Error("Could not process image");
-  return { blob, width: w, height: h };
+  return blob;
+}
+
+async function drawTo(
+  img: ImageSource,
+  maxPx: number,
+  quality: number,
+  watermark: { text: string; opacity: number; size: number } | null,
+  format: "image/jpeg" = "image/jpeg",
+): Promise<{ blob: Blob; width: number; height: number }> {
+  const { canvas, width, height } = renderCanvas(img, maxPx, watermark);
+  return { blob: await encodeCanvas(canvas, quality, format), width, height };
 }
 
 /** Lanes used when encoding + uploading photos in parallel. */
 const ENCODE_LANES = 5;
+
+/**
+ * Finds the best-looking JPEG that fits the chosen size budget.
+ *
+ * The photo is painted once per resolution and only re-encoded after that, and
+ * the quality search is a short binary search rather than dozens of full
+ * re-renders — same visual result, a fraction of the work per photo.
+ */
 async function drawToByteLimit(
   img: ImageSource,
   maxBytes: number,
   watermark: { text: string; opacity: number; size: number } | null,
 ) {
-  // Keep this identical to the original high-quality preview builder: begin
-  // with the source's full resolution at JPEG quality 100, then find the best
-  // quality that actually fits. Resolution is reduced only when even quality
-  // 72 cannot satisfy the selected byte ceiling.
   const { w: sw, h: sh } = sourceSize(img);
   let edge = Math.max(sw, sh);
-  let best = await drawTo(img, edge, 100, watermark, "image/jpeg");
-  if (best.blob.size <= maxBytes) return best;
 
-  for (let pass = 0; pass < 6; pass += 1) {
+  for (let pass = 0; pass < 4; pass += 1) {
+    const { canvas, width, height } = renderCanvas(img, edge, watermark);
+    const top = await encodeCanvas(canvas, 100);
+    if (top.size <= maxBytes) return { blob: top, width, height };
+
     let low = 72;
     let high = 99;
-    let fitting: typeof best | null = null;
-    for (let attempt = 0; attempt < 9; attempt += 1) {
+    let fitting: { blob: Blob; width: number; height: number } | null = null;
+    while (low <= high) {
       const quality = Math.round((low + high) / 2);
-      const candidate = await drawTo(img, edge, quality, watermark, "image/jpeg");
-      if (candidate.blob.size <= maxBytes) {
-        fitting = candidate;
+      const blob = await encodeCanvas(canvas, quality);
+      if (blob.size <= maxBytes) {
+        fitting = { blob, width, height };
         low = quality + 1;
       } else {
         high = quality - 1;
       }
     }
     if (fitting) return fitting;
-    edge = Math.max(1600, Math.round(edge * 0.9));
-    best = await drawTo(img, edge, 72, watermark, "image/jpeg");
+
+    // Nothing fits at this resolution: JPEG size tracks pixel count, so step
+    // straight to the resolution that should fit instead of nudging by 10%.
+    const floor72 = await encodeCanvas(canvas, 72);
+    const ratio = Math.sqrt(maxBytes / floor72.size) * 0.95;
+    const next = Math.max(1600, Math.round(edge * Math.min(0.9, ratio)));
+    if (next >= edge) return { blob: floor72, width, height };
+    edge = next;
   }
-  return best;
+  return drawTo(img, edge, 72, watermark, "image/jpeg");
 }
+
 
 export function GalleriesPanel({
   contacts,
