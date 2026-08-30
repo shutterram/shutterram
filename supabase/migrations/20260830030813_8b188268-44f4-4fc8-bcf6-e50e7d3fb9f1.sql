@@ -1,1 +1,0 @@
-ALTER TABLE public.crm_galleries ALTER COLUMN preview_max_bytes SET DEFAULT 1048576;

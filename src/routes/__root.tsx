@@ -105,18 +105,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     // from the request there and from window on client-side navigations.
     const hostname = resolveHostname() ?? "";
 
-    if (!hostname) return;
-    const apexUrl = apexSectionRedirect(hostname, location.pathname);
-    if (apexUrl) {
-      if (typeof window !== "undefined") {
-        window.location.replace(apexUrl);
-        return;
+    if (hostname) {
+      const apexUrl = apexSectionRedirect(hostname, location.pathname);
+      if (apexUrl) {
+        if (typeof window !== "undefined") {
+          window.location.replace(apexUrl);
+          return {};
+        }
+        throw redirect({ href: apexUrl });
       }
-      throw redirect({ href: apexUrl });
+      const to = subdomainRedirect(hostname, location.pathname);
+      if (to) throw redirect({ to });
     }
-    const to = subdomainRedirect(hostname, location.pathname);
-    if (to) throw redirect({ to });
+
+    // Studio content lives in module-level state that the root component
+    // applies while rendering. On the server that is too late: child route
+    // loaders (e.g. /gallery/$category) run *before* any component renders,
+    // and each server request may start from a fresh worker isolate — which
+    // is why category pages randomly 404'd or lost their overlay styling in
+    // production. Loading + applying the content here guarantees every
+    // server request has the real data before any loader reads it.
+    if (typeof window === "undefined") {
+      const search = location.search as Record<string, unknown> | undefined;
+      const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
+      const content = await getSiteContent({ data: { token } });
+      applyContent(content);
+      return { content };
+    }
+    return {};
   },
+
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -141,11 +159,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
   }),
   // `?k=<token>` unlocks private photos for visitors holding a share link.
-  loader: ({ location }) => {
+  loader: ({ location, context }) => {
+    const cached = (context as { content?: Awaited<ReturnType<typeof getSiteContent>> }).content;
+    if (cached) return cached;
     const search = location.search as Record<string, unknown> | undefined;
     const token = typeof search?.["k"] === "string" ? (search["k"] as string) : "";
     return getSiteContent({ data: { token } });
   },
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
